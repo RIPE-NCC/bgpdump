@@ -1,3 +1,37 @@
+2004-05-17 Lorenzo Colitti <lorenzo@ripe.net>
+	* Output times properly in withdrawals with -m/-M
+	* Properly support ipv6 with table dumps and -M
+
+2004-02-04 Hong-wei Kong  <hong-wei_kong@agilent.com>
+        * Add a new option (-t dump|change) to bgpdump. If '-t dump' is 
+	  specified, then the decoding result with '-m' / '-M' option will
+	  show the timestamp when these routes are dumped. If '-t change' is
+	  specified, then the decoding result with '-m' / '-M' option will
+	  show the timestamp when the routes were last time changed. This 
+	  option only works with routing table dumps.
+
+2004-01-16 Lorenzo Colitti <lorenzo@ripe.net>
+	* Fix compile errors under cygwin (only IPv4 works though)
+
+2003-12-18 Hong-Wei Kong <hong-wei_kong@agilent.com>
+	* Added support for dumping BGP routing table entries in
+	  machine-readable format (-m). Previously -m was only supported
+	  for BGP messages
+
+2003-12-16 Shufu Mao <msf98@mails.tsinghua.edu.cn>
+	* Revised the decoding of BGP routing table dump to make the result
+	  identical to route_btoa
+
+2003-12-15  Lorenzo Colitti <lorenzo@ripe.net>
+	* Proper autoconf support: check for features instead of target
+	  systems, remove extra .h files and only use configure.in, use
+	  Makefile.in instead of Make.include, link both static and
+	  shared library, check for ar and ranlib, etc.
+	* Changed INET6 to BGPDUMP_HAVE_IPV6
+	  (N.B. Docs are not updated yet)
+	* Fixed possible endianness issues on Sparc.
+	* Fixed a crash while decoding NOTIFICATION messages
+
 2004-02-10 Lorenzo Colitti <lorenzo@ripe.net>
 	* Fix a stupid crash when reading truncated prefixes.
 
