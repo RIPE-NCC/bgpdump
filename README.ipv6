@@ -1,0 +1,59 @@
+IPv6 support in libbgpdump
+--------------------------
+
+libbgpdump supports IPv6 in v1.3 and above. IPv6 should
+be supported for all record types that were supported by
+previous versions, including RIB dumps and BGP updates.
+
+IPv6 support is detected by ./configure. If desired, it
+can be turned off at compile time by specifying the
+--disable-ipv6 option to ./configure.
+
+Note that the introduction of IPv6 support required a
+change in data structures: everything that used to be a
+sin_addr, including for example IP addresses and prefixes,
+is now a BGPDUMP_IP_ADDRESS:
+
+    typedef union union_BGPDUMP_IP_ADDRESS {
+	struct in_addr    v4_addr;
+	struct in6_addr    v6_addr;
+    } BGPDUMP_IP_ADDRESS;
+
+So whatever code referred to IPv4 addresses must be
+modified by adding .v4_addr to the variable in question.
+For example,
+
+    printf("%s\n", inet_ntoa(prefix.address));
+
+becomes
+
+    printf("%s\n", inet_ntoa(prefix.address.v4_addr));
+
+
+IPv6 announcements and withdrawals
+----------------------------------
+
+IPv6 announcements and withdrawals aren't stored directly
+in the update data structures like their IPv4
+counterparts, they are stored in a separate struct
+mp_info. Two convenient macros, MP_IPV6_ANNOUNCE() and
+MP_IPV6_WITHDRAW(), are provided to get them out.
+
+So if for IPv4 prefixes you did something like:
+
+    for (i = 0; i < entry->body.zebra_message.announce_count; i++) {
+	do_something_with_prefix(entry->body.zebra_message.announce[i]);
+    }
+
+for IPv6 prefixes you would do this:
+
+    struct mp_nlri *v6_announce;
+    if(entry->attr->mp_info &&
+       (v6_announce = MP_IPV6_ANNOUNCE(entry->attr->mp_info)) != NULL) {
+	for (i = 0; i < v6_announce->prefix_count; i++) {
+	    do_something_with_prefix(v6_announce->nlri[i]);
+	}
+    }
+
+for withdrawals, do the same using MP_IPV6_WITHDRAW().
+For more examples, look at test.c.

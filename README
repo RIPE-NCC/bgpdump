@@ -1,0 +1,37 @@
+This is libbgpdump - a C library designed to help with analyzing dump
+files produced by Zebra/Quagga or MRT.
+
+File formats:
+    - MRT RIB dump
+    - Zebra/Quagga format
+    - These may be gzipped and/or passed in through stdin
+
+Entry formats:
+    - MRT routing table dump entries
+    - Zebra/Quagga BGP records:
+          - BGP messages (OPEN, UPDATE, NOTIFY, KEEPALIVE)
+          - BGP state changes
+
+How to compile:
+    - ./configure [--disable-ipv6] ; make
+    - Note that IPv6 is enabled by default, and if the library has IPv6
+      support your application must be able to handle or ignore the resulting
+      IPv6 data!
+    - libbgpdump should compile on Linux, FreeBSD, Solaris, and Cygwin
+
+How to use the library:
+
+- include the file bgpdump_lib.h
+- call bgpdump_open_dump() to open desired Zebra/MRT dump/update file
+- call bgpdump_read_next() to read an entry
+- analyze the entry
+- call bgdump_free_mem() to free up memory allocated by bgpdump_read_next()
+- repeat last 3 steps until EOF of input
+- call bgdump_close_dump() to close the dump file
+
+Please see bgdump_formats.h for a description of data structures used.
+
+An example is included - test.c - it lists all the information gathered
+from a dump/update file given as a command line parameter.
+
+If you find a bug, please report it to ris@ripe.net.
