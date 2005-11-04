@@ -1132,7 +1132,7 @@ void table_line_announce(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY 
 				printf("|%s|",tmp2);
 				
 			if (entry->attr->aggregator_addr.s_addr != -1)
-				printf("%s|\n",inet_ntoa(entry->attr->aggregator_addr));
+				printf("%d %s|\n",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
 			else
 				printf("|\n");
 		}
@@ -1254,7 +1254,7 @@ void table_line_announce_1(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENT
 
 			}
 			if (entry->attr->aggregator_addr.s_addr != -1)
-				printf("%s|\n",inet_ntoa(entry->attr->aggregator_addr));
+				printf("%d %s|\n",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
 			else
 				printf("|\n");
 		}
@@ -1348,7 +1348,7 @@ void table_line_announce6(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTR
 
 
 			if (entry->attr->aggregator_addr.s_addr != -1)
-				printf("%s|\n",inet_ntoa(entry->attr->aggregator_addr));
+				printf("%d %s|\n",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
 			else
 				printf("|\n");
 
@@ -1424,7 +1424,7 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 				printf("|%s|",tmp2);
 				
 			if (entry->attr->aggregator_addr.s_addr != -1)
-				printf("%s|\n",inet_ntoa(entry->attr->aggregator_addr));
+				printf("%d %s|\n",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
 			else
 				printf("|\n");
 		}
