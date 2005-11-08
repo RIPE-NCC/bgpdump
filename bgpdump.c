@@ -184,7 +184,6 @@ void process(BGPDUMP_ENTRY *entry) {
 	struct tm *time;
 	char time_str[128];
 	char time_str2[128];
-	char tmp_str[10];
         char prefix[BGPDUMP_ADDRSTRLEN];  
 	
 	time=gmtime(&entry->time);
@@ -198,15 +197,22 @@ void process(BGPDUMP_ENTRY *entry) {
     switch(entry->type) {
 	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:
 	     if(mode==0){
+	        const char *prefix_str = NULL;
 #ifdef BGPDUMP_HAVE_IPV6
 	    	if (entry->subtype == AFI_IP6)
+		{
 	    		printf("TYPE: TABLE_DUMP/INET6\n");
+			prefix_str = inet_ntop(AF_INET6,&entry->body.mrtd_table_dump.prefix.v6_addr,prefix,sizeof(prefix));
+		}
 	    	else
 #endif
+                {
 			printf("TYPE: TABLE_DUMP/INET\n");
+			prefix_str = inet_ntoa(entry->body.mrtd_table_dump.prefix.v4_addr);
+		}
 		printf("VIEW: %d\n",entry->body.mrtd_table_dump.view);
 	    	printf("SEQUENCE: %d\n",entry->body.mrtd_table_dump.sequence);
-	    	printf("PREFIX: %s/%d\n",inet_ntoa(entry->body.mrtd_table_dump.prefix.v4_addr),entry->body.mrtd_table_dump.mask);
+	    	printf("PREFIX: %s/%d\n",prefix_str,entry->body.mrtd_table_dump.mask);
 	    	printf("FROM:");
 		switch(entry->subtype)
 		{
@@ -1016,12 +1022,12 @@ void table_line_withdraw(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY 
 			{
 #ifdef BGPDUMP_HAVE_IPV6
 			case AFI_IP6:
-				printf("BGP4MP|%ld|W|%s|%d|",time_str,inet_ntop(AF_INET6,&entry->body.zebra_message.source_ip.v6_addr,buf,128),entry->body.zebra_message.source_as);
+				printf("BGP4MP|%s|W|%s|%d|",time_str,inet_ntop(AF_INET6,&entry->body.zebra_message.source_ip.v6_addr,buf,128),entry->body.zebra_message.source_as);
 				break;
 #endif
 			case AFI_IP:
 			default:
-				printf("BGP4MP|%ld|W|%s|%d|",time_str,inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
+				printf("BGP4MP|%s|W|%s|%d|",time_str,inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
 				break;
 			}
 			printf("%s/%d\n",inet_ntoa(prefix[index].address.v4_addr),prefix[index].len);
@@ -1382,6 +1388,8 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 	int  npref;
 	int  nmed;
 	char  time_str[10];
+        char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN];
+
 	switch (entry->attr->origin)
 	{
 
@@ -1401,14 +1409,27 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 	else
 		sprintf(tmp2,"NAG");
 
+#ifdef BGPDUMP_HAVE_IPV6
+	    	if (entry->subtype == AFI_IP6)
+		{
+		    strncpy(peer, inet_ntop(AF_INET6,&route->peer_ip.v6_addr,peer,sizeof(peer)), BGPDUMP_ADDRSTRLEN);
+		    strncpy(prefix, inet_ntop(AF_INET6,&route->prefix.v6_addr,prefix,sizeof(prefix)), BGPDUMP_ADDRSTRLEN);
+		}
+	    	else
+#endif
+                {
+		    strncpy(peer, inet_ntoa(route->peer_ip.v4_addr), BGPDUMP_ADDRSTRLEN);
+                    strncpy(prefix, inet_ntoa(route->prefix.v4_addr), BGPDUMP_ADDRSTRLEN);
+		}
+
 		if (mode == 1)
 		{
 		   if(timetype==0){
-	   	   printf("TABLE_DUMP|%ld|B|%s|%d|",entry->time,inet_ntoa(route->peer_ip.v4_addr),route->peer_as);
+	   	   printf("TABLE_DUMP|%ld|B|%s|%d|",entry->time,peer,route->peer_as);
 		   }else if(timetype==1){
-	   	   printf("TABLE_DUMP|%ld|B|%s|%d|",route->uptime,inet_ntoa(route->peer_ip.v4_addr),route->peer_as);
+	   	   printf("TABLE_DUMP|%ld|B|%s|%d|",route->uptime,peer,route->peer_as);
 		   }
-	      	   printf("%s/%d|%s|%s|",inet_ntoa(route->prefix.v4_addr),route->mask,entry->attr->aspath->str,tmp1);
+	      	   printf("%s/%d|%s|%s|",prefix,route->mask,entry->attr->aspath->str,tmp1);
 
 		    npref=entry->attr->local_pref;
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
@@ -1436,8 +1457,8 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 			time=gmtime(&route->uptime);
 		    }
 	            time2str(time,time_str);	
-	 	    printf("TABLE_DUMP|%s|A|%s|%d|",time_str,inet_ntoa(route->peer_ip.v4_addr),route->peer_as);
-			printf("%s/%d|%s|%s\n",inet_ntoa(route->prefix.v4_addr),route->mask,entry->attr->aspath->str,tmp1);
+	 	    printf("TABLE_DUMP|%s|A|%s|%d|",time_str,peer,route->peer_as);
+			printf("%s/%d|%s|%s\n",prefix,route->mask,entry->attr->aspath->str,tmp1);
 				
 		}
 
