@@ -1,4 +1,4 @@
-static char RCSID[] = "$Id$";
+static const char RCSID[] = "$Id$";
 /*
 
 Copyright (c) 2002                      RIPE NCC
