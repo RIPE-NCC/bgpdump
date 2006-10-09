@@ -591,7 +591,7 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
 void process_attr_read(struct mstream *s, struct attr *attr, struct zebra_incomplete *incomplete) {
     u_char	flag;
     u_char	type;
-    u_int32_t	len, pos, end;
+    u_int32_t	len, end;
     u_int32_t	truelen;
     struct unknown_attr *unknown;
     
@@ -724,7 +724,7 @@ void process_attr_aspath_string(struct aspath *as) {
   struct assegment *assegment;
   int str_size = ASPATH_STR_DEFAULT_LEN;
   int str_pnt;
-  u_char *str_buf;
+  char *str_buf;
   int count = 0;
 
   /* Empty aspath. */
