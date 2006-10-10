@@ -793,7 +793,13 @@ void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
 	}
 
       /* Buffer length check. */
-      estimate_len = ((assegment->length * 6) + 4);
+      switch(asn_len) {
+        case ASN16_LEN:
+          estimate_len = ((assegment->length * 6) + 4);
+          break;
+        default:
+          estimate_len = ((assegment->length * 12) + 4);
+      }
       
       /* String length check. */
       while (str_pnt + estimate_len >= str_size)
