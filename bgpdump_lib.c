@@ -1125,7 +1125,7 @@ static as_t read_asn(struct mstream *s, as_t *asn, size_t len) {
 	}
 }
 
-static char *print_asn(as_t asn) {
+char *print_asn(as_t asn) {
 	static char asn_str[strlen("65535:65535") + 1];
 	if(asn >> 16) {
 		sprintf(asn_str, "%d.%d", (asn >> 16) & 0xFFFF, asn & 0xFFFF);
