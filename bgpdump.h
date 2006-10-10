@@ -57,7 +57,7 @@ To Do             :
 #include <sys/types.h>
 #include <netinet/in.h>
 
-typedef u_int16_t as_t;
+typedef u_int32_t as_t;
 
 typedef union union_BGPDUMP_IP_ADDRESS {
     struct in_addr	v4_addr;
@@ -79,5 +79,8 @@ typedef union union_BGPDUMP_IP_ADDRESS {
 #else
 #define BGPDUMP_ADDRSTRLEN INET_ADDRSTRLEN
 #endif
+
+#define ASN16_LEN sizeof(u_int16_t)
+#define ASN32_LEN sizeof(u_int32_t)
 
 #endif

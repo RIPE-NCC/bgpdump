@@ -63,13 +63,14 @@ To Do             :
 #include <syslog.h>
 
 #include <zlib.h>
+#include <assert.h>
 
 static    int process_mrtd_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry);
     
-static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry);
+static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
 static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_message_open(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_message_notify(struct mstream *s,BGPDUMP_ENTRY *entry);
@@ -78,14 +79,17 @@ static    int process_zebra_bgp_entry(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_snapshot(struct mstream *s,BGPDUMP_ENTRY *entry);
 
 static    void process_attr_init(BGPDUMP_ENTRY *entry);
-static    void process_attr_read(struct mstream *s,struct attr *attr, struct zebra_incomplete *incomplete);
-static    void process_attr_aspath_string(struct aspath *as);
+static    void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, struct zebra_incomplete *incomplete);
+static    void process_attr_aspath_string(struct aspath *as, size_t len);
 static    char aspath_delimiter_char (u_char type, u_char which);
 static    void process_attr_community_string(struct community *com);
 
 static    void process_mp_announce(struct mstream *s, struct mp_info *info, int len, struct zebra_incomplete *incomplete);
 static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, int len, struct zebra_incomplete *incomplete);
 static    u_int16_t read_prefix_list(struct mstream *s, int len, u_int16_t af, struct prefix **prefixarray, struct zebra_incomplete *incomplete);
+
+static    as_t read_asn(struct mstream *s, as_t *asn, size_t len);
+static    char *print_asn(as_t asn);
 
 #if defined(linux)
 static    size_t strlcat(char *dst, const char *src, size_t size);
@@ -317,10 +321,10 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
 	mstream_get(s, &entry->body.mrtd_table_dump.peer_ip.v6_addr.s6_addr, 16);
 #endif
 
-    mstream_getw(s,&entry->body.mrtd_table_dump.peer_as);
+    read_asn(s,&entry->body.mrtd_table_dump.peer_as, ASN16_LEN);
 
     process_attr_init(entry);
-    process_attr_read(s, entry->attr, NULL);
+    process_attr_read(s, entry->attr, ASN16_LEN, NULL);
 
     return 1;
 }
@@ -330,7 +334,9 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE:
 	    return process_zebra_bgp_state_change(s, entry);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-	    return process_zebra_bgp_message(s, entry);
+	    return process_zebra_bgp_message(s, entry, ASN16_LEN);
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
+	    return process_zebra_bgp_message(s, entry, LEN_ASN32);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_ENTRY:
 	    return process_zebra_bgp_entry(s,entry);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_SNAPSHOT:
@@ -344,8 +350,8 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 
 int 
 process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry) {
-    mstream_getw(s,&entry->body.zebra_state_change.source_as);
-    mstream_getw(s,&entry->body.zebra_state_change.destination_as);
+    read_asn(s, &entry->body.zebra_state_change.source_as, ASN16_LEN);
+    read_asn(s, &entry->body.zebra_state_change.destination_as, ASN16_LEN);
 
     /* Work around Zebra dump corruption.
      * N.B. I don't see this in quagga 0.96.4 any more. Is it fixed? */
@@ -402,11 +408,12 @@ process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry) {
     return 1;
 }
 
-int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry) {
+int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len) {
     u_char marker[16]; /* BGP marker */
 
-    mstream_getw(s,&entry->body.zebra_message.source_as);
-    mstream_getw(s,&entry->body.zebra_message.destination_as);
+    entry->body.zebra_message.asn_len = asn_len;
+    read_asn(s, &entry->body.zebra_message.source_as, asn_len);
+    read_asn(s, &entry->body.zebra_message.destination_as, asn_len);
     mstream_getw(s,&entry->body.zebra_message.interface_index);
     mstream_getw(s,&entry->body.zebra_message.address_family);
 
@@ -537,7 +544,7 @@ int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry) {
     attr_pos = s->position;
 
     process_attr_init(entry);
-    process_attr_read(s, entry->attr, &entry->body.zebra_message.incomplete);
+    process_attr_read(s, entry->attr, entry->body.zebra_message.asn_len, &entry->body.zebra_message.incomplete);
 
     /* Get back in sync in case there are malformed attributes */
     s->position = attr_pos + entry->attr->len + 2;
@@ -586,9 +593,12 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
 
     entry->attr->unknown_num = 0;
     entry->attr->unknown = NULL;
+
+    entry->attr->new_aspath		= NULL;
+    entry->attr->new_aggregator_as	= -1;
 }
 
-void process_attr_read(struct mstream *s, struct attr *attr, struct zebra_incomplete *incomplete) {
+void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, struct zebra_incomplete *incomplete) {
     u_char	flag;
     u_char	type;
     u_int32_t	len, end;
@@ -632,7 +642,7 @@ void process_attr_read(struct mstream *s, struct attr *attr, struct zebra_incomp
 		attr->aspath->data	= malloc(len);
 		mstream_get(s,attr->aspath->data,len);
 		attr->aspath->str	= NULL;
-		process_attr_aspath_string(attr->aspath);
+		process_attr_aspath_string(attr->aspath, asn_len);
 		break;
 	    case BGP_ATTR_NEXT_HOP:
 		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_NEXT_HOP);
@@ -651,7 +661,7 @@ void process_attr_read(struct mstream *s, struct attr *attr, struct zebra_incomp
 		break;
 	    case BGP_ATTR_AGGREGATOR:
 		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_AGGREGATOR);
-		mstream_getw(s,&attr->aggregator_as);
+		read_asn(s, &attr->aggregator_as, asn_len);
 		mstream_get_ipv4(s,&attr->aggregator_addr.s_addr);
 		break;
 	    case BGP_ATTR_COMMUNITIES:
@@ -716,7 +726,7 @@ void process_attr_read(struct mstream *s, struct attr *attr, struct zebra_incomp
     }
 }
 
-void process_attr_aspath_string(struct aspath *as) {
+void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
   int space;
   u_char type;
   void *pnt;
@@ -773,7 +783,7 @@ void process_attr_aspath_string(struct aspath *as) {
 	}
 
       /* Check AS length. */
-      if ((pnt + (assegment->length * AS_VALUE_SIZE) + AS_HEADER_SIZE) > end)
+      if ((pnt + (assegment->length * asn_len) + AS_HEADER_SIZE) > end)
 	{
 	  free(str_buf);
 	  str_buf=malloc(strlen(ASPATH_STR_ERROR)+1);
@@ -818,6 +828,8 @@ void process_attr_aspath_string(struct aspath *as) {
       for (i = 0; i < assegment->length; i++)
 	{
 	  int len;
+	  as_t asn;
+	  int asn_pos;
 
 	  if (space)
 	    {
@@ -830,12 +842,22 @@ void process_attr_aspath_string(struct aspath *as) {
 	  else
 	    space = 1;
 
-	  len = sprintf (str_buf + str_pnt, "%d", ntohs (assegment->asval[i]));
+	  asn_pos = i * asn_len;
+	  switch(asn_len) {
+	    case ASN16_LEN:
+	      asn = ntohs (*(u_int16_t *) (assegment->data + asn_pos));
+	      break;
+	    case LEN_ASN32:
+	      asn = ntohl (*(u_int32_t *) (assegment->data + asn_pos));
+	      break;
+	  }
+
+	  len = sprintf (str_buf + str_pnt, "%s", print_asn(asn));
 	  str_pnt += len;
 	}
 
       type = assegment->type;
-      pnt += (assegment->length * AS_VALUE_SIZE) + AS_HEADER_SIZE;
+      pnt += (assegment->length * asn_len) + AS_HEADER_SIZE;
     }
 
   if (assegment->type != AS_SEQUENCE)
@@ -1082,6 +1104,36 @@ u_int16_t read_prefix_list(struct mstream *s, int len, u_int16_t afi,
 	}
 	*prefixarray = prefixes;
 	return count;
+}
+
+static as_t read_asn(struct mstream *s, as_t *asn, size_t len) {
+	u_int16_t asn16;
+
+	assert(len == sizeof(u_int32_t) || len == sizeof(u_int16_t));
+
+	switch(len) {
+		case sizeof(u_int32_t):
+			return mstream_getl(s, asn);
+		case sizeof(u_int16_t):
+			mstream_getw(s, &asn16);
+			if(asn)
+				*asn = asn16;
+			return asn16;
+		default:
+			syslog(LOG_ERR, "read_asn: wrong ASN length %d!", len);
+			mstream_get(s, NULL, len);
+			return -1;
+	}
+}
+
+static char *print_asn(as_t asn) {
+	static char asn_str[strlen("65535:65535") + 1];
+	if(asn >> 16) {
+		sprintf(asn_str, "%d.%d", (asn >> 16) & 0xFFFF, asn & 0xFFFF);
+	} else {
+		sprintf(asn_str, "%d", asn);
+	}
+	return asn_str;
 }
 
 #if defined(linux)

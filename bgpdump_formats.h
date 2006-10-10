@@ -82,6 +82,7 @@ To Do             :
 #define BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE	1  /* BGP4MP_MESSAGE */
 #define BGPDUMP_SUBTYPE_ZEBRA_BGP_ENTRY		2  /* BGP4MP_ENTRY */
 #define BGPDUMP_SUBTYPE_ZEBRA_BGP_SNAPSHOT	3  /* BGP4MP_SNAPSHOT */
+#define BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32	4  /* BGP4MP_MESSAGE_32BIT_AS */
 
 /* BGP state - defined in RFC1771 */
 #define BGP_STATE_IDLE		1
@@ -151,6 +152,9 @@ typedef struct struct_BGPDUMP_ZEBRA_MESSAGE {
     u_int16_t		address_family;
     BGPDUMP_IP_ADDRESS	source_ip;
     BGPDUMP_IP_ADDRESS	destination_ip;
+
+    /* Does this message use 16-bit or 32-bit AS numbers? */
+    size_t		asn_len;
 
     /* BGP packet header fields */
     u_int16_t		size;

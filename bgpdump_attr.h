@@ -83,7 +83,6 @@ To Do             :
 
 /* BGP ASPATH attribute defines */
 #define AS_HEADER_SIZE        2	 
-#define AS_VALUE_SIZE         sizeof (as_t)
 
 #define AS_SET             1
 #define AS_SEQUENCE        2
@@ -162,6 +161,8 @@ struct attr
   u_int16_t		unknown_num;
   struct unknown_attr	*unknown;
 
+  struct aspath 	*new_aspath;
+  as_t			new_aggregator_as;
 };
 
 struct community 
@@ -199,7 +200,7 @@ struct assegment
 {
   u_char type;
   u_char length;
-  as_t asval[1];
+  char data[0];
 };
 
 struct mp_info {
