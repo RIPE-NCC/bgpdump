@@ -203,7 +203,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 	    printf("    STATUS      : %d\n",entry->body.mrtd_table_dump.status);
 	    printf("    UPTIME      : %s",asctime(gmtime(&entry->body.mrtd_table_dump.uptime)));
 	    printf("    PEER IP     : %s\n",peer_ip);
-	    printf("    PEER AS     : %d\n",entry->body.mrtd_table_dump.peer_as);
+	    printf("    PEER AS     : %s\n",print_asn(entry->body.mrtd_table_dump.peer_as));
 	    break;
 	case BGPDUMP_TYPE_ZEBRA_BGP:
 	    printf("TYPE            : Zebra BGP \n");
@@ -224,8 +224,8 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 	    switch(entry->subtype) {
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 		    printf("SUBTYPE         : Zebra BGP Message \n");
-		    printf("    SOURCE_AS   : %d\n",entry->body.zebra_message.source_as);
-		    printf("    DEST_AS     : %d\n",entry->body.zebra_message.destination_as);
+		    printf("    SOURCE_AS   : %s\n",print_asn(entry->body.zebra_message.source_as));
+		    printf("    DEST_AS     : %s\n",print_asn(entry->body.zebra_message.destination_as));
 		    printf("    INTERFACE   : %d\n",entry->body.zebra_message.interface_index);
 		    printf("    SOURCE_IP   : %s\n",source_ip);
 		    printf("    DEST_IP     : %s\n",destination_ip);
@@ -259,7 +259,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 			    break;
 			case BGP_MSG_OPEN:
 			    printf("    VERSION     : %d\n",entry->body.zebra_message.version);
-			    printf("    MY_ASN      : %d\n",entry->body.zebra_message.my_as);
+			    printf("    MY_ASN      : %s\n",print_asn(entry->body.zebra_message.my_as));
 			    printf("    HOLD_TIME   : %d\n",entry->body.zebra_message.hold_time);
 			    printf("    ROUTER_ID   : %s\n",inet_ntoa(entry->body.zebra_message.bgp_id));
 			    printf("    OPTION_LEN  : %d\n",entry->body.zebra_message.opt_len);
@@ -300,8 +300,8 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE:
 		    printf("SUBTYPE         : Zebra BGP State Change\n");
-		    printf("    SOURCE_AS   : %d\n",entry->body.zebra_state_change.source_as);
-		    printf("    DEST_AS     : %d\n",entry->body.zebra_state_change.destination_as);
+		    printf("    SOURCE_AS   : %s\n",print_asn(entry->body.zebra_state_change.source_as));
+		    printf("    DEST_AS     : %s\n",print_asn(entry->body.zebra_state_change.destination_as));
 		    printf("    INTERFACE   : %d\n",entry->body.zebra_state_change.interface_index);
 		    printf("    SOURCE_IP   : %s\n",source_ip);
 		    printf("    DEST_IP     : %s\n",destination_ip);
@@ -368,7 +368,7 @@ void show_attr(struct attr *attr) {
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE) ) !=0)	printf("   ATOMIC_AGREG : Present\n");
 	    else printf("   ATOMIC_AGREG : N/A\n");
 
-	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_AGGREGATOR) ) !=0)		printf("   AGGREGATOR   : %s AS%d\n",inet_ntoa(attr->aggregator_addr),attr->aggregator_as);
+	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_AGGREGATOR) ) !=0)		printf("   AGGREGATOR   : %s AS%s\n",inet_ntoa(attr->aggregator_addr),print_asn(attr->aggregator_as));
 	    else printf("   AGGREGATOR   : N/A\n");
 
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	printf("   COMMUNITIES  : %s\n",attr->community->str);
