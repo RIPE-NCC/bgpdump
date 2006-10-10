@@ -258,6 +258,7 @@ void process(BGPDUMP_ENTRY *entry) {
 	    switch(entry->subtype) 
 	    {
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
 
 		    switch(entry->body.zebra_message.type) 
 		    {
