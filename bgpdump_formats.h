@@ -162,7 +162,7 @@ typedef struct struct_BGPDUMP_ZEBRA_MESSAGE {
 
     /* For OPEN packets */
     u_char	version;
-    u_int16_t	my_as;
+    as_t	my_as;
     u_int16_t	hold_time;
     struct	in_addr bgp_id;
     u_char	opt_len;

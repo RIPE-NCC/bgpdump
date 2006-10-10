@@ -72,7 +72,7 @@ static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *en
     
 static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
 static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry);
-static    int process_zebra_bgp_message_open(struct mstream *s,BGPDUMP_ENTRY *entry);
+static    int process_zebra_bgp_message_open(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
 static    int process_zebra_bgp_message_notify(struct mstream *s,BGPDUMP_ENTRY *entry);
 
 static    int process_zebra_bgp_entry(struct mstream *s,BGPDUMP_ENTRY *entry);
@@ -476,7 +476,7 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn
     
     switch(entry->body.zebra_message.type) {    
 	case BGP_MSG_OPEN:
-	    return process_zebra_bgp_message_open(s,entry);
+	    return process_zebra_bgp_message_open(s,entry, asn_len);
 	case BGP_MSG_UPDATE:
 	    return process_zebra_bgp_message_update(s,entry);
 	case BGP_MSG_NOTIFY:
@@ -512,9 +512,9 @@ int process_zebra_bgp_message_notify(struct mstream *s, BGPDUMP_ENTRY *entry) {
     return 1;
 }
 
-int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry) {
+int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, size_t asn_len) {
     mstream_getc(s, &entry->body.zebra_message.version);
-    mstream_getw(s, &entry->body.zebra_message.my_as);
+    read_asn(s, &entry->body.zebra_message.my_as, asn_len);
     mstream_getw(s, &entry->body.zebra_message.hold_time);
     mstream_get_ipv4(s, &entry->body.zebra_message.bgp_id.s_addr);
     mstream_getc(s, &entry->body.zebra_message.opt_len);
