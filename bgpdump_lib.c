@@ -336,7 +336,7 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 	    return process_zebra_bgp_message(s, entry, ASN16_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
-	    return process_zebra_bgp_message(s, entry, LEN_ASN32);
+	    return process_zebra_bgp_message(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_ENTRY:
 	    return process_zebra_bgp_entry(s,entry);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_SNAPSHOT:
@@ -847,7 +847,7 @@ void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
 	    case ASN16_LEN:
 	      asn = ntohs (*(u_int16_t *) (assegment->data + asn_pos));
 	      break;
-	    case LEN_ASN32:
+	    case ASN32_LEN:
 	      asn = ntohl (*(u_int32_t *) (assegment->data + asn_pos));
 	      break;
 	  }
