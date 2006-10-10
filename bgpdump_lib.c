@@ -89,7 +89,6 @@ static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, int 
 static    u_int16_t read_prefix_list(struct mstream *s, int len, u_int16_t af, struct prefix **prefixarray, struct zebra_incomplete *incomplete);
 
 static    as_t read_asn(struct mstream *s, as_t *asn, size_t len);
-static    char *print_asn(as_t asn);
 
 #if defined(linux)
 static    size_t strlcat(char *dst, const char *src, size_t size);
