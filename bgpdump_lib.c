@@ -68,7 +68,7 @@ To Do             :
 static    int process_mrtd_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
-static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry);
+static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
     
 static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
 static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
@@ -352,7 +352,9 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
 int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
     switch(entry->subtype) {
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE:
-	    return process_zebra_bgp_state_change(s, entry);
+	    return process_zebra_bgp_state_change(s, entry, ASN16_LEN);
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE32:
+	    return process_zebra_bgp_state_change(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 	    return process_zebra_bgp_message(s, entry, ASN16_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
@@ -369,9 +371,9 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 
 
 int 
-process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry) {
-    read_asn(s, &entry->body.zebra_state_change.source_as, ASN16_LEN);
-    read_asn(s, &entry->body.zebra_state_change.destination_as, ASN16_LEN);
+process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len) {
+    read_asn(s, &entry->body.zebra_state_change.source_as, asn_len);
+    read_asn(s, &entry->body.zebra_state_change.destination_as, asn_len);
 
     /* Work around Zebra dump corruption.
      * N.B. I don't see this in quagga 0.96.4 any more. Is it fixed? */
