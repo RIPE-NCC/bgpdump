@@ -71,7 +71,7 @@ static    int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry);
     
 static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
-static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry);
+static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
 static    int process_zebra_bgp_message_open(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
 static    int process_zebra_bgp_message_notify(struct mstream *s,BGPDUMP_ENTRY *entry);
 
@@ -294,15 +294,18 @@ int process_mrtd_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 
 int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     int afi = entry->subtype;
+    size_t asn_len;
 
     mstream_getw(s,&entry->body.mrtd_table_dump.view);
     mstream_getw(s,&entry->body.mrtd_table_dump.sequence);
     switch(afi) {
-	case AFI_IP:
+	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
+	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
 	    mstream_get_ipv4(s, &entry->body.mrtd_table_dump.prefix.v4_addr.s_addr);
 	    break;
 #ifdef BGPDUMP_HAVE_IPV6
-	case AFI_IP6:
+	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
+	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
 	    mstream_get(s, &entry->body.mrtd_table_dump.prefix.v6_addr.s6_addr, 16);
 	    break;
 #endif
@@ -313,17 +316,35 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     mstream_getc(s,&entry->body.mrtd_table_dump.mask);
     mstream_getc(s,&entry->body.mrtd_table_dump.status);
     mstream_getl(s,(u_int32_t *)&entry->body.mrtd_table_dump.uptime);
-    if(afi == AFI_IP)
-	mstream_get_ipv4(s, &entry->body.mrtd_table_dump.peer_ip.v4_addr.s_addr);
-#ifdef BGPDUMP_HAVE_IPV6
-    else if(afi == AFI_IP6)
-	mstream_get(s, &entry->body.mrtd_table_dump.peer_ip.v6_addr.s6_addr, 16);
-#endif
 
-    read_asn(s,&entry->body.mrtd_table_dump.peer_as, ASN16_LEN);
+    switch(afi) {
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
+	mstream_get_ipv4(s, &entry->body.mrtd_table_dump.peer_ip.v4_addr.s_addr);
+	break;
+#ifdef BGPDUMP_HAVE_IPV6
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
+	mstream_get(s, &entry->body.mrtd_table_dump.peer_ip.v6_addr.s6_addr, 16);
+	break;
+#endif
+    }
+
+    switch(afi) {
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
+	asn_len = ASN16_LEN;
+	break;
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
+      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
+	asn_len = ASN32_LEN;
+	break;
+    }
+
+    read_asn(s,&entry->body.mrtd_table_dump.peer_as, asn_len);
 
     process_attr_init(entry);
-    process_attr_read(s, entry->attr, ASN16_LEN, NULL);
+    process_attr_read(s, entry->attr, asn_len, NULL);
 
     return 1;
 }
@@ -410,7 +431,6 @@ process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry) {
 int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len) {
     u_char marker[16]; /* BGP marker */
 
-    entry->body.zebra_message.asn_len = asn_len;
     read_asn(s, &entry->body.zebra_message.source_as, asn_len);
     read_asn(s, &entry->body.zebra_message.destination_as, asn_len);
     mstream_getw(s,&entry->body.zebra_message.interface_index);
@@ -478,7 +498,7 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn
 	case BGP_MSG_OPEN:
 	    return process_zebra_bgp_message_open(s,entry, asn_len);
 	case BGP_MSG_UPDATE:
-	    return process_zebra_bgp_message_update(s,entry);
+	    return process_zebra_bgp_message_update(s,entry, asn_len);
 	case BGP_MSG_NOTIFY:
 	    return process_zebra_bgp_message_notify(s,entry);
 	case BGP_MSG_KEEPALIVE:
@@ -527,7 +547,7 @@ int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, size
     return 1;
 }
 
-int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry) {
+int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry, size_t asn_len) {
     int withdraw_len;
     int announce_len;
     int attr_pos;
@@ -543,7 +563,7 @@ int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry) {
     attr_pos = s->position;
 
     process_attr_init(entry);
-    process_attr_read(s, entry->attr, entry->body.zebra_message.asn_len, &entry->body.zebra_message.incomplete);
+    process_attr_read(s, entry->attr, asn_len, &entry->body.zebra_message.incomplete);
 
     /* Get back in sync in case there are malformed attributes */
     s->position = attr_pos + entry->attr->len + 2;
