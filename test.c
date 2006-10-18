@@ -373,6 +373,13 @@ void show_attr(struct attr *attr) {
 
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	printf("   COMMUNITIES  : %s\n",attr->community->str);
 	    else printf("   COMMUNITIES  : N/A\n");
+
+	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_NEW_AS_PATH) ) !=0) {
+		printf("   NEW_ASPATH   : %s\n",attr->new_aspath->str);
+	    	printf("   OLD_ASPATH   : %s\n",attr->old_aspath->str);
+	    }
+
+	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_NEW_AGGREGATOR) ) !=0)	printf("   NEW_AGGREGTR : %s AS%s\n",inet_ntoa(attr->new_aggregator_addr),print_asn(attr->new_aggregator_as));
     }
 }
 
