@@ -83,4 +83,6 @@ typedef union union_BGPDUMP_IP_ADDRESS {
 #define ASN16_LEN sizeof(u_int16_t)
 #define ASN32_LEN sizeof(u_int32_t)
 
+#define AS_TRAN 23456
+
 #endif
