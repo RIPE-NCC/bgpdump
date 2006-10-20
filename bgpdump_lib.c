@@ -68,19 +68,19 @@ To Do             :
 static    int process_mrtd_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
-static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
+static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
     
-static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
-static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
-static    int process_zebra_bgp_message_open(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len);
+static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
+static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
+static    int process_zebra_bgp_message_open(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
 static    int process_zebra_bgp_message_notify(struct mstream *s,BGPDUMP_ENTRY *entry);
 
 static    int process_zebra_bgp_entry(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_snapshot(struct mstream *s,BGPDUMP_ENTRY *entry);
 
 static    void process_attr_init(BGPDUMP_ENTRY *entry);
-static    void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, struct zebra_incomplete *incomplete);
-static    void process_attr_aspath_string(struct aspath *as, size_t len);
+static    void process_attr_read(struct mstream *s, struct attr *attr, u_int8_t asn_len, struct zebra_incomplete *incomplete);
+static    void process_attr_aspath_string(struct aspath *as);
 static    char aspath_delimiter_char (u_char type, u_char which);
 static    void process_attr_community_string(struct community *com);
 
@@ -88,7 +88,13 @@ static    void process_mp_announce(struct mstream *s, struct mp_info *info, int 
 static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, int len, struct zebra_incomplete *incomplete);
 static    u_int16_t read_prefix_list(struct mstream *s, int len, u_int16_t af, struct prefix **prefixarray, struct zebra_incomplete *incomplete);
 
-static    as_t read_asn(struct mstream *s, as_t *asn, size_t len);
+static    as_t read_asn(struct mstream *s, as_t *asn, u_int8_t len);
+static    struct aspath *create_aspath(u_int16_t len, u_int8_t asn_len);
+static    void aspath_error(struct aspath *as);
+static    int check_new_aspath(struct aspath *aspath);
+static    void process_asn32_trans(struct attr *attr, u_int8_t asn_len);
+static    struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath);
+static    void asn32_expand_16_to_32(char *dst, char *src, int len);
 
 #if defined(linux)
 static    size_t strlcat(char *dst, const char *src, size_t size);
@@ -217,17 +223,23 @@ void bgpdump_free_mp_info(struct mp_info *info) {
 
 void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
     u_int16_t i;
+    struct aspath *path, *pathstofree[3] = {
+      (entry && entry->attr) ? entry->attr->aspath : NULL,
+      (entry && entry->attr) ? entry->attr->old_aspath : NULL,
+      (entry && entry->attr) ? entry->attr->new_aspath : NULL
+    };
 
     if(entry!=NULL) {
 	if(entry->attr != NULL) {
-	    if(entry->attr->aspath != NULL) {
-		if(entry->attr->aspath->data != NULL)
-		    free(entry->attr->aspath->data);
-
-		if(entry->attr->aspath->str != NULL)
-		    free(entry->attr->aspath->str);
-
-		free(entry->attr->aspath);
+	    for(i = 0; i < sizeof(pathstofree) / sizeof(pathstofree[0]); i++) {
+	      path = pathstofree[i];
+	      if(path) {
+		if(path->data)
+		  free(path->data);
+		if(path->str)
+		  free(path->str);
+		free(path);
+	      }
 	    }
 	    
 	    if(entry->attr->community != NULL) {
@@ -294,7 +306,7 @@ int process_mrtd_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 
 int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     int afi = entry->subtype;
-    size_t asn_len;
+    u_int8_t asn_len;
 
     mstream_getw(s,&entry->body.mrtd_table_dump.view);
     mstream_getw(s,&entry->body.mrtd_table_dump.sequence);
@@ -371,7 +383,7 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 
 
 int 
-process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len) {
+process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     read_asn(s, &entry->body.zebra_state_change.source_as, asn_len);
     read_asn(s, &entry->body.zebra_state_change.destination_as, asn_len);
 
@@ -430,7 +442,7 @@ process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, size_t as
     return 1;
 }
 
-int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, size_t asn_len) {
+int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     u_char marker[16]; /* BGP marker */
 
     read_asn(s, &entry->body.zebra_message.source_as, asn_len);
@@ -534,7 +546,7 @@ int process_zebra_bgp_message_notify(struct mstream *s, BGPDUMP_ENTRY *entry) {
     return 1;
 }
 
-int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, size_t asn_len) {
+int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     mstream_getc(s, &entry->body.zebra_message.version);
     read_asn(s, &entry->body.zebra_message.my_as, asn_len);
     mstream_getw(s, &entry->body.zebra_message.hold_time);
@@ -549,7 +561,7 @@ int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, size
     return 1;
 }
 
-int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry, size_t asn_len) {
+int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     int withdraw_len;
     int announce_len;
     int attr_pos;
@@ -593,7 +605,6 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
 
     entry->attr = malloc(sizeof(struct attr));
     
-    entry->attr->refcnt			= 0;
     entry->attr->flag			= 0;
     entry->attr->origin			= -1;
     entry->attr->nexthop.s_addr		= -1;
@@ -616,10 +627,12 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
     entry->attr->unknown = NULL;
 
     entry->attr->new_aspath		= NULL;
+    entry->attr->old_aspath		= NULL;
     entry->attr->new_aggregator_as	= -1;
+    entry->attr->new_aggregator_addr.s_addr = -1;
 }
 
-void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, struct zebra_incomplete *incomplete) {
+void process_attr_read(struct mstream *s, struct attr *attr, u_int8_t asn_len, struct zebra_incomplete *incomplete) {
     u_char	flag;
     u_char	type;
     u_int32_t	len, end;
@@ -627,6 +640,9 @@ void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, str
     struct unknown_attr *unknown;
     
     mstream_getw(s, &attr->len);
+    if(attr->len == 0)
+      return;
+
     attr->data=malloc(attr->len);
 
     /* Check the attributes are not truncated */
@@ -649,46 +665,36 @@ void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, str
 	else
 	    len=mstream_getc(s,NULL);
 	
+	/* Take note of all attributes, including unknown ones */
+	if(type <= sizeof(attr->flag) * 8)
+	  attr->flag = attr->flag | ATTR_FLAG_BIT (type);
+
 	switch(type) {
 	    case BGP_ATTR_ORIGIN:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_ORIGIN);
 		mstream_getc(s,&attr->origin);
 		break;	    
 	    case BGP_ATTR_AS_PATH:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_AS_PATH);
-		attr->aspath		= malloc(sizeof(struct aspath));
-		attr->aspath->refcnt	= 0;
-		attr->aspath->length	= len;
-		attr->aspath->count	= 0;
-		attr->aspath->data	= malloc(len);
+		attr->aspath = create_aspath(len, asn_len);
 		mstream_get(s,attr->aspath->data,len);
-		attr->aspath->str	= NULL;
-		process_attr_aspath_string(attr->aspath, asn_len);
+		process_attr_aspath_string(attr->aspath);
 		break;
 	    case BGP_ATTR_NEXT_HOP:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_NEXT_HOP);
 		mstream_get_ipv4(s,&attr->nexthop.s_addr);
 		break;
 	    case BGP_ATTR_MULTI_EXIT_DISC:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_MULTI_EXIT_DISC);
 		mstream_getl(s,&attr->med);
 		break;
 	    case BGP_ATTR_LOCAL_PREF:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_LOCAL_PREF);
 		mstream_getl(s,&attr->local_pref);
 		break;
 	    case BGP_ATTR_ATOMIC_AGGREGATE:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_ATOMIC_AGGREGATE);
 		break;
 	    case BGP_ATTR_AGGREGATOR:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_AGGREGATOR);
 		read_asn(s, &attr->aggregator_as, asn_len);
 		mstream_get_ipv4(s,&attr->aggregator_addr.s_addr);
 		break;
 	    case BGP_ATTR_COMMUNITIES:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_COMMUNITIES);
 		attr->community		= malloc(sizeof(struct community));
-		attr->community->refcnt = 0;
 		attr->community->size	= len / 4;
 		attr->community->val	= malloc(len);
 		mstream_get(s,attr->community->val,len);
@@ -696,7 +702,6 @@ void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, str
 		process_attr_community_string(attr->community);
 		break;
 	    case BGP_ATTR_MP_REACH_NLRI:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_MP_REACH_NLRI);
 		if(attr->mp_info == NULL) {
 		    attr->mp_info = malloc(sizeof(struct mp_info));
 		    memset(attr->mp_info, 0, sizeof(struct mp_info));
@@ -704,12 +709,22 @@ void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, str
 		process_mp_announce(s, attr->mp_info, len, incomplete);
 		break;
 	    case BGP_ATTR_MP_UNREACH_NLRI:
-		attr->flag = attr->flag | ATTR_FLAG_BIT (BGP_ATTR_MP_UNREACH_NLRI);
 		if(attr->mp_info == NULL) {
 		    attr->mp_info = malloc(sizeof(struct mp_info));
 		    memset(attr->mp_info, 0, sizeof(struct mp_info));
 		}
 		process_mp_withdraw(s, attr->mp_info, len, incomplete);
+		break;
+	    case BGP_ATTR_NEW_AS_PATH:
+		attr->new_aspath = create_aspath(len, ASN32_LEN);
+		mstream_get(s,attr->new_aspath->data,len);
+		process_attr_aspath_string(attr->new_aspath);
+                /* AS_CONFED_SEQUENCE and AS_CONFED_SET segments invalid in NEW_AS_PATH */
+                check_new_aspath(attr->new_aspath);
+		break;
+	    case BGP_ATTR_NEW_AGGREGATOR:
+		read_asn(s, &attr->new_aggregator_as, ASN32_LEN);
+		mstream_get_ipv4(s,&attr->new_aggregator_addr.s_addr);
 		break;
 	    default:
 		/* Unknown attribute. Save as is */
@@ -745,9 +760,41 @@ void process_attr_read(struct mstream *s, struct attr *attr, size_t asn_len, str
 		break;
 	}
     }
+    /* Once all attributes have been read, take care of ASN32 transition */
+    process_asn32_trans(attr, asn_len);
 }
 
-void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
+struct aspath *create_aspath(u_int16_t len, u_int8_t asn_len) {
+  struct aspath *aspath = malloc(sizeof(struct aspath));
+  if(aspath) {
+    aspath->asn_len	= asn_len;
+    aspath->length	= len;
+    aspath->count	= 0;
+    aspath->str		= NULL;
+    if(len > 0)
+       aspath->data	= malloc(len);
+    else
+       aspath->data	= NULL;
+  }
+  return aspath;
+}
+
+void aspath_error(struct aspath *as) {
+  as->count = 0;
+
+  if(as->str) {
+    free(as->str);
+    as->str = NULL;
+  }
+
+  as->str = malloc(strlen(ASPATH_STR_ERROR) + 1);
+  if(as->str)
+    strcpy(as->str, ASPATH_STR_ERROR);
+  else
+    syslog(LOG_CRIT, "aspath_error: malloc failed");
+}
+
+void process_attr_aspath_string(struct aspath *as) {
   int space;
   u_char type;
   void *pnt;
@@ -796,26 +843,20 @@ void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
 	  (assegment->type != AS_CONFED_SEQUENCE))
 	{
 	  free(str_buf);
-	  str_buf=malloc(strlen(ASPATH_STR_ERROR)+1);
-	  strcpy(str_buf,ASPATH_STR_ERROR);
-	  as->count=0;
-	  as->str = str_buf;
+	  aspath_error(as);
 	  return;
 	}
 
       /* Check AS length. */
-      if ((pnt + (assegment->length * asn_len) + AS_HEADER_SIZE) > end)
+      if ((pnt + (assegment->length * as->asn_len) + AS_HEADER_SIZE) > end)
 	{
 	  free(str_buf);
-	  str_buf=malloc(strlen(ASPATH_STR_ERROR)+1);
-	  strcpy(str_buf,ASPATH_STR_ERROR);
-	  as->count=0;
-	  as->str = str_buf;
+	  aspath_error(as);
 	  return;
 	}
 
       /* Buffer length check. */
-      switch(asn_len) {
+      switch(as->asn_len) {
         case ASN16_LEN:
           estimate_len = ((assegment->length * 6) + 4);
           break;
@@ -842,15 +883,16 @@ void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
 
       space = 0;
 
-      /* Increment count - ignoring CONFED SETS/SEQUENCES */
-      if (assegment->type != AS_CONFED_SEQUENCE
-	  && assegment->type != AS_CONFED_SET)
-	{
-	  if (assegment->type == AS_SEQUENCE)
-	    count += assegment->length;
-	  else if (assegment->type == AS_SET)
-	    count++;
-	}
+      /* Increment count - NOT ignoring CONFED_SETS/SEQUENCES any more.
+         I doubt anybody was relying on this behaviour anyway. */
+      switch(assegment->type) {
+	case AS_SEQUENCE:
+	case AS_CONFED_SEQUENCE:
+	  count += assegment->length;
+	case AS_SET:
+	case AS_CONFED_SET:
+	  count += 1;
+      }
 
       for (i = 0; i < assegment->length; i++)
 	{
@@ -869,8 +911,8 @@ void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
 	  else
 	    space = 1;
 
-	  asn_pos = i * asn_len;
-	  switch(asn_len) {
+	  asn_pos = i * as->asn_len;
+	  switch(as->asn_len) {
 	    case ASN16_LEN:
 	      asn = ntohs (*(u_int16_t *) (assegment->data + asn_pos));
 	      break;
@@ -884,7 +926,7 @@ void process_attr_aspath_string(struct aspath *as, size_t asn_len) {
 	}
 
       type = assegment->type;
-      pnt += (assegment->length * asn_len) + AS_HEADER_SIZE;
+      pnt += (assegment->length * as->asn_len) + AS_HEADER_SIZE;
     }
 
   if (assegment->type != AS_SEQUENCE)
@@ -1133,34 +1175,153 @@ u_int16_t read_prefix_list(struct mstream *s, int len, u_int16_t afi,
 	return count;
 }
 
-static as_t read_asn(struct mstream *s, as_t *asn, size_t len) {
-	u_int16_t asn16;
+static as_t read_asn(struct mstream *s, as_t *asn, u_int8_t len) {
+  u_int16_t asn16;
 
-	assert(len == sizeof(u_int32_t) || len == sizeof(u_int16_t));
-
-	switch(len) {
-		case sizeof(u_int32_t):
-			return mstream_getl(s, asn);
-		case sizeof(u_int16_t):
-			mstream_getw(s, &asn16);
-			if(asn)
-				*asn = asn16;
-			return asn16;
-		default:
-			syslog(LOG_ERR, "read_asn: wrong ASN length %d!", len);
-			mstream_get(s, NULL, len);
-			return -1;
-	}
+  assert(len == sizeof(u_int32_t) || len == sizeof(u_int16_t));
+  switch(len) {
+    case sizeof(u_int32_t):
+      return mstream_getl(s, asn);
+    case sizeof(u_int16_t):
+      mstream_getw(s, &asn16);
+      if(asn)
+	*asn = asn16;
+	return asn16;
+    default:
+      /* Not reached. Avoid compiler warning */
+      return 0;
+  }
 }
 
 char *print_asn(as_t asn) {
-	static char asn_str[strlen("65535:65535") + 1];
+  /* This function is here because we don't yet know what the final
+     presentation format for 32-bit ASNs will be. If in the end it turns out to
+     be a 32-bit integer, it can simply be removed. */
+	static char asn_str[strlen("65535.65535") + 1];
 	if(asn >> 16) {
 		sprintf(asn_str, "%d.%d", (asn >> 16) & 0xFFFF, asn & 0xFFFF);
 	} else {
 		sprintf(asn_str, "%d", asn);
 	}
 	return asn_str;
+}
+
+int check_new_aspath(struct aspath *aspath) {
+  struct assegment *segment;
+  for(segment = (struct assegment *) aspath->data;
+      segment < (struct assegment *) (aspath->data + aspath->length);
+      segment = (struct assegment *) ((char *) segment + sizeof(*segment) + segment->length * ASN32_LEN)) {
+    if(segment->type == AS_CONFED_SEQUENCE || segment->type == AS_CONFED_SET) {
+      syslog(LOG_WARNING, "check_new_aspath: invalid segment of type AS_CONFED_%s in NEW_AS_PATH",
+	     segment->type == AS_CONFED_SET ? "SET" : "SEQUENCE");
+      return 0;
+    }
+  }
+  return 1;
+}
+
+void process_asn32_trans(struct attr *attr, u_int8_t asn_len) {
+  if(asn_len == ASN32_LEN) {
+    /* These attributes "SHOULD NOT" be used with ASN32. */
+    if(attr->flag & ATTR_FLAG_BIT(BGP_ATTR_NEW_AS_PATH))
+      syslog(LOG_WARNING, "process_asn32_trans: ASN32 message contains NEW_AS_PATH attribute");
+
+    if(attr->flag & ATTR_FLAG_BIT(BGP_ATTR_NEW_AGGREGATOR))
+      syslog(LOG_WARNING, "process_asn32_trans: ASN32 message contains NEW_AGGREGATOR attribute");
+
+    /* Don't compute anything, just leave AS_PATH and AGGREGATOR as they are */
+    return;
+  }
+
+  /* Process NEW_AGGREGATOR */
+  if(attr->flag & ATTR_FLAG_BIT(BGP_ATTR_AGGREGATOR) &&
+     attr->flag & ATTR_FLAG_BIT(BGP_ATTR_NEW_AGGREGATOR)) {
+      /* Both AGGREGATOR and NEW_AGGREGATOR present, merge */
+      if(attr->aggregator_as != AS_TRAN) {
+	/* Don't do anything */
+	return;
+      } else {
+	attr->old_aggregator_as = attr->aggregator_as;
+	attr->old_aggregator_addr = attr->aggregator_addr;
+	attr->aggregator_as = attr->new_aggregator_as;
+	attr->aggregator_addr = attr->new_aggregator_addr;
+      }
+  }
+
+  /* Process NEW_AS_PATH */
+  if(! (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_NEW_AS_PATH)))
+    return;
+
+  if(attr->aspath->count < attr->new_aspath->count) {
+    return;
+  }
+
+  /* Merge paths */
+  attr->old_aspath = attr->aspath;
+  attr->aspath = asn32_merge_paths(attr->old_aspath, attr->new_aspath);
+  if(attr->aspath) {
+    process_attr_aspath_string(attr->aspath);
+  }
+}
+
+struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath) {
+  struct aspath *mergedpath = create_aspath(0, ASN32_LEN);
+  struct assegment *segment, *mergedsegment;
+  int newlen;
+
+  /* Keep copying segments from AS_PATH until our path is as long as AS_PATH - NEW_AS_PATH. */
+  segment = (struct assegment *) (path->data);
+  while(mergedpath->count < path->count - newpath->count) {
+    /* Make room */
+    newlen = mergedpath->length + sizeof(struct assegment) + segment->length * ASN32_LEN;
+    mergedpath->data = realloc(mergedpath->data, newlen);
+    if(mergedpath->data == NULL) {
+      syslog(LOG_CRIT, "asn32_merge_paths: malloc failed");
+      return NULL;
+    }
+
+    /* Create a new AS-path segment */
+    mergedsegment = (struct assegment *) (mergedpath->data + mergedpath->length);
+
+    /* Copy segment over. AS_PATH contains 16-bit ASes, so expand */
+    mergedsegment->type = segment->type;
+    mergedsegment->length = segment->length;
+    asn32_expand_16_to_32(mergedsegment->data, segment->data, segment->length);
+
+    /* Update length */
+    mergedpath->length = newlen;
+    if(segment->type == AS_SET || segment->type == AS_CONFED_SET) {
+      mergedpath->count += 1;
+    } else {
+      mergedpath->count += segment->length;
+      /* Did we copy too many ASes over? */
+      if(mergedpath->count > path->count - newpath->count) {
+	mergedsegment->length -= mergedpath->count - (path->count - newpath->count);
+	mergedpath->length -= (mergedpath->count - (path->count - newpath->count)) * ASN32_LEN;
+      }
+    }
+  }
+
+  /* Append NEW_AS_PATH to merged path */
+  mergedpath->data = realloc(mergedpath->data, mergedpath->length + newpath->length);
+  if(mergedpath->data == NULL) {
+    syslog(LOG_CRIT, "asn32_merge_paths: malloc failed");
+    return NULL;
+  }
+  memcpy(mergedpath->data + mergedpath->length, newpath->data, newpath->length);
+  mergedpath->length += newpath->length;
+
+  return mergedpath;
+}
+
+void asn32_expand_16_to_32(char *dst, char *src, int len) {
+  u_int32_t *dstarray = (u_int32_t *) dst;
+  u_int16_t *srcarray = (u_int16_t *) src;
+  int i;
+
+  for(i = 0; i < len; i++) {
+    dstarray[i] = htonl(ntohs(srcarray[i]));
+  }
 }
 
 #if defined(linux)

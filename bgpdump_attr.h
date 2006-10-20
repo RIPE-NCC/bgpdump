@@ -77,6 +77,8 @@ To Do             :
 #define BGP_ATTR_MP_REACH_NLRI            14
 #define BGP_ATTR_MP_UNREACH_NLRI          15
 #define BGP_ATTR_EXT_COMMUNITIES          16
+#define BGP_ATTR_NEW_AS_PATH              17
+#define BGP_ATTR_NEW_AGGREGATOR           18
 
 /* Flag macro */
 #define ATTR_FLAG_BIT(X)  (1 << ((X) - 1))
@@ -130,9 +132,6 @@ struct unknown_attr
 
 struct attr
 {
-  /* Reference count of this attribute. */
-  unsigned long refcnt;
-
   /* Flag of attribute is set or not. */
   u_int32_t flag;
 
@@ -161,13 +160,17 @@ struct attr
   u_int16_t		unknown_num;
   struct unknown_attr	*unknown;
 
+  /* ASN32 support */
   struct aspath 	*new_aspath;
+  struct aspath 	*old_aspath;
   as_t			new_aggregator_as;
+  as_t			old_aggregator_as;
+  struct in_addr 	new_aggregator_addr;
+  struct in_addr 	old_aggregator_addr;
 };
 
 struct community 
 {
-  unsigned long 	refcnt;
   int 			size;
   u_int32_t 		*val;
   char			*str;
@@ -175,21 +178,19 @@ struct community
 
 struct cluster_list
 {
-  unsigned long		refcnt;
   int			length;
   struct in_addr 	*list;
 };
 
 struct transit
 {
-  unsigned long 	refcnt;
   int 			length;
   u_char 		*val;
 };
 
 struct aspath 
 {
-  unsigned long 	refcnt;
+  u_int8_t		asn_len;
   int 			length;
   int 			count;
   caddr_t 		data;

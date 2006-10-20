@@ -156,9 +156,6 @@ typedef struct struct_BGPDUMP_ZEBRA_MESSAGE {
     BGPDUMP_IP_ADDRESS	source_ip;
     BGPDUMP_IP_ADDRESS	destination_ip;
 
-    /* Does this message use 16-bit or 32-bit AS numbers? */
-    size_t		asn_len;
-
     /* BGP packet header fields */
     u_int16_t		size;
     u_char		type;
