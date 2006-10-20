@@ -1,3 +1,0 @@
-
-2005-11-08  Young Hyun <youngh@caida.org> submitted the patch to
-            bgpdump.c. IPv6 prefixes were not printed properly.

@@ -1,3 +1,9 @@
+2006-10-20 Lorenzo Colitti <lorenzo@ripe.net>
+	* Implement ASN32 support
+
+2005-11-08 Young Hyun <youngh@caida.org>
+	* IPv6 prefixes were not printed properly by bgpdump.
+
 2004-02-10 Lorenzo Colitti <lorenzo@ripe.net>
 	* Fix a stupid crash when reading truncated prefixes.
 
