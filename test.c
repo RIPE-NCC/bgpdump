@@ -223,7 +223,13 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 		}
 	    switch(entry->subtype) {
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-		    printf("SUBTYPE         : Zebra BGP Message \n");
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
+		    printf("SUBTYPE         : Zebra BGP Message");
+		    if(entry->subtype == BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32) {
+		      printf(" (32-bit ASN)\n");
+		    } else {
+		      printf("\n");
+		    }
 		    printf("    SOURCE_AS   : %s\n",print_asn(entry->body.zebra_message.source_as));
 		    printf("    DEST_AS     : %s\n",print_asn(entry->body.zebra_message.destination_as));
 		    printf("    INTERFACE   : %d\n",entry->body.zebra_message.interface_index);
