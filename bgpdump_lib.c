@@ -323,6 +323,7 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
 #endif
 	default:
 	    syslog(LOG_WARNING, "process_mrtd_table_dump: unknown AFI %d",  afi);
+	    mstream_get(s, NULL, mstream_can_read(s));
 	    return 0;
     }
     mstream_getc(s,&entry->body.mrtd_table_dump.mask);
@@ -350,6 +351,10 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
       case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
       case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
 	asn_len = ASN32_LEN;
+	break;
+      default:
+	/* Not reached. Keep compiler happy */
+	asn_len = 0;
 	break;
     }
 
@@ -918,6 +923,10 @@ void process_attr_aspath_string(struct aspath *as) {
 	      break;
 	    case ASN32_LEN:
 	      asn = ntohl (*(u_int32_t *) (assegment->data + asn_pos));
+	      break;
+	    default:
+	      /* Not reached. Keep compiler happy*/
+	      asn = 0;
 	      break;
 	  }
 
