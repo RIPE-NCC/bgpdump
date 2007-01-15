@@ -731,7 +731,7 @@ void process(BGPDUMP_ENTRY *entry) {
 		    break;
 
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE:
-		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE_32BIT_AS:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE32:
 		    if (mode==0)
 		    {
 		    	printf("TYPE: BGP4MP/STATE_CHANGE\n");
