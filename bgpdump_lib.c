@@ -843,7 +843,6 @@ void process_attr_aspath_string(struct aspath *as) {
       /* For fetch value. */
       assegment = (struct assegment *) pnt;
 
-	  printf("AS TYPE = %d !\n", assegment->type);
       /* Check AS type validity. */
       if ((assegment->type != AS_SET) && 
 	  (assegment->type != AS_SEQUENCE) &&
