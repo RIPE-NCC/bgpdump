@@ -415,7 +415,8 @@ process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t 
 
     switch(entry->body.zebra_state_change.address_family) {
 	case AFI_IP:
-	    if(entry->length != 20) {
+	    // length could be 20 or 24 (asn16 vs asn32)
+	    if(entry->length != 20 && entry->length != 24) {
 		syslog(LOG_WARNING, "process_zebra_bgp_state_change: bad length %d",
 		       entry->length);
 		return 0;
@@ -426,7 +427,8 @@ process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t 
 	    break;
 #ifdef BGPDUMP_HAVE_IPV6
 	case AFI_IP6:
-	    if(entry->length != 44) {
+	    // length could be 44 or 48 (asn16 vs asn32)
+	    if(entry->length != 44 && entry->length != 48) {
 		syslog(LOG_WARNING, "process_zebra_bgp_state_change: bad length %d",
 		       entry->length);
 		return 0;
@@ -841,6 +843,7 @@ void process_attr_aspath_string(struct aspath *as) {
       /* For fetch value. */
       assegment = (struct assegment *) pnt;
 
+	  printf("AS TYPE = %d !\n", assegment->type);
       /* Check AS type validity. */
       if ((assegment->type != AS_SET) && 
 	  (assegment->type != AS_SEQUENCE) &&
