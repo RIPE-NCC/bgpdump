@@ -198,17 +198,33 @@ void process(BGPDUMP_ENTRY *entry) {
 	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:
 	     if(mode==0){
 	        const char *prefix_str = NULL;
+		switch(entry->subtype){
 #ifdef BGPDUMP_HAVE_IPV6
-	    	if (entry->subtype == AFI_IP6)
-		{
+	    	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
 	    		printf("TYPE: TABLE_DUMP/INET6\n");
 			prefix_str = inet_ntop(AF_INET6,&entry->body.mrtd_table_dump.prefix.v6_addr,prefix,sizeof(prefix));
-		}
-	    	else
+		break;
+
+	    	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
+	    		printf("TYPE: TABLE_DUMP/INET6_32BIT_AS\n");
+			prefix_str = inet_ntop(AF_INET6,&entry->body.mrtd_table_dump.prefix.v6_addr,prefix,sizeof(prefix));
+		break;
+
 #endif
-                {
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
 			printf("TYPE: TABLE_DUMP/INET\n");
 			prefix_str = inet_ntoa(entry->body.mrtd_table_dump.prefix.v4_addr);
+		break;
+
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
+			printf("TYPE: TABLE_DUMP/INET_32BIT_AS\n");
+			prefix_str = inet_ntoa(entry->body.mrtd_table_dump.prefix.v4_addr);
+		break;
+
+		default:
+			printf("Error: unknown table type %d\n", entry->subtype);
+		return;
+
 		}
 		printf("VIEW: %d\n",entry->body.mrtd_table_dump.view);
 	    	printf("SEQUENCE: %d\n",entry->body.mrtd_table_dump.sequence);
@@ -217,18 +233,20 @@ void process(BGPDUMP_ENTRY *entry) {
 		switch(entry->subtype)
 		{
 #ifdef BGPDUMP_HAVE_IPV6
-		case AFI_IP6:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
 
 			inet_ntop(AF_INET6,&entry->body.mrtd_table_dump.peer_ip.v6_addr,prefix,sizeof(prefix));
-			printf(" %s ",prefix);
+			printf("%s ",prefix);
 			break;
 #endif
-		case AFI_IP:
-		default:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
 			if (entry->body.mrtd_table_dump.peer_ip.v4_addr.s_addr != 0x00000000L)
-		    		printf(" %s ",inet_ntoa(entry->body.mrtd_table_dump.peer_ip.v4_addr));
+		    		printf("%s ",inet_ntoa(entry->body.mrtd_table_dump.peer_ip.v4_addr));
 			else
-				printf(" N/A ");
+				printf("N/A ");
+
 		}
 		printf("AS%s\n",print_asn(entry->body.mrtd_table_dump.peer_as));
 
