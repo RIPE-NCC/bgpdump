@@ -1,3 +1,6 @@
+2007-02-01 Erik Romijn <eromijn@ripe.net>
+    * Minor fix in ASN32 support
+
 2006-10-20 Lorenzo Colitti <lorenzo@ripe.net>
 	* Implement ASN32 support
 
