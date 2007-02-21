@@ -181,7 +181,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
     printf("TIME            : %s",asctime(gmtime(&entry->time)));
     printf("LENGTH          : %u\n", entry->length);
     switch(entry->type) {
-	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:
+	case BGPDUMP_TYPE_TABLE_DUMP:
 	    if(entry->subtype == AFI_IP) {
 		strcpy(prefix, inet_ntoa(entry->body.mrtd_table_dump.prefix.v4_addr));
 		strcpy(peer_ip, inet_ntoa(entry->body.mrtd_table_dump.peer_ip.v4_addr));

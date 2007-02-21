@@ -61,22 +61,22 @@ To Do             :
 #include <netinet/in.h>
 
 /* type and subtypes values */
-#define BGPDUMP_TYPE_MRTD_BGP			5
-#define BGPDUMP_SUBTYPE_MRTD_BGP_NULL		0
-#define BGPDUMP_SUBTYPE_MRTD_BGP_PREFUPDATE	1
-#define BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE		2
-#define BGPDUMP_SUBTYPE_MRTD_BGP_STATE_CHANGE	3
-#define BGPDUMP_SUBTYPE_MRTD_BGP_SYNC		4
-#define BGPDUMP_SUBTYPE_MRTD_BGP_OPEN		129
-#define BGPDUMP_SUBTYPE_MRTD_BGP_NOTIFICATION	131
-#define BGPDUMP_SUBTYPE_MRTD_BGP_KEEPALIVE	132
-#define BGPDUMP_SUBTYPE_MRTD_BGP_ROUT_REFRESH	133
+#define BGPDUMP_TYPE_BGP			5
+#define BGPDUMP_SUBTYPE_BGP_NULL		0
+#define BGPDUMP_SUBTYPE_BGP_PREFUPDATE	1
+#define BGPDUMP_SUBTYPE_BGP_UPDATE		2
+#define BGPDUMP_SUBTYPE_BGP_STATE_CHANGE	3
+#define BGPDUMP_SUBTYPE_BGP_SYNC		4
+#define BGPDUMP_SUBTYPE_BGP_OPEN		129
+#define BGPDUMP_SUBTYPE_BGP_NOTIFICATION	131
+#define BGPDUMP_SUBTYPE_BGP_KEEPALIVE	132
+#define BGPDUMP_SUBTYPE_BGP_ROUT_REFRESH	133
 
-#define BGPDUMP_TYPE_MRTD_TABLE_DUMP				12
-#define BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP			1
-#define BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6			2
-#define BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS		3
-#define BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS	4
+#define BGPDUMP_TYPE_TABLE_DUMP				12
+#define BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP			1
+#define BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6			2
+#define BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP_32BIT_AS		3
+#define BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6_32BIT_AS	4
 
 /* Zebra record types */
 #define BGPDUMP_TYPE_ZEBRA_BGP			16 /* MSG_PROTOCOL_BGP4MP */
@@ -108,15 +108,15 @@ struct prefix {
     u_char		len;
 };
 
-typedef struct struct_BGPDUMP_MRTD_MESSAGE {
+typedef struct struct_BGPDUMP_MESSAGE {
     u_int16_t		source_as;
     struct in_addr	source_ip;
     u_int16_t		destination_as;
     struct in_addr	destination_ip;
     u_char		*bgp_message;
-} BGPDUMP_MRTD_MESSAGE;
+} BGPDUMP_MESSAGE;
 
-typedef struct struct_BGPDUMP_MRTD_TABLE_DUMP {
+typedef struct struct_BGPDUMP_TABLE_DUMP {
     u_int16_t		view;
     u_int16_t		sequence;
     BGPDUMP_IP_ADDRESS	prefix;
@@ -126,7 +126,7 @@ typedef struct struct_BGPDUMP_MRTD_TABLE_DUMP {
     BGPDUMP_IP_ADDRESS	peer_ip;
     as_t		peer_as;
     u_int16_t		attr_len;
-} BGPDUMP_MRTD_TABLE_DUMP;
+} BGPDUMP_TABLE_DUMP;
 
 /* For Zebra BGP4MP_STATE_CHANGE */
 typedef struct struct_BGPDUMP_ZEBRA_STATE_CHANGE {
@@ -208,8 +208,8 @@ typedef struct struct_BGPDUMP_ZEBRA_SNAPSHOT {
 } BGPDUMP_ZEBRA_SNAPSHOT;
 
 typedef union union_BGPDUMP_BODY {
-	BGPDUMP_MRTD_MESSAGE		mrtd_message;
-	BGPDUMP_MRTD_TABLE_DUMP		mrtd_table_dump;
+	BGPDUMP_MESSAGE		mrtd_message;
+	BGPDUMP_TABLE_DUMP		mrtd_table_dump;
 	BGPDUMP_ZEBRA_STATE_CHANGE	zebra_state_change;
 	BGPDUMP_ZEBRA_MESSAGE		zebra_message;
 	BGPDUMP_ZEBRA_ENTRY		zebra_entry;

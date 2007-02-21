@@ -185,9 +185,9 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     mstream_init(&s,buffer,this_entry->length);
 
     switch(this_entry->type) {
-	case BGPDUMP_TYPE_MRTD_BGP:		
+	case BGPDUMP_TYPE_BGP:		
 		break;
-	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:	
+	case BGPDUMP_TYPE_TABLE_DUMP:	
 		ok = process_mrtd_table_dump(&s,this_entry); 
 		break;
 	case BGPDUMP_TYPE_ZEBRA_BGP:
@@ -269,7 +269,7 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
 
 
 	switch(entry->type) {
-	    case BGPDUMP_TYPE_MRTD_TABLE_DUMP:	
+	    case BGPDUMP_TYPE_TABLE_DUMP:	
 		break;
 	    case BGPDUMP_TYPE_ZEBRA_BGP:
 		switch(entry->subtype) {
@@ -311,13 +311,13 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     mstream_getw(s,&entry->body.mrtd_table_dump.view);
     mstream_getw(s,&entry->body.mrtd_table_dump.sequence);
     switch(afi) {
-	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
-	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP_32BIT_AS:
 	    mstream_get_ipv4(s, &entry->body.mrtd_table_dump.prefix.v4_addr.s_addr);
 	    break;
 #ifdef BGPDUMP_HAVE_IPV6
-	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
-	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6_32BIT_AS:
 	    mstream_get(s, &entry->body.mrtd_table_dump.prefix.v6_addr.s6_addr, 16);
 	    break;
 #endif
@@ -331,25 +331,25 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     mstream_getl(s,(u_int32_t *)&entry->body.mrtd_table_dump.uptime);
 
     switch(afi) {
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP_32BIT_AS:
 	mstream_get_ipv4(s, &entry->body.mrtd_table_dump.peer_ip.v4_addr.s_addr);
 	break;
 #ifdef BGPDUMP_HAVE_IPV6
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6_32BIT_AS:
 	mstream_get(s, &entry->body.mrtd_table_dump.peer_ip.v6_addr.s6_addr, 16);
 	break;
 #endif
     }
 
     switch(afi) {
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6:
 	asn_len = ASN16_LEN;
 	break;
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
-      case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP_32BIT_AS:
+      case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6_32BIT_AS:
 	asn_len = ASN32_LEN;
 	break;
       default:
