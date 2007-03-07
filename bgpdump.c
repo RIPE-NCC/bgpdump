@@ -55,10 +55,12 @@ Original Author: Shufu Mao(msf98@mails.tsinghua.edu.cn)
     void table_line_announce(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
     void table_line_withdraw(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
     void table_line_mrtd_route(int mode,BGPDUMP_TABLE_DUMP *route,BGPDUMP_ENTRY *entry, int timetype);
+	void table_line_dump_v2_ipv4_unicast(int mode,BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST *e,BGPDUMP_ENTRY *entry,int timetype);
 #ifdef BGPDUMP_HAVE_IPV6
     void show_prefixes6(int count,struct prefix *prefix);
     void table_line_withdraw6(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
     void table_line_announce6(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
+	void table_line_dump_v2_ipv6(int mode,BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *e,BGPDUMP_ENTRY *entry,int timetype);
 #endif
 
 
@@ -291,7 +293,7 @@ void process(BGPDUMP_ENTRY *entry) {
 					}
 	    			printf("FROM: %s AS%s\n", peer_ip, print_asn(e->entries[i].peer->peer_as));
 
-					time2str(gmtime(&e->entries[i].originated_time),time_str);
+					time2str(gmtime((const time_t *)&e->entries[i].originated_time),time_str);
 					printf("ORIGINATED: %s\n",time_str); 	
 					if (entry->attr && entry->attr->len)
 				    	show_attr(entry->attr);
@@ -320,7 +322,7 @@ void process(BGPDUMP_ENTRY *entry) {
 					}
 	    			printf("FROM: %s AS%s\n", peer_ip, print_asn(e->entries[i].peer->peer_as));
 
-					time2str(gmtime(&e->entries[i].originated_time),time_str);
+					time2str(gmtime((const time_t *)&e->entries[i].originated_time),time_str);
 					printf("ORIGINATED: %s\n",time_str); 	
 					if (entry->attr && entry->attr->len)
 				    	show_attr(entry->attr);
@@ -333,7 +335,7 @@ void process(BGPDUMP_ENTRY *entry) {
 	        	table_line_dump_v2_ipv4_unicast(mode,&entry->body.mrtd_table_dump_v2_ipv4_unicast,entry,timetype);	     
 #ifdef BGPDUMP_HAVE_IPV6
 			} else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL){
-	        	table_line_dump_v2_ipv6(mode,&entry->body.mrtd_table_dump_v2_ipv4_unicast,entry,timetype);	     
+	        	table_line_dump_v2_ipv6(mode,&entry->body.mrtd_table_dump_v2_ipv6,entry,timetype);	     
 #endif
 			}
 		}
@@ -344,7 +346,7 @@ void process(BGPDUMP_ENTRY *entry) {
 	    switch(entry->subtype) 
 	    {
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
 
 		    switch(entry->body.zebra_message.type) 
 		    {
@@ -817,7 +819,7 @@ void process(BGPDUMP_ENTRY *entry) {
 		    break;
 
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE:
-		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE32:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE_AS4:
 		    if (mode==0)
 		    {
 		    	printf("TYPE: BGP4MP/STATE_CHANGE\n");
@@ -1600,7 +1602,7 @@ void table_line_dump_v2_ipv4_unicast(int mode,BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST
 		   if(timetype==0){
 	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",entry->time,peer,print_asn(e->entries[i].peer->peer_as));
 		   }else if(timetype==1){
-	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
+	   	   printf("TABLE_DUMP2|%u|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
 		   }
 	      	   printf("%s/%d|%s|%s|",prefix,e->prefix_length,entry->attr->aspath->str,tmp1);
 
@@ -1627,7 +1629,7 @@ void table_line_dump_v2_ipv4_unicast(int mode,BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST
                     if(timetype==0){
                         time=gmtime(&entry->time);
 		    }else if(timetype==1){
-			time=gmtime(&e->entries[i].originated_time);
+			time=gmtime((const time_t *)&e->entries[i].originated_time);
 		    }
 	            time2str(time,time_str);	
 	 	    printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));
@@ -1678,14 +1680,14 @@ void table_line_dump_v2_ipv6(int mode,BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *
 		}
 #endif
 			
-		inet_ntop(AF_INET, &e->v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
+		inet_ntop(AF_INET6, &e->v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
 
 		if (mode == 1)
 		{
 		   if(timetype==0){
 	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",entry->time,peer,print_asn(e->entries[i].peer->peer_as));
 		   }else if(timetype==1){
-	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
+	   	   printf("TABLE_DUMP2|%u|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
 		   }
 	      	   printf("%s/%d|%s|%s|",prefix,e->prefix_length,entry->attr->aspath->str,tmp1);
 
@@ -1712,7 +1714,7 @@ void table_line_dump_v2_ipv6(int mode,BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *
                     if(timetype==0){
                         time=gmtime(&entry->time);
 		    }else if(timetype==1){
-			time=gmtime(&e->entries[i].originated_time);
+			time=gmtime((const time_t *)&e->entries[i].originated_time);
 		    }
 	            time2str(time,time_str);	
 	 	    printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));

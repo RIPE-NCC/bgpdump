@@ -508,11 +508,11 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
     switch(entry->subtype) {
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE:
 	    return process_zebra_bgp_state_change(s, entry, ASN16_LEN);
-	case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE32:
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE_AS4:
 	    return process_zebra_bgp_state_change(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 	    return process_zebra_bgp_message(s, entry, ASN16_LEN);
-	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
 	    return process_zebra_bgp_message(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_ENTRY:
 	    return process_zebra_bgp_entry(s,entry);

@@ -302,9 +302,9 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 		}
 	    switch(entry->subtype) {
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
 		    printf("SUBTYPE         : Zebra BGP Message");
-		    if(entry->subtype == BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE32) {
+		    if(entry->subtype == BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4) {
 		      printf(" (32-bit ASN)\n");
 		    } else {
 		      printf("\n");
