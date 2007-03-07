@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2002                      RIPE NCC
+Copyright (c) 2007                      RIPE NCC
 
 
 All Rights Reserved
@@ -33,18 +33,7 @@ this license is included with libbgpdump.
 */
 
 /*
--------------------------------------------------------------------------------
-Module Header
-Filename          : bgpdump.c
-Author            : Shufu Mao(msf98@mails.tsinghua.edu.cn) 
-Date              : 2003-11-02 
-Revision          : 
-Revised           : 
-Description       : bgpdump program, the input and output format is the same as route_btoa 
-Language Version  : C
-OSs Tested        : Linux 2.4.22
-To Do             : 
--------------------------------------------------------------------------------
+Original Author: Shufu Mao(msf98@mails.tsinghua.edu.cn) 
 */
 
 #if HAVE_CONFIG_H
@@ -269,6 +258,85 @@ void process(BGPDUMP_ENTRY *entry) {
 	     {
 	        table_line_mrtd_route(mode,&entry->body.mrtd_table_dump,entry,timetype);	     
 	     }
+	    break;
+
+	case BGPDUMP_TYPE_TABLE_DUMP_V2:
+		if(mode == 0){
+			char peer_ip[BGPDUMP_ADDRSTRLEN];
+			char time_str[30];
+			int i;
+
+			if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST){
+				BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST *e;
+				e = &entry->body.mrtd_table_dump_v2_ipv4_unicast;
+
+				strncpy(prefix, inet_ntoa(e->v4_addr), BGPDUMP_ADDRSTRLEN);
+
+				for(i = 0; i < e->entry_count; i++){
+					// This is slightly nasty - as we want to print multiple entries
+					// for multiple peers, we may need to print another TIME ourselves
+					if(i) printf("\n\n\nTIME: %s\n",time_str);
+    				printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
+	    			printf("PREFIX: %s/%d\n",prefix, e->prefix_length);
+    				printf("SEQUENCE: %d\n",e->seq);
+
+					if(e->entries[i].peer->afi == AFI_IP){
+						inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, BGPDUMP_ADDRSTRLEN);
+#ifdef BGPDUMP_HAVE_IPV6
+					} else if (e->entries[i].peer->afi == AFI_IP6){
+						inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, BGPDUMP_ADDRSTRLEN);
+#endif
+					} else {
+						sprintf(peer_ip, "[N/A, unsupported AF]");
+					}
+	    			printf("FROM: %s AS%s\n", peer_ip, print_asn(e->entries[i].peer->peer_as));
+
+					time2str(gmtime(&e->entries[i].originated_time),time_str);
+					printf("ORIGINATED: %s\n",time_str); 	
+					if (entry->attr && entry->attr->len)
+				    	show_attr(entry->attr);
+				}
+
+#ifdef BGPDUMP_HAVE_IPV6
+			} else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL){
+				BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *e;
+				e = &entry->body.mrtd_table_dump_v2_ipv6;
+
+				inet_ntop(AF_INET6, &e->v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
+
+				for(i = 0; i < e->entry_count; i++){
+					// This is slightly nasty - as we want to print multiple entries
+					// for multiple peers, we may need to print another TIME ourselves
+					if(i) printf("\n\n\nTIME: %s\n",time_str);
+    				printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
+	    			printf("PREFIX: %s/%d\n",prefix, e->prefix_length);
+    				printf("SEQUENCE: %d\n",e->seq);
+					if(e->entries[i].peer->afi == AFI_IP){
+						inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, BGPDUMP_ADDRSTRLEN);
+					} else if (e->entries[i].peer->afi == AFI_IP6){
+						inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, BGPDUMP_ADDRSTRLEN);
+					} else {
+						sprintf(peer_ip, "[N/A, unsupported AF]");
+					}
+	    			printf("FROM: %s AS%s\n", peer_ip, print_asn(e->entries[i].peer->peer_as));
+
+					time2str(gmtime(&e->entries[i].originated_time),time_str);
+					printf("ORIGINATED: %s\n",time_str); 	
+					if (entry->attr && entry->attr->len)
+				    	show_attr(entry->attr);
+				}
+			}
+#endif
+
+		} else if (mode ==1 || mode ==2) { // -m -M
+			if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST){
+	        	table_line_dump_v2_ipv4_unicast(mode,&entry->body.mrtd_table_dump_v2_ipv4_unicast,entry,timetype);	     
+#ifdef BGPDUMP_HAVE_IPV6
+			} else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL){
+	        	table_line_dump_v2_ipv6(mode,&entry->body.mrtd_table_dump_v2_ipv4_unicast,entry,timetype);	     
+#endif
+			}
+		}
 	    break;
 	    
 	case BGPDUMP_TYPE_ZEBRA_BGP:
@@ -1407,7 +1475,7 @@ void table_line_mrtd_route(int mode,BGPDUMP_TABLE_DUMP *route,BGPDUMP_ENTRY *ent
 	char tmp2[20];	
 	int  npref;
 	int  nmed;
-	char  time_str[10];
+	char  time_str[20];
         char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN];
 
 	switch (entry->attr->origin)
@@ -1482,4 +1550,175 @@ void table_line_mrtd_route(int mode,BGPDUMP_TABLE_DUMP *route,BGPDUMP_ENTRY *ent
 				
 		}
 
+}
+
+
+void table_line_dump_v2_ipv4_unicast(int mode,BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST *e,BGPDUMP_ENTRY *entry,int timetype)
+{
+	struct tm *time;
+	char tmp1[20];
+	char tmp2[20];	
+	int  npref;
+	int  nmed;
+	char  time_str[20];
+    char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN];
+	
+	int i;
+
+	for(i = 0; i < e->entry_count; i++){
+
+		switch (entry->attr->origin) {
+
+		case 0 :
+			sprintf(tmp1,"IGP");
+			break;
+		case 1:
+			sprintf(tmp1,"EGP");
+			break;
+		case 2:
+		default:
+			sprintf(tmp1,"INCOMPLETE");
+			break;
+		}
+		if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
+			sprintf(tmp2,"AG");
+		else
+			sprintf(tmp2,"NAG");
+
+		if(e->entries[i].peer->afi == AFI_IP){
+		    inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
+#ifdef BGPDUMP_HAVE_IPV6
+		} else if(e->entries[i].peer->afi == AFI_IP6){
+		    inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
+		}
+#endif
+			
+		inet_ntop(AF_INET, &e->v4_addr, prefix, BGPDUMP_ADDRSTRLEN);
+
+		if (mode == 1)
+		{
+		   if(timetype==0){
+	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",entry->time,peer,print_asn(e->entries[i].peer->peer_as));
+		   }else if(timetype==1){
+	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
+		   }
+	      	   printf("%s/%d|%s|%s|",prefix,e->prefix_length,entry->attr->aspath->str,tmp1);
+
+		    npref=entry->attr->local_pref;
+	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
+	            npref=0;
+		    nmed=entry->attr->med;
+	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
+	            nmed=0;
+			    
+		   printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
+		   if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
+		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
+			else
+				printf("|%s|",tmp2);
+				
+			if (entry->attr->aggregator_addr.s_addr != -1)
+				printf("%s %s|\n",print_asn(entry->attr->aggregator_as),inet_ntoa(entry->attr->aggregator_addr));
+			else
+				printf("|\n");
+		}
+		else
+		{
+                    if(timetype==0){
+                        time=gmtime(&entry->time);
+		    }else if(timetype==1){
+			time=gmtime(&e->entries[i].originated_time);
+		    }
+	            time2str(time,time_str);	
+	 	    printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));
+			printf("%s/%d|%s|%s\n",prefix,e->prefix_length,entry->attr->aspath->str,tmp1);
+				
+		}
+	}
+	
+}
+
+void table_line_dump_v2_ipv6(int mode,BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *e,BGPDUMP_ENTRY *entry,int timetype)
+{
+	struct tm *time;
+	char tmp1[20];
+	char tmp2[20];	
+	int  npref;
+	int  nmed;
+	char  time_str[20];
+    char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN];
+	
+	int i;
+
+	for(i = 0; i < e->entry_count; i++){
+
+		switch (entry->attr->origin) {
+
+		case 0 :
+			sprintf(tmp1,"IGP");
+			break;
+		case 1:
+			sprintf(tmp1,"EGP");
+			break;
+		case 2:
+		default:
+			sprintf(tmp1,"INCOMPLETE");
+			break;
+		}
+		if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
+			sprintf(tmp2,"AG");
+		else
+			sprintf(tmp2,"NAG");
+
+		if(e->entries[i].peer->afi == AFI_IP){
+		    inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
+#ifdef BGPDUMP_HAVE_IPV6
+		} else if(e->entries[i].peer->afi == AFI_IP6){
+		    inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
+		}
+#endif
+			
+		inet_ntop(AF_INET, &e->v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
+
+		if (mode == 1)
+		{
+		   if(timetype==0){
+	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",entry->time,peer,print_asn(e->entries[i].peer->peer_as));
+		   }else if(timetype==1){
+	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
+		   }
+	      	   printf("%s/%d|%s|%s|",prefix,e->prefix_length,entry->attr->aspath->str,tmp1);
+
+		    npref=entry->attr->local_pref;
+	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
+	            npref=0;
+		    nmed=entry->attr->med;
+	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
+	            nmed=0;
+			    
+		   printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
+		   if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
+		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
+			else
+				printf("|%s|",tmp2);
+				
+			if (entry->attr->aggregator_addr.s_addr != -1)
+				printf("%s %s|\n",print_asn(entry->attr->aggregator_as),inet_ntoa(entry->attr->aggregator_addr));
+			else
+				printf("|\n");
+		}
+		else
+		{
+                    if(timetype==0){
+                        time=gmtime(&entry->time);
+		    }else if(timetype==1){
+			time=gmtime(&e->entries[i].originated_time);
+		    }
+	            time2str(time,time_str);	
+	 	    printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));
+			printf("%s/%d|%s|%s\n",prefix,e->prefix_length,entry->attr->aspath->str,tmp1);
+				
+		}
+	}
+	
 }

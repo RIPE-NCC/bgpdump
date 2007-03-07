@@ -1,25 +1,32 @@
 This is libbgpdump - a C library designed to help with analyzing dump
 files produced by Zebra/Quagga or MRT.
 
-File formats:
-    - MRT RIB dump
-    - Zebra/Quagga format
-    - These may be gzipped and/or passed in through stdin
 
-Entry formats:
-    - MRT routing table dump entries
-    - Zebra/Quagga BGP records:
-          - BGP messages (OPEN, UPDATE, NOTIFY, KEEPALIVE)
-          - BGP state changes
 
-How to compile:
-    - ./configure [--disable-ipv6] ; make
-    - Note that IPv6 is enabled by default, and if the library has IPv6
-      support your application must be able to handle or ignore the resulting
-      IPv6 data!
-    - libbgpdump should compile on Linux, FreeBSD, Solaris, and Cygwin
+=== SUPPORTED INPUT FORMAT ===
 
-How to use the library:
+- MRT RIB dump
+- Zebra/Quagga format
+- These may be gzipped and/or passed in through stdin
+
+- MRT routing table dump entries in TABLE_DUMP or TABLE_DUMP_V2 types
+- Zebra/Quagga BGP records:
+	- BGP messages (OPEN, UPDATE, NOTIFY, KEEPALIVE)
+	- BGP state changes
+
+
+
+=== COMPILING ===
+
+- ./configure [--disable-ipv6] ; make
+- Note that IPv6 is enabled by default, and if the library has IPv6
+  support your application must be able to handle or ignore the resulting
+  IPv6 data!
+- libbgpdump should compile on Linux, FreeBSD, Solaris, and Cygwin
+
+
+
+=== HOW TO USE THE LIBRARY YOURSELF ===
 
 - include the file bgpdump_lib.h
 - call bgpdump_open_dump() to open desired Zebra/MRT dump/update file
@@ -33,5 +40,22 @@ Please see bgdump_formats.h for a description of data structures used.
 
 An example is included - test.c - it lists all the information gathered
 from a dump/update file given as a command line parameter.
+
+
+
+=== A SMALL NOTE ON TABLE_DUMP_V2 ===
+
+You might note that there are some strange loops in the code handling
+TABLE_DUMP_V2. The reason for this is that for one prefix, there is
+always only one TABLE_DUMP_V2 entry, possibly with multiple peers and
+atrributes. To keep output consistent, the code loops through every
+peer/attribute set and prints the prefix every time.
+As the code around the type-specific parsing usually prints out
+timestamps and newlines to seperate entries, this is done
+in these small loops too.
+
+
+
+=== BUGS ===
 
 If you find a bug, please report it to ris@ripe.net.

@@ -1,7 +1,7 @@
 /* $Id$ */
 /*
 
-Copyright (c) 2002                      RIPE NCC
+Copyright (c) 2007                      RIPE NCC
 
 
 All Rights Reserved
@@ -35,18 +35,7 @@ this license is included with libbgpdump.
 
 
 /*
--------------------------------------------------------------------------------
-Module Header
-Filename          : bgpdump_formats.h
-Author            : Dan Ardelean (dan@ripe.net)
-Date              : 02-SEP-2002
-Revision          : 
-Revised           : 
-Description       : Basic BGP dump structures/declarations
-Language Version  : C
-OSs Tested        : Linux 2.2.19
-To Do             : 
--------------------------------------------------------------------------------
+Original Author: Dan Ardelean (dan@ripe.net)
 */
 
 #ifndef _BGPDUMP_FORMATS_H
@@ -77,6 +66,15 @@ To Do             :
 #define BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6			2
 #define BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP_32BIT_AS		3
 #define BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6_32BIT_AS	4
+
+#define BGPDUMP_TYPE_TABLE_DUMP_V2                     13
+#define BGPDUMP_SUBTYPE_TABLE_DUMP_V2_PEER_INDEX_TABLE  1
+#define BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST      2
+#define BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL     3
+#define BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AFI_IP           0
+#define BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AFI_IP6          1
+#define BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AS2              0
+#define BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AS4              2
 
 /* Zebra record types */
 #define BGPDUMP_TYPE_ZEBRA_BGP			16 /* MSG_PROTOCOL_BGP4MP */
@@ -127,6 +125,45 @@ typedef struct struct_BGPDUMP_TABLE_DUMP {
     as_t		peer_as;
     u_int16_t		attr_len;
 } BGPDUMP_TABLE_DUMP;
+
+
+typedef struct struct_BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY {
+	u_char              afi;
+	BGPDUMP_IP_ADDRESS  peer_ip;
+	as_t                peer_as;
+} BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY;
+
+typedef struct struct_BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE {
+	uint16_t                                 peer_count;
+	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY  *entries;
+} BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE;
+
+typedef struct struct_BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY {
+	uint16_t            peer_index;
+	uint32_t            originated_time;
+	uint16_t            attribute_length;
+	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY *peer;
+    u_char              *bgp_atribute;
+} BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY;
+
+typedef struct struct_BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST {
+	uint32_t            seq;
+	u_char              prefix_length;
+    struct in_addr      v4_addr;
+	uint16_t            entry_count;
+	BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *entries;
+} BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST;
+
+typedef struct struct_BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 {
+	uint32_t            seq;
+	uint16_t            afi;
+	uint8_t             safi;
+	u_char              prefix_length;
+    struct in6_addr	    v6_addr;
+	uint16_t            entry_count;
+	BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *entries;
+} BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6;
+
 
 /* For Zebra BGP4MP_STATE_CHANGE */
 typedef struct struct_BGPDUMP_ZEBRA_STATE_CHANGE {
@@ -210,6 +247,9 @@ typedef struct struct_BGPDUMP_ZEBRA_SNAPSHOT {
 typedef union union_BGPDUMP_BODY {
 	BGPDUMP_MESSAGE		mrtd_message;
 	BGPDUMP_TABLE_DUMP		mrtd_table_dump;
+	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE		mrtd_table_dump_v2_peer_table;
+	BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST		mrtd_table_dump_v2_ipv4_unicast;
+	BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6		mrtd_table_dump_v2_ipv6;
 	BGPDUMP_ZEBRA_STATE_CHANGE	zebra_state_change;
 	BGPDUMP_ZEBRA_MESSAGE		zebra_message;
 	BGPDUMP_ZEBRA_ENTRY		zebra_entry;

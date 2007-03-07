@@ -1,7 +1,7 @@
 /* $Id$ */
 /*
 
-Copyright (c) 2002                      RIPE NCC
+Copyright (c) 2007                      RIPE NCC
 
 
 All Rights Reserved
@@ -36,17 +36,7 @@ this license is included with libbgpdump.
 
 /*
 -------------------------------------------------------------------------------
-Module Header
-Filename          : bgdump.h
-Author            : Dan Ardelean (dan@ripe.net)
-Date              : 02-SEP-2002
-Revision          : 
-Revised           : 
-Description       : Generic header file for libbgpdump library
-Language Version  : C
-OSs Tested        : Linux 2.2.19
-To Do             : 
--------------------------------------------------------------------------------
+Original Author: Dan Ardelean (dan@ripe.net)
 */
 
 #ifndef _BGPDUMP_H

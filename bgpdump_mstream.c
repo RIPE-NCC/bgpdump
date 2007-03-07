@@ -1,7 +1,7 @@
 static const char RCSID[] = "$Id$";
 /*
 
-Copyright (c) 2002                      RIPE NCC
+Copyright (c) 2007                      RIPE NCC
 
 
 All Rights Reserved
@@ -35,18 +35,7 @@ this license is included with libbgpdump.
 
 
 /*
--------------------------------------------------------------------------------
-Module Header
-Filename          : bgpdump_mstream.c
-Author            : Dan Ardelean (dan@ripe.net)
-Date              : 02-SEP-2002
-Revision          : 
-Revised           : 
-Description       : mstream emmulation implementation
-Language Version  : C
-OSs Tested        : Linux 2.2.19
-To Do             : 
--------------------------------------------------------------------------------
+Original Author: Dan Ardelean (dan@ripe.net)
 */
 
 #include <bgpdump-config.h>

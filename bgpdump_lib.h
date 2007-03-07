@@ -1,7 +1,7 @@
 /* $Id$ */
 /*
 
-Copyright (c) 2002                      RIPE NCC
+Copyright (c) 2007                      RIPE NCC
 
 
 All Rights Reserved
@@ -35,18 +35,7 @@ this license is included with libbgpdump.
 
 
 /*
--------------------------------------------------------------------------------
-Module Header
-Filename          : bgdump_lib.h
-Author            : Dan Ardelean (dan@ripe.net)
-Date              : 02-SEP-2002
-Revision          : 
-Revised           : 
-Description       : Library frontend declarations
-Language Version  : C
-OSs Tested        : Linux 2.2.19
-To Do             : 
--------------------------------------------------------------------------------
+Original Author: Dan Ardelean (dan@ripe.net)
 */
 
 
@@ -72,6 +61,8 @@ typedef struct struct_BGPDUMP {
     int		parsed;
     int		parsed_ok;
 } BGPDUMP;
+
+BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE table_dump_v2_peer_index_table;
 
 /* prototypes */
 

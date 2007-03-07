@@ -205,6 +205,85 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 	    printf("    PEER IP     : %s\n",peer_ip);
 	    printf("    PEER AS     : %s\n",print_asn(entry->body.mrtd_table_dump.peer_as));
 	    break;
+
+	case BGPDUMP_TYPE_TABLE_DUMP_V2:
+
+	    if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST) {
+			BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST *e;
+			e = &entry->body.mrtd_table_dump_v2_ipv4_unicast;
+
+			strcpy(prefix, inet_ntoa(e->v4_addr));
+
+			for(i = 0; i < e->entry_count; i++){
+				if(i){
+    				printf("\n\nTIME            : %s",asctime(gmtime(&entry->time)));
+    				printf("LENGTH          : %u\n", entry->length);
+				}
+
+
+	    		printf("TYPE            : BGP Table Dump version 2 Entry\n");
+	    		printf("    SEQUENCE    : %d\n",e->seq);
+	    		printf("    PREFIX      : %s/%d\n",prefix,entry->body.mrtd_table_dump.mask);
+
+				if(e->entries[i].peer->afi == AFI_IP){
+					inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
+#ifdef BGPDUMP_HAVE_IPV6
+				} else if (e->entries[i].peer->afi == AFI_IP6){
+					inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
+#endif
+				} else {
+					sprintf(peer_ip, "N/A, unsupported AF");
+				}
+	    		printf("    PEER IP     : %s\n",peer_ip);
+	    		printf("    PEER AS     : %s\n",print_asn(e->entries[i].peer->peer_as));
+
+				// On the last run of this loop, don't print attr, later code will do that
+				if(i+1 < e->entry_count){
+    				show_attr(entry->attr);
+    				printf("\n");
+				}
+			}
+
+#ifdef BGPDUMP_HAVE_IPV6
+	    } else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL) {
+			BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *e;
+			e = &entry->body.mrtd_table_dump_v2_ipv6;
+
+			inet_ntop(AF_INET6, &e->v6_addr, prefix, INET6_ADDRSTRLEN);
+
+			for(i = 0; i < e->entry_count; i++){
+				if(i){
+    				printf("\n\nTIME            : %s",asctime(gmtime(&entry->time)));
+    				printf("LENGTH          : %u\n", entry->length);
+				}
+
+
+	    		printf("TYPE            : BGP Table Dump version 2 Entry\n");
+	    		printf("    SEQUENCE    : %d\n",e->seq);
+	    		printf("    PREFIX      : %s/%d\n",prefix,entry->body.mrtd_table_dump.mask);
+
+				if(e->entries[i].peer->afi == AFI_IP){
+					inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
+				} else if (e->entries[i].peer->afi == AFI_IP6){
+					inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
+				} else {
+					sprintf(peer_ip, "N/A, unsupported AF");
+				}
+	    		printf("    PEER IP     : %s\n",peer_ip);
+	    		printf("    PEER AS     : %s\n",print_asn(e->entries[i].peer->peer_as));
+
+				// On the last run of this loop, don't print attr, later code will do that
+				if(i+1 < e->entry_count){
+    				show_attr(entry->attr);
+    				printf("\n");
+				}
+			}
+#endif
+	    } else {
+			printf("Error: BGP table dump version 2 entry with unknown subtype\n");
+	    }
+	    break;
+
 	case BGPDUMP_TYPE_ZEBRA_BGP:
 	    printf("TYPE            : Zebra BGP \n");
 		if(entry->body.zebra_message.address_family == AFI_IP) {

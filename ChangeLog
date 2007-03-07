@@ -1,5 +1,10 @@
+2007-03-07 Erik Romijn <eromijn@ripe.net>
+	* Built in TABLE_DUMP_V2 support
+	* Rename ..MESSAGE32 to ..MESSAGE_AS4
+	* Fixed bug where -M always crashed
+
 2007-02-01 Erik Romijn <eromijn@ripe.net>
-    * Minor fix in ASN32 support
+	* Minor fix in ASN32 support
 
 2006-10-20 Lorenzo Colitti <lorenzo@ripe.net>
 	* Implement ASN32 support
