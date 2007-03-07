@@ -54,7 +54,7 @@ Original Author: Shufu Mao(msf98@mails.tsinghua.edu.cn)
     void table_line_announce_1(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
     void table_line_announce(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
     void table_line_withdraw(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
-    void table_line_mrtd_route(int mode,BGPDUMP_TABLE_DUMP *route,BGPDUMP_ENTRY *entry, int timetype);
+    void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *entry, int timetype);
 	void table_line_dump_v2_ipv4_unicast(int mode,BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST *e,BGPDUMP_ENTRY *entry,int timetype);
 #ifdef BGPDUMP_HAVE_IPV6
     void show_prefixes6(int count,struct prefix *prefix);
@@ -186,28 +186,28 @@ void process(BGPDUMP_ENTRY *entry) {
     //printf("TIME: %s",asctime(gmtime(&entry->time)));
     //printf("LENGTH          : %u\n", entry->length);
     switch(entry->type) {
-	case BGPDUMP_TYPE_TABLE_DUMP:
+	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:
 	     if(mode==0){
 	        const char *prefix_str = NULL;
 		switch(entry->subtype){
 #ifdef BGPDUMP_HAVE_IPV6
-	    	case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6:
+	    	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
 	    		printf("TYPE: TABLE_DUMP/INET6\n");
 			prefix_str = inet_ntop(AF_INET6,&entry->body.mrtd_table_dump.prefix.v6_addr,prefix,sizeof(prefix));
 		break;
 
-	    	case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6_32BIT_AS:
+	    	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
 	    		printf("TYPE: TABLE_DUMP/INET6_32BIT_AS\n");
 			prefix_str = inet_ntop(AF_INET6,&entry->body.mrtd_table_dump.prefix.v6_addr,prefix,sizeof(prefix));
 		break;
 
 #endif
-		case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
 			printf("TYPE: TABLE_DUMP/INET\n");
 			prefix_str = inet_ntoa(entry->body.mrtd_table_dump.prefix.v4_addr);
 		break;
 
-		case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP_32BIT_AS:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
 			printf("TYPE: TABLE_DUMP/INET_32BIT_AS\n");
 			prefix_str = inet_ntoa(entry->body.mrtd_table_dump.prefix.v4_addr);
 		break;
@@ -224,15 +224,15 @@ void process(BGPDUMP_ENTRY *entry) {
 		switch(entry->subtype)
 		{
 #ifdef BGPDUMP_HAVE_IPV6
-		case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6:
-		case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP6_32BIT_AS:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6_32BIT_AS:
 
 			inet_ntop(AF_INET6,&entry->body.mrtd_table_dump.peer_ip.v6_addr,prefix,sizeof(prefix));
 			printf("%s ",prefix);
 			break;
 #endif
-		case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP:
-		case BGPDUMP_SUBTYPE_TABLE_DUMP_AFI_IP_32BIT_AS:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
+		case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
 			if (entry->body.mrtd_table_dump.peer_ip.v4_addr.s_addr != 0x00000000L)
 		    		printf("%s ",inet_ntoa(entry->body.mrtd_table_dump.peer_ip.v4_addr));
 			else
@@ -277,7 +277,7 @@ void process(BGPDUMP_ENTRY *entry) {
 				for(i = 0; i < e->entry_count; i++){
 					// This is slightly nasty - as we want to print multiple entries
 					// for multiple peers, we may need to print another TIME ourselves
-					if(i) printf("\n\n\nTIME: %s\n",time_str);
+					if(i) printf("\nTIME: %s\n",time_str);
     				printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
 	    			printf("PREFIX: %s/%d\n",prefix, e->prefix_length);
     				printf("SEQUENCE: %d\n",e->seq);
@@ -309,7 +309,7 @@ void process(BGPDUMP_ENTRY *entry) {
 				for(i = 0; i < e->entry_count; i++){
 					// This is slightly nasty - as we want to print multiple entries
 					// for multiple peers, we may need to print another TIME ourselves
-					if(i) printf("\n\n\nTIME: %s\n",time_str);
+					if(i) printf("\nTIME: %s\n",time_str);
     				printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
 	    			printf("PREFIX: %s/%d\n",prefix, e->prefix_length);
     				printf("SEQUENCE: %d\n",e->seq);
@@ -1469,7 +1469,7 @@ void table_line_announce6(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTR
 #endif
 
 
-void table_line_mrtd_route(int mode,BGPDUMP_TABLE_DUMP *route,BGPDUMP_ENTRY *entry,int timetype)
+void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *entry,int timetype)
 {
 	
 	struct tm *time;
