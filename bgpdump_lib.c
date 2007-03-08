@@ -421,15 +421,18 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 
 
 int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *entry){
-	BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST *prefixdata;
-	prefixdata = &entry->body.mrtd_table_dump_v2_ipv4_unicast;
+	BGPDUMP_TABLE_DUMP_V2_PREFIX *prefixdata;
+	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
 	uint16_t i;
 
 	mstream_getl(s, &prefixdata->seq);
 	mstream_getc(s, &prefixdata->prefix_length);
-	bzero(&prefixdata->v4_addr.s_addr, 4);
-	mstream_get(s, &prefixdata->v4_addr.s_addr, (prefixdata->prefix_length+7)/8);
+	bzero(&prefixdata->prefix.v4_addr.s_addr, 4);
+	mstream_get(s, &prefixdata->prefix.v4_addr.s_addr, (prefixdata->prefix_length+7)/8);
 	mstream_getw(s, &prefixdata->entry_count);
+
+	prefixdata->afi = AFI_IP;
+	prefixdata->safi = SAFI_UNICAST;
 
 	
 	prefixdata->entries = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY) * prefixdata->entry_count);
@@ -458,8 +461,8 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 
 
 int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *entry){
-	BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *prefixdata;
-	prefixdata = &entry->body.mrtd_table_dump_v2_ipv6;
+	BGPDUMP_TABLE_DUMP_V2_PREFIX *prefixdata;
+	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
 	uint16_t i;
 
 	mstream_getl(s, &prefixdata->seq);
@@ -472,8 +475,8 @@ int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *e
 	}
 
 	mstream_getc(s, &prefixdata->prefix_length);
-	bzero(&prefixdata->v6_addr.s6_addr, 16);
-	mstream_get(s, &prefixdata->v6_addr.s6_addr, (prefixdata->prefix_length+7)/8);
+	bzero(&prefixdata->prefix.v6_addr.s6_addr, 16);
+	mstream_get(s, &prefixdata->prefix.v6_addr.s6_addr, (prefixdata->prefix_length+7)/8);
 
 	mstream_getw(s, &prefixdata->entry_count);
 

@@ -146,23 +146,16 @@ typedef struct struct_BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY {
     struct attr         *attr;
 } BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY;
 
-typedef struct struct_BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST {
-	uint32_t            seq;
-	u_char              prefix_length;
-    struct in_addr      v4_addr;
-	uint16_t            entry_count;
-	BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *entries;
-} BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST;
-
-typedef struct struct_BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 {
+typedef struct struct_BGPDUMP_TABLE_DUMP_V2_PREFIX {
 	uint32_t            seq;
 	uint16_t            afi;
 	uint8_t             safi;
 	u_char              prefix_length;
-    struct in6_addr	    v6_addr;
+	BGPDUMP_IP_ADDRESS  prefix;
 	uint16_t            entry_count;
 	BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *entries;
-} BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6;
+} BGPDUMP_TABLE_DUMP_V2_PREFIX;
+
 
 
 /* For Zebra BGP4MP_STATE_CHANGE */
@@ -248,8 +241,7 @@ typedef union union_BGPDUMP_BODY {
 	BGPDUMP_MRTD_MESSAGE		mrtd_message;
 	BGPDUMP_MRTD_TABLE_DUMP		mrtd_table_dump;
 	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE		mrtd_table_dump_v2_peer_table;
-	BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST		mrtd_table_dump_v2_ipv4_unicast;
-	BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6		mrtd_table_dump_v2_ipv6;
+	BGPDUMP_TABLE_DUMP_V2_PREFIX		mrtd_table_dump_v2_prefix;
 	BGPDUMP_ZEBRA_STATE_CHANGE	zebra_state_change;
 	BGPDUMP_ZEBRA_MESSAGE		zebra_message;
 	BGPDUMP_ZEBRA_ENTRY		zebra_entry;

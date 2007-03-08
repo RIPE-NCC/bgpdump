@@ -172,6 +172,7 @@ void process(BGPDUMP_ENTRY *entry) {
     char source_ip[BGPDUMP_ADDRSTRLEN], destination_ip[BGPDUMP_ADDRSTRLEN];
     struct mp_nlri *mp_announce, *mp_withdraw;
     int i, code, subcode;
+	BGPDUMP_TABLE_DUMP_V2_PREFIX *e;
 
 if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE && entry->body.zebra_message.type == BGP_MSG_KEEPALIVE) return;
 if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE && entry->body.zebra_message.type == BGP_MSG_OPEN) return;
@@ -209,72 +210,45 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 
 	case BGPDUMP_TYPE_TABLE_DUMP_V2:
 
+		e = &entry->body.mrtd_table_dump_v2_prefix;
+
 	    if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST) {
-			BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST *e;
-			e = &entry->body.mrtd_table_dump_v2_ipv4_unicast;
-
-			strcpy(prefix, inet_ntoa(e->v4_addr));
-
-			for(i = 0; i < e->entry_count; i++){
-				if(i){
-    				printf("\nTIME            : %s",asctime(gmtime(&entry->time)));
-    				printf("LENGTH          : %u\n", entry->length);
-				}
-
-
-	    		printf("TYPE            : BGP Table Dump version 2 Entry\n");
-	    		printf("    SEQUENCE    : %d\n",e->seq);
-	    		printf("    PREFIX      : %s/%d\n",prefix,e->prefix_length);
-
-				if(e->entries[i].peer->afi == AFI_IP){
-					inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
-#ifdef BGPDUMP_HAVE_IPV6
-				} else if (e->entries[i].peer->afi == AFI_IP6){
-					inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
-#endif
-				} else {
-					sprintf(peer_ip, "N/A, unsupported AF");
-				}
-	    		printf("    PEER IP     : %s\n",peer_ip);
-	    		printf("    PEER AS     : %s\n",print_asn(e->entries[i].peer->peer_as));
-
-    			show_attr(e->entries[i].attr);
-			}
-
+			strcpy(prefix, inet_ntoa(e->prefix.v4_addr));
 #ifdef BGPDUMP_HAVE_IPV6
 	    } else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL) {
-			BGPDUMP_TABLE_DUMP_V2_MULTIPROTOCOL_IPV6 *e;
-			e = &entry->body.mrtd_table_dump_v2_ipv6;
-
-			inet_ntop(AF_INET6, &e->v6_addr, prefix, INET6_ADDRSTRLEN);
-
-			for(i = 0; i < e->entry_count; i++){
-				if(i){
-    				printf("\nTIME            : %s",asctime(gmtime(&entry->time)));
-    				printf("LENGTH          : %u\n", entry->length);
-				}
-
-
-	    		printf("TYPE            : BGP Table Dump version 2 Entry\n");
-	    		printf("    SEQUENCE    : %d\n",e->seq);
-	    		printf("    PREFIX      : %s/%d\n",prefix,e->prefix_length);
-
-				if(e->entries[i].peer->afi == AFI_IP){
-					inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
-				} else if (e->entries[i].peer->afi == AFI_IP6){
-					inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
-				} else {
-					sprintf(peer_ip, "N/A, unsupported AF");
-				}
-	    		printf("    PEER IP     : %s\n",peer_ip);
-	    		printf("    PEER AS     : %s\n",print_asn(e->entries[i].peer->peer_as));
-
-    			show_attr(e->entries[i].attr);
-			}
+			inet_ntop(AF_INET6, &e->prefix.v6_addr, prefix, INET6_ADDRSTRLEN);
 #endif
 	    } else {
 			printf("Error: BGP table dump version 2 entry with unknown subtype\n");
+			break;
 	    }
+
+		for(i = 0; i < e->entry_count; i++){
+			if(i){
+    			printf("\nTIME            : %s",asctime(gmtime(&entry->time)));
+    			printf("LENGTH          : %u\n", entry->length);
+			}
+
+
+    		printf("TYPE            : BGP Table Dump version 2 Entry\n");
+    		printf("    SEQUENCE    : %d\n",e->seq);
+    		printf("    PREFIX      : %s/%d\n",prefix,e->prefix_length);
+
+			if(e->entries[i].peer->afi == AFI_IP){
+				inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
+#ifdef BGPDUMP_HAVE_IPV6
+			} else if (e->entries[i].peer->afi == AFI_IP6){
+				inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
+#endif
+			} else {
+				sprintf(peer_ip, "N/A, unsupported AF");
+			}
+    		printf("    PEER IP     : %s\n",peer_ip);
+    		printf("    PEER AS     : %s\n",print_asn(e->entries[i].peer->peer_as));
+
+   			show_attr(e->entries[i].attr);
+		}
+
 	    break;
 
 	case BGPDUMP_TYPE_ZEBRA_BGP:
