@@ -143,7 +143,7 @@ typedef struct struct_BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY {
 	uint32_t            originated_time;
 	uint16_t            attribute_length;
 	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY *peer;
-    u_char              *bgp_atribute;
+    struct attr         *attr;
 } BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY;
 
 typedef struct struct_BGPDUMP_TABLE_DUMP_V2_IPV4_UNICAST {

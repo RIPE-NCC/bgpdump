@@ -437,7 +437,6 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_ipv4_unicast: failed to allocate memory for entry table");
 		return 0;
 	}
-	char blastr[50];
 
 	for(i=0; i < prefixdata->entry_count; i++){
 		BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *e;
@@ -450,7 +449,8 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
     	process_attr_init(entry);
 		entry->attr->len = e->attribute_length;
 		process_attr_read(s, entry->attr, 4, NULL, 0);
-
+		e->attr = entry->attr;
+		entry->attr = NULL;
 	}
 
 	return 1;
@@ -477,8 +477,6 @@ int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *e
 
 	mstream_getw(s, &prefixdata->entry_count);
 
-	char blastr[50];
-
 	prefixdata->entries = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY) * prefixdata->entry_count);
 	if(prefixdata->entries == NULL){
 	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_multiprotocol: failed to allocate memory for entry table");
@@ -496,9 +494,9 @@ int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *e
     	process_attr_init(entry);
 		entry->attr->len = e->attribute_length;
 		process_attr_read(s, entry->attr, 4, NULL, 1);
-
+		e->attr = entry->attr;
+		entry->attr = NULL;
 	}
-
 
 	return 1;
 }

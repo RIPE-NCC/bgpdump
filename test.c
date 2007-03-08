@@ -204,6 +204,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 	    printf("    UPTIME      : %s",asctime(gmtime(&entry->body.mrtd_table_dump.uptime)));
 	    printf("    PEER IP     : %s\n",peer_ip);
 	    printf("    PEER AS     : %s\n",print_asn(entry->body.mrtd_table_dump.peer_as));
+    	show_attr(entry->attr);
 	    break;
 
 	case BGPDUMP_TYPE_TABLE_DUMP_V2:
@@ -216,14 +217,14 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 
 			for(i = 0; i < e->entry_count; i++){
 				if(i){
-    				printf("\n\nTIME            : %s",asctime(gmtime(&entry->time)));
+    				printf("\nTIME            : %s",asctime(gmtime(&entry->time)));
     				printf("LENGTH          : %u\n", entry->length);
 				}
 
 
 	    		printf("TYPE            : BGP Table Dump version 2 Entry\n");
 	    		printf("    SEQUENCE    : %d\n",e->seq);
-	    		printf("    PREFIX      : %s/%d\n",prefix,entry->body.mrtd_table_dump.mask);
+	    		printf("    PREFIX      : %s/%d\n",prefix,e->prefix_length);
 
 				if(e->entries[i].peer->afi == AFI_IP){
 					inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
@@ -237,11 +238,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 	    		printf("    PEER IP     : %s\n",peer_ip);
 	    		printf("    PEER AS     : %s\n",print_asn(e->entries[i].peer->peer_as));
 
-				// On the last run of this loop, don't print attr, later code will do that
-				if(i+1 < e->entry_count){
-    				show_attr(entry->attr);
-    				printf("\n");
-				}
+    			show_attr(e->entries[i].attr);
 			}
 
 #ifdef BGPDUMP_HAVE_IPV6
@@ -253,14 +250,14 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 
 			for(i = 0; i < e->entry_count; i++){
 				if(i){
-    				printf("\n\nTIME            : %s",asctime(gmtime(&entry->time)));
+    				printf("\nTIME            : %s",asctime(gmtime(&entry->time)));
     				printf("LENGTH          : %u\n", entry->length);
 				}
 
 
 	    		printf("TYPE            : BGP Table Dump version 2 Entry\n");
 	    		printf("    SEQUENCE    : %d\n",e->seq);
-	    		printf("    PREFIX      : %s/%d\n",prefix,entry->body.mrtd_table_dump.mask);
+	    		printf("    PREFIX      : %s/%d\n",prefix,e->prefix_length);
 
 				if(e->entries[i].peer->afi == AFI_IP){
 					inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
@@ -272,11 +269,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 	    		printf("    PEER IP     : %s\n",peer_ip);
 	    		printf("    PEER AS     : %s\n",print_asn(e->entries[i].peer->peer_as));
 
-				// On the last run of this loop, don't print attr, later code will do that
-				if(i+1 < e->entry_count){
-    				show_attr(entry->attr);
-    				printf("\n");
-				}
+    			show_attr(e->entries[i].attr);
 			}
 #endif
 	    } else {
@@ -392,17 +385,19 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 		    printf("    DEST_IP     : %s\n",destination_ip);
 		    printf("    OLD_STATE   : %s\n",bgp_state_name[entry->body.zebra_state_change.old_state]);
 		    printf("    NEW_STATE   : %s\n",bgp_state_name[entry->body.zebra_state_change.new_state]);
+    		show_attr(entry->attr);
 		    break;
 
 		default:
 		    printf("SUBTYPE         : Unknown %d\n", entry->subtype);
 	    }
+    	show_attr(entry->attr);
 	    break;
 	default:
 	    printf("TYPE            : Unknown %d\n", entry->type);
+    	show_attr(entry->attr);
 	    
     }
-    show_attr(entry->attr);
     printf("\n");
 }
 
