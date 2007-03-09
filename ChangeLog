@@ -1,3 +1,6 @@
+2007-03-09 Erik Romijn <eromijn@ripe.net>
+	* Updated TABLE_DUMP_V2 support to comply with draft-ietf-grow-mrt-04
+
 2007-03-07 Erik Romijn <eromijn@ripe.net>
 	* Built in TABLE_DUMP_V2 support
 	* Rename ..MESSAGE32 to ..MESSAGE_AS4

@@ -62,8 +62,6 @@ typedef struct struct_BGPDUMP {
     int		parsed_ok;
 } BGPDUMP;
 
-BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE table_dump_v2_peer_index_table;
-
 /* prototypes */
 
 BGPDUMP *bgpdump_open_dump(char *filename);

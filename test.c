@@ -212,10 +212,10 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 
 		e = &entry->body.mrtd_table_dump_v2_prefix;
 
-	    if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST) {
+	    if(e->afi == AFI_IP) {
 			strcpy(prefix, inet_ntoa(e->prefix.v4_addr));
 #ifdef BGPDUMP_HAVE_IPV6
-	    } else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL) {
+	    } else if(e->afi == AFI_IP6) {
 			inet_ntop(AF_INET6, &e->prefix.v6_addr, prefix, INET6_ADDRSTRLEN);
 #endif
 	    } else {

@@ -59,7 +59,7 @@ static    int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s,BGPDUMP_ENTRY *entry);
-static    int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s,BGPDUMP_ENTRY *entry);
+static    int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
     
@@ -89,6 +89,8 @@ static    int check_new_aspath(struct aspath *aspath);
 static    void process_asn32_trans(struct attr *attr, u_int8_t asn_len);
 static    struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath);
 static    void asn32_expand_16_to_32(char *dst, char *src, int len);
+
+BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE *table_dump_v2_peer_index_table = NULL;
 
 #if defined(linux)
 static    size_t strlcat(char *dst, const char *src, size_t size);
@@ -370,11 +372,14 @@ int process_mrtd_table_dump_v2(struct mstream *s,BGPDUMP_ENTRY *entry) {
 	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_PEER_INDEX_TABLE:
 		return process_mrtd_table_dump_v2_peer_index_table(s, entry);
 	break;
-	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST:
 		return process_mrtd_table_dump_v2_ipv4_unicast(s, entry);
 	break;
-	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL:
-		return process_mrtd_table_dump_v2_multiprotocol(s, entry);
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST:
+		return process_mrtd_table_dump_v2_ipv6_unicast(s, entry);
+	break;
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_GENERIC:
+		//return process_mrtd_table_dump_v2_generic(s, entry);
 	break;
 	}
 
@@ -385,9 +390,29 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE *t;
 	uint16_t i;
 	uint8_t peertype;
+	uint16_t view_name_len;
 
+	if(table_dump_v2_peer_index_table){
+		free(table_dump_v2_peer_index_table);
+		if(table_dump_v2_peer_index_table->entries)
+			free(table_dump_v2_peer_index_table->entries);
+	}
 
-	t = &table_dump_v2_peer_index_table;
+	table_dump_v2_peer_index_table = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE));
+	t = table_dump_v2_peer_index_table;
+
+    mstream_get_ipv4(s,&t->local_bgp_id);
+
+    mstream_getw(s,&view_name_len);
+	strcpy(t->view_name, "");
+
+	// view_name_len is without trailing \0
+	if(view_name_len+1 > BGPDUMP_TYPE_TABLE_DUMP_V2_MAX_VIEWNAME_LEN) {
+	    syslog(LOG_WARNING, "process_mrtd_table_dump_v2_peer_index_table: view name length more than maximum length (%d), ignoring view name", BGPDUMP_TYPE_TABLE_DUMP_V2_MAX_VIEWNAME_LEN);
+	} else {
+		mstream_get(s, t->view_name, view_name_len);
+		t->view_name[view_name_len] = 0;
+	}
 
     mstream_getw(s,&t->peer_count);
 
@@ -403,6 +428,8 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 			t->entries[i].afi = AFI_IP6;
 		else
 			t->entries[i].afi = AFI_IP;
+
+    	mstream_get_ipv4(s,&t->entries[i].peer_bgp_id);
 
 		if(t->entries[i].afi == AFI_IP)
 			mstream_get_ipv4(s,&t->entries[i].peer_ip.v4_addr.s_addr);
@@ -425,16 +452,15 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
 	uint16_t i;
 
+	prefixdata->afi = AFI_IP;
+	prefixdata->safi = SAFI_UNICAST;
+
 	mstream_getl(s, &prefixdata->seq);
 	mstream_getc(s, &prefixdata->prefix_length);
 	bzero(&prefixdata->prefix.v4_addr.s_addr, 4);
 	mstream_get(s, &prefixdata->prefix.v4_addr.s_addr, (prefixdata->prefix_length+7)/8);
 	mstream_getw(s, &prefixdata->entry_count);
 
-	prefixdata->afi = AFI_IP;
-	prefixdata->safi = SAFI_UNICAST;
-
-	
 	prefixdata->entries = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY) * prefixdata->entry_count);
 	if(prefixdata->entries == NULL){
 	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_ipv4_unicast: failed to allocate memory for entry table");
@@ -446,7 +472,7 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		e = &prefixdata->entries[i];
 
 		mstream_getw(s, &e->peer_index);
-		e->peer = &table_dump_v2_peer_index_table.entries[e->peer_index];
+		e->peer = &table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
 
     	process_attr_init(entry);
@@ -460,7 +486,47 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 }
 
 
-int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *entry){
+int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *entry){
+	BGPDUMP_TABLE_DUMP_V2_PREFIX *prefixdata;
+	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
+	uint16_t i;
+
+	prefixdata->afi = AFI_IP6;
+	prefixdata->safi = SAFI_UNICAST;
+
+	mstream_getl(s, &prefixdata->seq);
+
+	mstream_getc(s, &prefixdata->prefix_length);
+	bzero(&prefixdata->prefix.v6_addr.s6_addr, 16);
+	mstream_get(s, &prefixdata->prefix.v6_addr.s6_addr, (prefixdata->prefix_length+7)/8);
+
+	mstream_getw(s, &prefixdata->entry_count);
+
+	prefixdata->entries = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY) * prefixdata->entry_count);
+	if(prefixdata->entries == NULL){
+	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_ipv6_unicast: failed to allocate memory for entry table");
+		return 0;
+	}
+
+	for(i=0; i < prefixdata->entry_count; i++){
+		BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *e;
+		e = &prefixdata->entries[i];
+
+		mstream_getw(s, &e->peer_index);
+		e->peer = &table_dump_v2_peer_index_table->entries[e->peer_index];
+		mstream_getl(s, &e->originated_time);
+
+    	process_attr_init(entry);
+		entry->attr->len = e->attribute_length;
+		process_attr_read(s, entry->attr, 4, NULL, 1);
+		e->attr = entry->attr;
+		entry->attr = NULL;
+	}
+
+	return 1;
+}
+/*
+int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *entry){
 	BGPDUMP_TABLE_DUMP_V2_PREFIX *prefixdata;
 	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
 	uint16_t i;
@@ -470,7 +536,7 @@ int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *e
 	mstream_getc(s, &prefixdata->safi);
 
 	if(prefixdata->afi != AFI_IP6 || prefixdata->safi != SAFI_UNICAST){
-	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_multiprotocol: entry has unsupported AFI/SAFI %d/%d", prefixdata->afi, prefixdata->safi);
+	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_ipv6_unicast: entry has unsupported AFI/SAFI %d/%d", prefixdata->afi, prefixdata->safi);
 		return 0;
 	}
 
@@ -482,7 +548,7 @@ int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *e
 
 	prefixdata->entries = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY) * prefixdata->entry_count);
 	if(prefixdata->entries == NULL){
-	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_multiprotocol: failed to allocate memory for entry table");
+	    syslog(LOG_ERR, "process_mrtd_table_dump_v2_ipv6_unicast: failed to allocate memory for entry table");
 		return 0;
 	}
 
@@ -502,7 +568,7 @@ int process_mrtd_table_dump_v2_multiprotocol(struct mstream *s, BGPDUMP_ENTRY *e
 	}
 
 	return 1;
-}
+}*/
 
 
 int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {

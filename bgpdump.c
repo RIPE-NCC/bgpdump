@@ -270,10 +270,10 @@ void process(BGPDUMP_ENTRY *entry) {
 			BGPDUMP_TABLE_DUMP_V2_PREFIX *e;
 			e = &entry->body.mrtd_table_dump_v2_prefix;
 
-			if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST){
+			if(e->afi == AFI_IP){
 				strncpy(prefix, inet_ntoa(e->prefix.v4_addr), BGPDUMP_ADDRSTRLEN);
 #ifdef BGPDUMP_HAVE_IPV6
-			} else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL){
+			} else if(e->afi == AFI_IP6){
 				inet_ntop(AF_INET6, &e->prefix.v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
 #endif
 			}
@@ -282,7 +282,13 @@ void process(BGPDUMP_ENTRY *entry) {
 				// This is slightly nasty - as we want to print multiple entries
 				// for multiple peers, we may need to print another TIME ourselves
 				if(i) printf("\nTIME: %s\n",time_str);
-    			printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
+				if(e->afi == AFI_IP){
+    				printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
+#ifdef BGPDUMP_HAVE_IPV6
+				} else if(e->afi == AFI_IP6){
+    				printf("TYPE: TABLE_DUMP_V2/IPV6_UNICAST\n");
+#endif
+				}
 	    		printf("PREFIX: %s/%d\n",prefix, e->prefix_length);
     			printf("SEQUENCE: %d\n",e->seq);
 
@@ -1561,10 +1567,10 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 		}
 #endif
 			
-		if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_IPV4_UNICAST){
+		if(e->afi == AFI_IP) {
 			inet_ntop(AF_INET, &e->prefix.v4_addr, prefix, BGPDUMP_ADDRSTRLEN);
 #ifdef BGPDUMP_HAVE_IPV6
-		} else if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_MULTIPROTOCOL){
+		} else if(e->afi == AFI_IP6) {
 			inet_ntop(AF_INET6, &e->prefix.v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
 #endif
 		}

@@ -43,7 +43,7 @@ from a dump/update file given as a command line parameter.
 
 
 
-=== A SMALL NOTE ON TABLE_DUMP_V2 ===
+=== NOTES ON TABLE_DUMP_V2 ===
 
 You might note that there are some strange loops in the code handling
 TABLE_DUMP_V2. The reason for this is that for one prefix, there is
@@ -53,6 +53,24 @@ peer/attribute set and prints the prefix every time.
 As the code around the type-specific parsing usually prints out
 timestamps and newlines to seperate entries, this is done
 in these small loops too.
+
+Also, TABLE_DUMP_V2 was not finished yet when it was added to libbgpdump.
+Libbgpdump supports the format as defined in draft-ietf-grow-mrt-04,
+with the following exceptions:
+- INDEX_TABLE is named PEER_INDEX_TABLE in the code
+- BGP4MP_STATE_CHANGE_AS4 exists, it's like BGP4MP_STATE_CHANGE with a
+  4-byte AS field. Note that it's subtype is mentioned in section 5.9.
+- RIB_GENERIC and the multicast RIBs are not supported. IPv4 and IPv6
+  unicast prefixes will only be read from RIB_IPV4_UNICAST and
+  RIB_IPV6_UNICAST entries.
+
+As RIB_GENERIC may be supported in later versions and may then also
+contain IPv4 or IPv6 unicast prefixes, code using the library should
+check the address family by reading the contents of:
+  entry->body.mrtd_table_dump_v2_prefix.afi
+for AFI_IP or AFI_IP6 and *NOT* checking the contents of
+  entry->subtype
+for BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST etc.
 
 
 
