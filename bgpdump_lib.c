@@ -54,7 +54,6 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #include <zlib.h>
 #include <assert.h>
 
-static    int process_mrtd_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY *entry);
@@ -298,11 +297,6 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
     }
 }
 
-int process_mrtd_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {    
-    syslog(LOG_WARNING, "process_mrtd_bgp: record type not implemented");
-    return 0;
-}
-
 int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     int afi = entry->subtype;
     u_int8_t asn_len;
@@ -393,15 +387,16 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 	uint16_t view_name_len;
 
 	if(table_dump_v2_peer_index_table){
-		free(table_dump_v2_peer_index_table);
 		if(table_dump_v2_peer_index_table->entries)
 			free(table_dump_v2_peer_index_table->entries);
+		free(table_dump_v2_peer_index_table);
 	}
 
 	table_dump_v2_peer_index_table = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE));
 	t = table_dump_v2_peer_index_table;
+	t->entries = NULL;
 
-    mstream_get_ipv4(s,&t->local_bgp_id);
+    mstream_get_ipv4(s,(uint32_t *)&t->local_bgp_id);
 
     mstream_getw(s,&view_name_len);
 	strcpy(t->view_name, "");
@@ -429,7 +424,7 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 		else
 			t->entries[i].afi = AFI_IP;
 
-    	mstream_get_ipv4(s,&t->entries[i].peer_bgp_id);
+    	mstream_get_ipv4(s,(uint32_t *)&t->entries[i].peer_bgp_id);
 
 		if(t->entries[i].afi == AFI_IP)
 			mstream_get_ipv4(s,&t->entries[i].peer_ip.v4_addr.s_addr);
