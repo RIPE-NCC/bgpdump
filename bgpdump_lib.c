@@ -1515,6 +1515,8 @@ void process_asn32_trans(struct attr *attr, u_int8_t asn_len) {
   if(! (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_NEW_AS_PATH)))
     return;
 
+  // attr->aspath may be NULL, at least in case of MP_UNREACH_NLRI
+  if(attr->aspath == NULL) return;
   if(attr->aspath->count < attr->new_aspath->count) {
     return;
   }
