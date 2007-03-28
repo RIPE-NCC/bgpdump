@@ -54,6 +54,7 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #include <zlib.h>
 #include <assert.h>
 
+void	  bgpdump_free_attr(struct attr *attr);
 static    int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY *entry);
@@ -220,55 +221,12 @@ void bgpdump_free_mp_info(struct mp_info *info) {
 }
 
 void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
-    u_int16_t i;
-    struct aspath *path, *pathstofree[3] = {
-      (entry && entry->attr) ? entry->attr->aspath : NULL,
-      (entry && entry->attr) ? entry->attr->old_aspath : NULL,
-      (entry && entry->attr) ? entry->attr->new_aspath : NULL
-    };
 
     if(entry!=NULL) {
-	if(entry->attr != NULL) {
-	    for(i = 0; i < sizeof(pathstofree) / sizeof(pathstofree[0]); i++) {
-	      path = pathstofree[i];
-	      if(path) {
-		if(path->data)
-		  free(path->data);
-		if(path->str)
-		  free(path->str);
-		free(path);
-	      }
-	    }
-	    
-	    if(entry->attr->community != NULL) {
-		if(entry->attr->community->val != NULL)
-		    free(entry->attr->community->val);
 
-		if(entry->attr->community->str != NULL)
-		    free(entry->attr->community->str);
-
-		free(entry->attr->community);
-	    }
-
-	    if(entry->attr->data != NULL)
-		free(entry->attr->data);
-
-	    if(entry->attr->mp_info != NULL)
-		bgpdump_free_mp_info(entry->attr->mp_info);
-
-	    if (entry->attr->unknown_num) {
-		for (i = 0; i < entry->attr->unknown_num; i++)
-		    free(entry->attr->unknown[i].raw);
-		free(entry->attr->unknown);
-	    }
-
-	    free(entry->attr);
-	}
-
+	bgpdump_free_attr(entry->attr);
 
 	switch(entry->type) {
-	    case BGPDUMP_TYPE_MRTD_TABLE_DUMP:	
-		break;
 	    case BGPDUMP_TYPE_ZEBRA_BGP:
 		switch(entry->subtype) {
 		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
@@ -290,11 +248,65 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
 			}
 			break;
 		}
+	    case BGPDUMP_TYPE_TABLE_DUMP_V2:
+		if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST ||
+		   entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST ){
+
+			BGPDUMP_TABLE_DUMP_V2_PREFIX *e;
+			e = &entry->body.mrtd_table_dump_v2_prefix;
+			int i;
+
+			for(i = 0; i < e->entry_count; i++){
+				bgpdump_free_attr(e->entries[i].attr);
+			}
+			free(e->entries);
+		}
 		break;
 	}
 
 	free(entry);
     }
+}
+
+void bgpdump_free_attr(struct attr *attr){
+	if(attr != NULL) {
+    	u_int16_t i;
+    	struct aspath *path, *pathstofree[3] = { attr->aspath, attr->old_aspath, attr->new_aspath };
+	    for(i = 0; i < sizeof(pathstofree) / sizeof(pathstofree[0]); i++) {
+	      path = pathstofree[i];
+	      if(path) {
+		if(path->data)
+		  free(path->data);
+		if(path->str)
+		  free(path->str);
+		free(path);
+	      }
+	    }
+	    
+	    if(attr->community != NULL) {
+		if(attr->community->val != NULL)
+		    free(attr->community->val);
+
+		if(attr->community->str != NULL)
+		    free(attr->community->str);
+
+		free(attr->community);
+	    }
+
+	    if(attr->data != NULL)
+		free(attr->data);
+
+	    if(attr->mp_info != NULL)
+		bgpdump_free_mp_info(attr->mp_info);
+
+	    if (attr->unknown_num) {
+		for (i = 0; i < attr->unknown_num; i++)
+		    free(attr->unknown[i].raw);
+		free(attr->unknown);
+	    }
+
+	    free(attr);
+	}
 }
 
 int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
