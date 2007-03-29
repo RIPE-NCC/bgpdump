@@ -1,3 +1,6 @@
+2007-03-29 Erik Romijn <eromijn@ripe.net>
+	* Fixed a serious segfault in the insertion of update dumps
+
 2007-03-28 Erik Romijn <eromijn@ripe.net>
 	* Fixed a large memory leak in TABLE_DUMP_V2 processing
 

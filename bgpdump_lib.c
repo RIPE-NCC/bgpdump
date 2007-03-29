@@ -248,6 +248,7 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
 			}
 			break;
 		}
+		break;
 	    case BGPDUMP_TYPE_TABLE_DUMP_V2:
 		if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST ||
 		   entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST ){
