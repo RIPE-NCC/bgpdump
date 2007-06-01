@@ -48,14 +48,14 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #include "bgpdump.h"
 #include "bgpdump_attr.h"
 #include "bgpdump_formats.h"
-
-#include <zlib.h>
+#include "cfile_tools.h"
 
 #define BGPDUMP_MAX_FILE_LEN	1024
 #define BGPDUMP_MAX_AS_PATH_LEN	2000
 
 typedef struct struct_BGPDUMP {
-    gzFile	*f;
+    CFRFILE	*f;
+    int		f_type;
     int		eof;
     char	filename[BGPDUMP_MAX_FILE_LEN];
     int		parsed;

@@ -1,3 +1,15 @@
+The current maintainer of this library is the
+RIPE NCC information services department.
+
+You can reach us at ris@ripe.net.
+
+
+2007-06-01 Erik Romijn <eromijn@ripe.net>
+    * Fixed several bugs in 64-bit PC support and added
+	  bzip2 support, credit goes to
+	  Bernhard Tellenbach <betellen@tik.ee.ethz.ch>
+	  for providing patches.
+
 2007-03-29 Erik Romijn <eromijn@ripe.net>
 	* Fixed a serious segfault in the insertion of update dumps
 

@@ -40,6 +40,7 @@ Original Author: Dan Ardelean (dan@ripe.net)
 
 #include "bgpdump_lib.h"
 #include "bgpdump_mstream.h"
+#include "cfile_tools.h"
 
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -98,16 +99,15 @@ static    size_t strlcat(char *dst, const char *src, size_t size);
 
 BGPDUMP *bgpdump_open_dump(char *filename) {
     BGPDUMP *this_dump=NULL;
-    gzFile *f;
+    CFRFILE *f;
 
     this_dump = malloc(sizeof(BGPDUMP));
 
+    f = cfr_open(filename);
     if((filename == NULL) || (strcmp(filename, "-") == 0)) {
-	/* dump from stdin */
-	f = gzdopen(0, "r");
 	strcpy(this_dump->filename, "[STDIN]");
-    } else {
-	f = gzopen(filename, "r");
+    } else
+    {
 	strcpy(this_dump->filename, filename);
     }
     
@@ -126,7 +126,7 @@ BGPDUMP *bgpdump_open_dump(char *filename) {
 
 void bgpdump_close_dump(BGPDUMP *dump) {
     if(dump!=NULL) 
-	gzclose(dump->f);
+	cfr_close(dump->f);
 }
 
 BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
@@ -138,8 +138,10 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
 
     this_entry = malloc(sizeof(BGPDUMP_ENTRY));
 
-    bytes_read = gzread(dump->f, this_entry, 12);
-
+    bytes_read = cfr_read_n(dump->f, &(this_entry->time), 4);
+    bytes_read += cfr_read_n(dump->f, &(this_entry->type), 2);
+    bytes_read += cfr_read_n(dump->f, &(this_entry->subtype), 2);
+    bytes_read += cfr_read_n(dump->f, &(this_entry->length), 4);
     if(bytes_read != 12) {
 	if(bytes_read > 0) {
 	    /* Malformed record */
@@ -165,7 +167,7 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     this_entry->attr=NULL;
 
     buffer = malloc(this_entry->length);
-    bytes_read = gzread(dump->f, buffer, this_entry->length);
+    bytes_read = cfr_read_n(dump->f, buffer, this_entry->length);
     if(bytes_read != this_entry->length) { 
 	syslog(LOG_ERR,
 	       "bgpdump_read_next: incomplete dump record (%d bytes read, expecting %d)",
@@ -313,7 +315,7 @@ void bgpdump_free_attr(struct attr *attr){
 int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     int afi = entry->subtype;
     u_int8_t asn_len;
-
+    u_int32_t temp_time = 0;
     mstream_getw(s,&entry->body.mrtd_table_dump.view);
     mstream_getw(s,&entry->body.mrtd_table_dump.sequence);
     switch(afi) {
@@ -334,7 +336,8 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     }
     mstream_getc(s,&entry->body.mrtd_table_dump.mask);
     mstream_getc(s,&entry->body.mrtd_table_dump.status);
-    mstream_getl(s,(u_int32_t *)&entry->body.mrtd_table_dump.uptime);
+    mstream_getl(s,&temp_time);
+    (entry->body).mrtd_table_dump.uptime = temp_time;
 
     switch(afi) {
       case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:

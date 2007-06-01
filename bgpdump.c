@@ -302,8 +302,8 @@ void process(BGPDUMP_ENTRY *entry) {
 					sprintf(peer_ip, "[N/A, unsupported AF]");
 				}
     			printf("FROM: %s AS%s\n", peer_ip, print_asn(e->entries[i].peer->peer_as));
-
-				time2str(gmtime((const time_t *)&e->entries[i].originated_time),time_str);
+				time_t time_temp = (time_t)((e->entries[i]).originated_time);
+				time2str(gmtime(&time_temp),time_str);
 				printf("ORIGINATED: %s\n",time_str); 	
 				if (e->entries[i].attr && e->entries[i].attr->len)
 			    	show_attr(e->entries[i].attr);
@@ -1444,7 +1444,7 @@ void table_line_announce6(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTR
 void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *entry,int timetype)
 {
 	
-	struct tm *time;
+	struct tm *time = NULL;
 	char tmp1[20];
 	char tmp2[20];	
 	int  npref;
@@ -1529,7 +1529,7 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 
 void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_ENTRY *entry,int timetype)
 {
-	struct tm *time;
+	struct tm *time = NULL;
 	char tmp1[20];
 	char tmp2[20];	
 	int  npref;
@@ -1607,7 +1607,8 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
                     if(timetype==0){
                         time=gmtime(&entry->time);
 		    }else if(timetype==1){
-			time=gmtime((const time_t *)&e->entries[i].originated_time);
+			time_t time_temp = (time_t)((e->entries[i]).originated_time);
+			time=gmtime(&time_temp);
 		    }
 	            time2str(time,time_str);	
 	 	    printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));
