@@ -1450,7 +1450,7 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 	int  npref;
 	int  nmed;
 	char  time_str[20];
-        char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN];
+        char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
 
 	switch (entry->attr->origin)
 	{
@@ -1500,7 +1500,18 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-		   printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
+#ifdef BGPDUMP_HAVE_IPV6
+	    	if ((entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI)) && entry->attr->mp_info->announce[AFI_IP6][SAFI_UNICAST])
+		{
+		    inet_ntop(AF_INET6,&entry->attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,nexthop,sizeof(nexthop));
+		}
+	    	else
+#endif
+                {
+		    strncpy(nexthop, inet_ntoa(entry->attr->nexthop), BGPDUMP_ADDRSTRLEN);
+		}
+		   printf("%s|%d|%d|",nexthop,npref,nmed);
+
 		   if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
 			else
@@ -1535,7 +1546,7 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 	int  npref;
 	int  nmed;
 	char  time_str[20];
-    char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN];
+    char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
 	
 	int i;
 
@@ -1591,7 +1602,18 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 	            if( (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-		   printf("%s|%d|%d|",inet_ntoa(e->entries[i].attr->nexthop),npref,nmed);
+#ifdef BGPDUMP_HAVE_IPV6
+	    	if ((e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI)) && e->entries[i].attr->mp_info->announce[AFI_IP6][SAFI_UNICAST])
+		{
+		    inet_ntop(AF_INET6,&e->entries[i].attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,nexthop,sizeof(nexthop));
+		}
+	    	else
+#endif
+                {
+		    strncpy(nexthop, inet_ntoa(e->entries[i].attr->nexthop), BGPDUMP_ADDRSTRLEN);
+		}
+		   printf("%s|%d|%d|",nexthop,npref,nmed);
+
 		   if( (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    		printf("%s|%s|",e->entries[i].attr->community->str+1,tmp2);
 			else

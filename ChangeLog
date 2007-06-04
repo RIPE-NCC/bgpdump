@@ -9,6 +9,7 @@ You can reach us at ris@ripe.net.
 	  bzip2 support, credit goes to
 	  Bernhard Tellenbach <betellen@tik.ee.ethz.ch>
 	  for providing patches.
+	* Fixed incorrect IPv6 nexthops in -M/-m output
 
 2007-03-29 Erik Romijn <eromijn@ripe.net>
 	* Fixed a serious segfault in the insertion of update dumps
