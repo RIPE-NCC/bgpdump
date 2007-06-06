@@ -366,7 +366,7 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
   switch (stream->format) {
   case 1:  // uncompressed
     { 
-      retval = getline(lineptr, n, (FILE *)(stream->data1));
+      retval = fgets(lineptr, n, (FILE *)(stream->data1));
       if (retval == -1) {
         stream->error1 = errno;
       }
