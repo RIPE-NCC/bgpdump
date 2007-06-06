@@ -20,7 +20,7 @@ all: libbgpdump.so libbgpdump.a testbgpdump bgpdump
 
 libbgpdump.so: $(LIB_H) $(LIB_C) Makefile
 	$(COMPILE) -fpic -c $(LIB_C)
-	$(COMPILE) -shared -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
+	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
 
 libbgpdump.a: $(LIB_H) $(LIB_C) $(LIB_O) Makefile
 	$(AR) r libbgpdump.a $(LIB_O)

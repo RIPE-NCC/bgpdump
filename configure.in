@@ -82,6 +82,16 @@ else
 fi
 fi
 
+OS=`uname|sed -e 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/'`
+case $OS in
+	darwin*)
+		LDFLAGS='-dynamiclib'
+		;;
+	*)
+		LDFLAGS='-shared'
+		;;
+esac
+
 AC_SUBST(CFLAGS)
 AC_SUBST(LIBS)
 
