@@ -174,13 +174,15 @@ void process(BGPDUMP_ENTRY *entry) {
 	struct tm *time;
 	char time_str[128];
 	char time_str2[128];
-        char prefix[BGPDUMP_ADDRSTRLEN];  
+	char time_str_fixed[128];
+    char prefix[BGPDUMP_ADDRSTRLEN];  
 	
 	time=gmtime(&entry->time);
 	time2str(time,time_str);	
+	time2str(time,time_str_fixed);	
 	if (mode==0)
 	{
-		printf("TIME: %s\n",time_str);
+		printf("TIME: %s\n", time_str);
 	}	
     //printf("TIME: %s",asctime(gmtime(&entry->time)));
     //printf("LENGTH          : %u\n", entry->length);
@@ -264,7 +266,7 @@ void process(BGPDUMP_ENTRY *entry) {
 	case BGPDUMP_TYPE_TABLE_DUMP_V2:
 		if(mode == 0){
 			char peer_ip[BGPDUMP_ADDRSTRLEN];
-			char time_str[30];
+			//char time_str[30];
 			int i;
 
 			BGPDUMP_TABLE_DUMP_V2_PREFIX *e;
@@ -281,7 +283,7 @@ void process(BGPDUMP_ENTRY *entry) {
 			for(i = 0; i < e->entry_count; i++){
 				// This is slightly nasty - as we want to print multiple entries
 				// for multiple peers, we may need to print another TIME ourselves
-				if(i) printf("\nTIME: %s\n",time_str);
+				if(i) printf("\nTIME: %s\n",time_str_fixed);
 				if(e->afi == AFI_IP){
     				printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
 #ifdef BGPDUMP_HAVE_IPV6
