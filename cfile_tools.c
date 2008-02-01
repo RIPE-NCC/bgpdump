@@ -196,6 +196,7 @@ int cfr_close(CFRFILE *stream) {
   case 1:  // uncompressed
     { 
       retval = fclose((FILE *)(stream->data1));
+      free(stream);
       stream->error1 = retval;
       return(retval);
     }
@@ -213,9 +214,11 @@ int cfr_close(CFRFILE *stream) {
       if (bzerror != BZ_OK) {
         stream->error2 = bzerror;
         stream->error1 = fclose((FILE *)(stream->data1));
+        free(stream);
         return(-1);
       }
       retval = fclose((FILE *)(stream->data1));
+      free(stream);
       stream->error1 = retval;
       return(retval);
     }
@@ -226,6 +229,7 @@ int cfr_close(CFRFILE *stream) {
     { 
 	if(stream->data2!=NULL) {
 		retval=gzclose(stream->data2);
+		free(stream);
 	}
       stream->error2 = retval;
       return(retval);
@@ -359,18 +363,16 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
   // so I dropped it.
   // Returns -1 in case of an error.
   
-  ssize_t retval;
-
   if (stream == NULL) return(-1);  
 
   switch (stream->format) {
   case 1:  // uncompressed
     { 
-      retval = fgets(lineptr, n, (FILE *)(stream->data1));
-      if (retval == -1) {
+      if (fgets(*lineptr, *n, (FILE *)(stream->data1)) == NULL) {
         stream->error1 = errno;
+	return -1;
       }
-      return(retval);
+      return 0;
     }
     break;
 

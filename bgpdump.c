@@ -73,7 +73,10 @@ int main(int argc, char *argv[]) {
     extern char *optarg;
     char c;
     extern int optind;
-    char *usage = "Usage: bgpdump [-m] [-M] [-i] [-t dump|change ] input_binary_file(s) \n";
+    char *usage = "Usage: bgpdump [-m] [-M] [-t dump|change ] input_binary_file(s)\n\
+	-m and -M produce two different kinds of binary formats,\n\
+	-t defines whether timestamps in machine-readable format should be the timestamp of\n\
+		when the dump was made, or when the dumped route was last change (only effective for RIB dumps)\n";
 
     while ((c=getopt(argc,argv,"if:o:t:mM"))!=-1)
 	switch(c)
@@ -1577,8 +1580,8 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 #ifdef BGPDUMP_HAVE_IPV6
 		} else if(e->entries[i].peer->afi == AFI_IP6){
 		    inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
-		}
 #endif
+		}
 			
 		if(e->afi == AFI_IP) {
 			inet_ntop(AF_INET, &e->prefix.v4_addr, prefix, BGPDUMP_ADDRSTRLEN);

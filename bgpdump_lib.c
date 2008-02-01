@@ -125,8 +125,16 @@ BGPDUMP *bgpdump_open_dump(char *filename) {
 }
 
 void bgpdump_close_dump(BGPDUMP *dump) {
-    if(dump!=NULL) 
+    if(dump!=NULL) {
+	
+    	if(table_dump_v2_peer_index_table){
+		if(table_dump_v2_peer_index_table->entries) 
+			free(table_dump_v2_peer_index_table->entries);
+		free(table_dump_v2_peer_index_table);
+	}
 	cfr_close(dump->f);
+        free(dump);
+    }
 }
 
 BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
@@ -210,9 +218,11 @@ void bgpdump_free_mp_info(struct mp_info *info) {
     u_int16_t afi;
     u_int8_t safi;
 
-    for(afi = 1; afi < BGPDUMP_MAX_AFI; afi++) {
+    for(afi = 1; afi <= BGPDUMP_MAX_AFI; afi++) {
 	for(safi = 1; safi < BGPDUMP_MAX_SAFI; safi++) {
 	    if(info->announce[afi][safi])
+		if(info->announce[afi][safi]->nlri)
+			free(info->announce[afi][safi]->nlri);
 		free(info->announce[afi][safi]);
 	    if(info->withdraw[afi][safi])
 		free(info->withdraw[afi][safi]);
@@ -435,17 +445,21 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 
 	for(i=0; i < t->peer_count; i++) {
     	mstream_getc(s,&peertype);
+#ifdef BGPDUMP_HAVE_IPV6
 		if(peertype & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AFI_IP6)
 			t->entries[i].afi = AFI_IP6;
 		else
+#endif
 			t->entries[i].afi = AFI_IP;
 
     	mstream_get_ipv4(s,(uint32_t *)&t->entries[i].peer_bgp_id);
 
 		if(t->entries[i].afi == AFI_IP)
 			mstream_get_ipv4(s,&t->entries[i].peer_ip.v4_addr.s_addr);
+#ifdef BGPDUMP_HAVE_IPV6
 		else
 			mstream_get(s, &t->entries[i].peer_ip.v6_addr.s6_addr, 16);
+#endif
 
 
 		if(peertype & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AS4)
@@ -498,6 +512,7 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 
 
 int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *entry){
+#ifdef BGPDUMP_HAVE_IPV6
 	BGPDUMP_TABLE_DUMP_V2_PREFIX *prefixdata;
 	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
 	uint16_t i;
@@ -534,6 +549,7 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		entry->attr = NULL;
 	}
 
+#endif
 	return 1;
 }
 /*
@@ -1321,7 +1337,7 @@ void process_mp_announce_only_nexthop(struct mstream *s, struct mp_info *info, i
 	u_int8_t safi;
 	struct mp_nlri *mp_nlri;
 
-	afi = AFI_IP6;
+	afi = AFI_IP;
 	safi = SAFI_UNICAST;
 
 	/* If there are 2 NLRI's for the same protocol, fail but don't burn and die */

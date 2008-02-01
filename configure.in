@@ -46,6 +46,7 @@ AC_CHECK_LIB(bz2, BZ2_bzReadOpen, [], AC_MSG_ERROR([libbz2 is required to build 
 
 # Check for inet_ntoa in -lnsl if not found (Solaris)
 AC_CHECK_FUNCS(inet_ntoa, [], AC_CHECK_LIB(nsl, inet_ntoa, [], AC_MSG_ERROR([inet_ntoa not found],1)))
+AC_CHECK_FUNCS(inet_ntop, [], AC_CHECK_LIB(nsl, inet_ntop, [], AC_MSG_ERROR([inet_ntop not found],1)))
 
 AC_ARG_ENABLE(ipv6, AC_HELP_STRING([--disable-ipv6], [disable support for IPv6]))
 

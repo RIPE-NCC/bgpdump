@@ -3,14 +3,23 @@ RIPE NCC information services department.
 
 You can reach us at ris@ripe.net.
 
-2006-06-21 Erik Romijn <eromijn@ripe.net>
+2008-02-01 Erik Romijn <eromijn@ripe.net>
+	* Fixed a few memleaks based on a patch from
+	  Antony Antony <antony@phenome.org>
+	  (Ticket NCC#2007064868)
+	* Fixed compiling with --disable-ipv6 based on a patch
+	  from Haniff Rahbari <hnrahbari@yahoo.com>
+	  (Ticket NCC#2007111325)
+	* Fixed a few warnings, mostly based on a patch from
+	  Bruno Quoitin <bruno.quoitin@uclouvain.be>
+	  (Ticket NCC#2007123069)
+	* Made bgpdump's usage message nicer
+
+2007-06-21 Erik Romijn <eromijn@ripe.net>
     * Fixed incorrect dump time display for some cases
 
-2006-06-06 Erik Romijn <eromijn@ripe.net>
+2007-06-06 Erik Romijn <eromijn@ripe.net>
     * Set proper compile options to work on Mac OS X 10.4
-
-2006-06-21 Erik Romijn <eromijn@ripe.net>
-    * Fixed incorrect dump time display for some cases
 
 2007-06-01 Erik Romijn <eromijn@ripe.net>
     * Fixed several bugs in 64-bit PC support and added

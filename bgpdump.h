@@ -42,7 +42,7 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #ifndef _BGPDUMP_H
 #define _BGPDUMP_H
 
-#include <bgpdump-config.h>
+#include "bgpdump-config.h"
 
 #include <sys/types.h>
 #include <netinet/in.h>
