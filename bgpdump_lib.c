@@ -128,9 +128,12 @@ void bgpdump_close_dump(BGPDUMP *dump) {
     if(dump!=NULL) {
 	
     	if(table_dump_v2_peer_index_table){
-		if(table_dump_v2_peer_index_table->entries) 
+		if(table_dump_v2_peer_index_table->entries) {
 			free(table_dump_v2_peer_index_table->entries);
+			table_dump_v2_peer_index_table->entries = NULL;
+		}
 		free(table_dump_v2_peer_index_table);
+		table_dump_v2_peer_index_table = NULL;
 	}
 	cfr_close(dump->f);
         free(dump);
