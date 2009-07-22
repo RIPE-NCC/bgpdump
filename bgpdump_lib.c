@@ -19,11 +19,11 @@ ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS; IN NO EVENT SHALL
 AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
 DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
 AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 */
 
-/* 
+/*
 
 Parts of this code have been engineered after analiyzing GNU Zebra's
 source code and therefore might contain declarations/code from GNU
@@ -63,7 +63,7 @@ static    int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s,BGPDUMP_
 static    int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
-    
+
 static    int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
 static    int process_zebra_bgp_message_update(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
 static    int process_zebra_bgp_message_open(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len);
@@ -110,12 +110,12 @@ BGPDUMP *bgpdump_open_dump(char *filename) {
     {
 	strcpy(this_dump->filename, filename);
     }
-    
+
     if(f == NULL) {
 	free(this_dump);
 	return NULL;
     }
-    
+
     this_dump->f = f;
     this_dump->eof=0;
     this_dump->parsed = 0;
@@ -126,7 +126,7 @@ BGPDUMP *bgpdump_open_dump(char *filename) {
 
 void bgpdump_close_dump(BGPDUMP *dump) {
     if(dump!=NULL) {
-	
+
     	if(table_dump_v2_peer_index_table){
 		if(table_dump_v2_peer_index_table->entries) {
 			free(table_dump_v2_peer_index_table->entries);
@@ -141,7 +141,7 @@ void bgpdump_close_dump(BGPDUMP *dump) {
 }
 
 BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
-    BGPDUMP_ENTRY *this_entry=NULL;    
+    BGPDUMP_ENTRY *this_entry=NULL;
     struct mstream s;
     u_char *buffer;
     int ok=0;
@@ -163,7 +163,7 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
 	}
 	/* Nothing more to read, quit */
 	free(this_entry);
-	dump->eof=1; 
+	dump->eof=1;
 	return(NULL);
     }
 
@@ -179,34 +179,34 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
 
     buffer = malloc(this_entry->length);
     bytes_read = cfr_read_n(dump->f, buffer, this_entry->length);
-    if(bytes_read != this_entry->length) { 
+    if(bytes_read != this_entry->length) {
 	syslog(LOG_ERR,
 	       "bgpdump_read_next: incomplete dump record (%d bytes read, expecting %d)",
 	       bytes_read, this_entry->length);
-	free(this_entry); 
+	free(this_entry);
 	free(buffer);
 	dump->eof=1;
 	return(NULL);
     }
-        
+
 
     ok=0;
     mstream_init(&s,buffer,this_entry->length);
 
     switch(this_entry->type) {
-	case BGPDUMP_TYPE_MRTD_BGP:		
+	case BGPDUMP_TYPE_MRTD_BGP:
 		break;
-	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:	
-		ok = process_mrtd_table_dump(&s,this_entry); 
+	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:
+		ok = process_mrtd_table_dump(&s,this_entry);
 		break;
 	case BGPDUMP_TYPE_ZEBRA_BGP:
-		ok = process_zebra_bgp(&s,this_entry); 
+		ok = process_zebra_bgp(&s,this_entry);
 		break;
 	case BGPDUMP_TYPE_TABLE_DUMP_V2:
-		ok = process_mrtd_table_dump_v2(&s,this_entry); 
+		ok = process_mrtd_table_dump_v2(&s,this_entry);
 		break;
     }
-	
+
     free(buffer);
     if(ok) {
 	dump->parsed_ok++;
@@ -298,7 +298,7 @@ void bgpdump_free_attr(struct attr *attr){
 		free(path);
 	      }
 	    }
-	    
+
 	    if(attr->community != NULL) {
 		if(attr->community->val != NULL)
 		    free(attr->community->val);
@@ -622,7 +622,7 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 }
 
 
-int 
+int
 process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     read_asn(s, &entry->body.zebra_state_change.source_as, asn_len);
     read_asn(s, &entry->body.zebra_state_change.destination_as, asn_len);
@@ -729,7 +729,7 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 	    }
 	    /* Note fall through! If we don't recognize this type of data corruption, we say
 	     * the address family is unsupported (since FFFF is not a valid address family) */
-	default:			
+	default:
 	    /* unsupported address family */
 	    syslog(LOG_WARNING, "process_zebra_bgp_message: unsupported AFI %d",
 		   entry->body.zebra_message.address_family);
@@ -738,7 +738,7 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 
     if(memcmp(marker, "\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377\377", 16) != 0) {
 	/* bad marker... ignore packet */
-	syslog(LOG_WARNING, 
+	syslog(LOG_WARNING,
 	       "bgp_message: bad marker: %02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x.%02x",
 	       marker[0],marker[1],marker[2],marker[3],marker[4],marker[5],marker[6],marker[7],
 	       marker[8],marker[9],marker[10],marker[11],marker[12],marker[13],marker[14],marker[15]);
@@ -749,8 +749,8 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
     mstream_getc (s,&entry->body.zebra_message.type);
 
     entry->body.zebra_message.cut_bytes = entry->body.zebra_message.size - 19 - mstream_can_read(s);
-    
-    switch(entry->body.zebra_message.type) {    
+
+    switch(entry->body.zebra_message.type) {
 	case BGP_MSG_OPEN:
 	    return process_zebra_bgp_message_open(s,entry, asn_len);
 	case BGP_MSG_UPDATE:
@@ -846,7 +846,7 @@ int process_zebra_bgp_snapshot(struct mstream *s, BGPDUMP_ENTRY *entry) {
 void process_attr_init(BGPDUMP_ENTRY *entry) {
 
     entry->attr = malloc(sizeof(struct attr));
-    
+
     entry->attr->flag			= 0;
     entry->attr->origin			= -1;
     entry->attr->nexthop.s_addr		= -1;
@@ -861,7 +861,7 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
     entry->attr->community		= NULL;
     entry->attr->transit		= NULL;
 
-    entry->attr->mp_info		= NULL;    
+    entry->attr->mp_info		= NULL;
     entry->attr->len			= 0;
     entry->attr->data			= NULL;
 
@@ -880,7 +880,7 @@ void process_attr_read(struct mstream *s, struct attr *attr, u_int8_t asn_len, s
     u_int32_t	len, end;
     u_int32_t	truelen;
     struct unknown_attr *unknown;
-    
+
     mstream_getw(s, &attr->len);
     if(attr->len == 0)
       return;
@@ -897,16 +897,16 @@ void process_attr_read(struct mstream *s, struct attr *attr, u_int8_t asn_len, s
     memcpy(attr->data, &s->start[s->position], truelen);
 
     end = s->position + truelen;
-    
+
     while(s->position < end) {
 	mstream_getc(s,&flag);
 	mstream_getc(s,&type);
-	
-	if(flag & BGP_ATTR_FLAG_EXTLEN) 
+
+	if(flag & BGP_ATTR_FLAG_EXTLEN)
 	    len=mstream_getw(s,NULL);
 	else
 	    len=mstream_getc(s,NULL);
-	
+
 	/* Take note of all attributes, including unknown ones */
 	if(type <= sizeof(attr->flag) * 8)
 	  attr->flag = attr->flag | ATTR_FLAG_BIT (type);
@@ -914,7 +914,7 @@ void process_attr_read(struct mstream *s, struct attr *attr, u_int8_t asn_len, s
 	switch(type) {
 	    case BGP_ATTR_ORIGIN:
 		mstream_getc(s,&attr->origin);
-		break;	    
+		break;
 	    case BGP_ATTR_AS_PATH:
 		attr->aspath = create_aspath(len, asn_len);
 		mstream_get(s,attr->aspath->data,len);
@@ -1081,9 +1081,9 @@ void process_attr_aspath_string(struct aspath *as) {
       assegment = (struct assegment *) pnt;
 
       /* Check AS type validity. */
-      if ((assegment->type != AS_SET) && 
+      if ((assegment->type != AS_SET) &&
 	  (assegment->type != AS_SEQUENCE) &&
-	  (assegment->type != AS_CONFED_SET) && 
+	  (assegment->type != AS_CONFED_SET) &&
 	  (assegment->type != AS_CONFED_SEQUENCE))
 	{
 	  free(str_buf);
@@ -1107,7 +1107,7 @@ void process_attr_aspath_string(struct aspath *as) {
         default:
           estimate_len = ((assegment->length * 12) + 4);
       }
-      
+
       /* String length check. */
       while (str_pnt + estimate_len >= str_size)
 	{
@@ -1228,11 +1228,11 @@ void process_attr_community_string(struct community *com) {
 
   memset (buf, 0, BUFSIZ);
 
-  for (i = 0; i < com->size; i++) 
+  for (i = 0; i < com->size; i++)
     {
       memcpy (&comval, com_nthval (com, i), sizeof (u_int32_t));
       comval = ntohl (comval);
-      switch (comval) 
+      switch (comval)
 	{
 	case COMMUNITY_NO_EXPORT:
 	  strlcat (buf, " no-export", BUFSIZ);
@@ -1246,7 +1246,7 @@ void process_attr_community_string(struct community *com) {
 	default:
 	  as = (comval >> 16) & 0xFFFF;
 	  val = comval & 0xFFFF;
-	  snprintf (buf + strlen (buf), BUFSIZ - strlen (buf), 
+	  snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
 		    " %d:%d", as, val);
 	  break;
 	}
@@ -1496,11 +1496,7 @@ char *print_asn(as_t asn) {
      presentation format for 32-bit ASNs will be. If in the end it turns out to
      be a 32-bit integer, it can simply be removed. */
 	static char asn_str[strlen("65535.65535") + 1];
-	//if(asn >> 16) {
-	//	sprintf(asn_str, "%d.%d", (asn >> 16) & 0xFFFF, asn & 0xFFFF);
-	//} else {
-		sprintf(asn_str, "%d", asn);
-	//}
+	sprintf(asn_str, "%d", asn);
 	return asn_str;
 }
 

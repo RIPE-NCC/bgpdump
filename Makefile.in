@@ -19,7 +19,7 @@ LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o
 all: libbgpdump.so libbgpdump.a testbgpdump bgpdump 
 
 libbgpdump.so: $(LIB_H) $(LIB_C) Makefile
-	$(COMPILE) -fpic -c $(LIB_C)
+	$(COMPILE) -fPIC -c $(LIB_C)
 	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
 
 libbgpdump.a: $(LIB_H) $(LIB_C) $(LIB_O) Makefile
@@ -34,3 +34,6 @@ bgpdump: bgpdump.c $(LIB_H) $(LIB_C) Makefile
 
 clean:
 	rm -f libbgpdump.so libbgpdump.a testbgpdump bgpdump *.o 
+
+distclean: clean
+	rm -rf config.log config.status *.dSYM core *.core autom4te.cache bgpdump-config.h Makefile

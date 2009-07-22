@@ -75,4 +75,8 @@ typedef union union_BGPDUMP_IP_ADDRESS {
 
 #define AS_TRAN 23456
 
+/* If no aspath was present as a string in the packet, return an empty string
+ * so everything stays machine parsable */
+#define ATTR_ASPATH(a) ( ((a->flag & ATTR_FLAG_BIT(BGP_ATTR_AS_PATH)) != 0 ) && a->aspath && a->aspath->str ? a->aspath->str : "") 
+
 #endif
