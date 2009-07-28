@@ -97,7 +97,7 @@ BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE *table_dump_v2_peer_index_table = NULL;
 static    size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
-BGPDUMP *bgpdump_open_dump(char *filename) {
+BGPDUMP *bgpdump_open_dump(const char *filename) {
     BGPDUMP *this_dump=NULL;
     CFRFILE *f;
 
@@ -145,7 +145,7 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     struct mstream s;
     u_char *buffer;
     int ok=0;
-    int bytes_read;
+    u_int32_t bytes_read;
 
     this_entry = malloc(sizeof(BGPDUMP_ENTRY));
 
@@ -224,11 +224,16 @@ void bgpdump_free_mp_info(struct mp_info *info) {
     for(afi = 1; afi <= BGPDUMP_MAX_AFI; afi++) {
 	for(safi = 1; safi < BGPDUMP_MAX_SAFI; safi++) {
 	    if(info->announce[afi][safi])
-		if(info->announce[afi][safi]->nlri)
+		if(info->announce[afi][safi]->nlri) {
 			free(info->announce[afi][safi]->nlri);
+			info->announce[afi][safi]->nlri = NULL;
+		}
 		free(info->announce[afi][safi]);
-	    if(info->withdraw[afi][safi])
+		info->announce[afi][safi] = NULL;
+	    if(info->withdraw[afi][safi]) {
 		free(info->withdraw[afi][safi]);
+		info->withdraw[afi][safi] = NULL;
+	    }
 	}
     }
 
@@ -849,11 +854,11 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
 
     entry->attr->flag			= 0;
     entry->attr->origin			= -1;
-    entry->attr->nexthop.s_addr		= -1;
+    entry->attr->nexthop.s_addr		= INADDR_NONE;
     entry->attr->med			= -1;
     entry->attr->local_pref		= -1;
     entry->attr->aggregator_as		= -1;
-    entry->attr->aggregator_addr.s_addr	= -1;
+    entry->attr->aggregator_addr.s_addr	= INADDR_NONE;
     entry->attr->weight			= -1;
     entry->attr->cluster		= NULL;
 
@@ -871,7 +876,7 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
     entry->attr->new_aspath		= NULL;
     entry->attr->old_aspath		= NULL;
     entry->attr->new_aggregator_as	= -1;
-    entry->attr->new_aggregator_addr.s_addr = -1;
+    entry->attr->new_aggregator_addr.s_addr = INADDR_NONE;
 }
 
 void process_attr_read(struct mstream *s, struct attr *attr, u_int8_t asn_len, struct zebra_incomplete *incomplete, char mp_only_nexthop) {
@@ -1041,8 +1046,8 @@ void aspath_error(struct aspath *as) {
 void process_attr_aspath_string(struct aspath *as) {
   int space;
   u_char type;
-  void *pnt;
-  void *end;
+  caddr_t pnt;
+  caddr_t end;
   struct assegment *assegment;
   int str_size = ASPATH_STR_DEFAULT_LEN;
   int str_pnt;
@@ -1201,7 +1206,7 @@ char aspath_delimiter_char (u_char type, u_char which) {
       { AS_SEQUENCE,        ' ', ' ' },
       { AS_CONFED_SET,      '[', ']' },
       { AS_CONFED_SEQUENCE, '(', ')' },
-      { 0 }
+      { 0, '\0', '\0' }
     };
 
   for (i = 0; aspath_delim_char[i].type != 0; i++)
@@ -1495,8 +1500,8 @@ char *print_asn(as_t asn) {
   /* This function is here because we don't yet know what the final
      presentation format for 32-bit ASNs will be. If in the end it turns out to
      be a 32-bit integer, it can simply be removed. */
-	static char asn_str[strlen("65535.65535") + 1];
-	sprintf(asn_str, "%d", asn);
+	static char asn_str[10 + 1];
+	sprintf(asn_str, "%u", asn);
 	return asn_str;
 }
 

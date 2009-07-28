@@ -5,7 +5,7 @@ AC_INIT([libbgpdump], 1.4.1, [ris@ripe.net])
 AC_CONFIG_SRCDIR([bgpdump_lib.c])
 AC_CONFIG_HEADERS([bgpdump-config.h])
 
-CFLAGS="$CFLAGS -Wall -Wcast-align -O3"
+CFLAGS="$CFLAGS -Wall -Wformat=2 -Wcast-align -Wsystem-headers -Wno-format-y2k -W -Wno-unused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wwrite-strings -Wswitch -Wshadow -Wcast-align -Wunused-parameter -O3"
 
 # Checks for programs.
 AC_PROG_CC
