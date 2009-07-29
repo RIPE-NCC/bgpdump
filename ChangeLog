@@ -1,11 +1,19 @@
+===============================================
 The current maintainer of this library is the
 RIPE NCC information services department.
 
 You can reach us at ris@ripe.net.
 
+PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
+ISSUES, AS YOUR E-MAIL MAY BE LOST
+===============================================
+
 2009-07-29 Erik Romijn <eromijn@ripe.net>
 	* Fixing incorrect as path length count in case of AS_(CONFED_)SEQUENCE
 	  (issue IS-141)
+	* Added support for the ORIGINATOR_ID and CLUSTER_LIST attributes
+	  (issue IS-181)
+	  Patch contributed by Maurizio Pizzonia <pizzonia@dia.uniroma3.it>
 	
 
 2009-07-27 Ruben van Staveren <ruben@ripe.net>

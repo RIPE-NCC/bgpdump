@@ -320,6 +320,11 @@ void bgpdump_free_attr(struct attr *attr){
 	    if(attr->mp_info != NULL)
 		bgpdump_free_mp_info(attr->mp_info);
 
+	    if(attr->cluster != NULL) {
+			free(attr->cluster->list);
+			free(attr->cluster);
+		}
+
 	    if (attr->unknown_num) {
 		for (i = 0; i < attr->unknown_num; i++)
 		    free(attr->unknown[i].raw);
@@ -860,6 +865,8 @@ void process_attr_init(BGPDUMP_ENTRY *entry) {
     entry->attr->aggregator_as		= -1;
     entry->attr->aggregator_addr.s_addr	= INADDR_NONE;
     entry->attr->weight			= -1;
+
+    entry->attr->originator_id.s_addr	= -1;
     entry->attr->cluster		= NULL;
 
     entry->attr->aspath			= NULL;
@@ -975,6 +982,20 @@ void process_attr_read(struct mstream *s, struct attr *attr, u_int8_t asn_len, s
 		read_asn(s, &attr->new_aggregator_as, ASN32_LEN);
 		mstream_get_ipv4(s,&attr->new_aggregator_addr.s_addr);
 		break;
+
+	    case BGP_ATTR_ORIGINATOR_ID:
+		mstream_get_ipv4(s,&attr->originator_id.s_addr);
+		break;
+	    case BGP_ATTR_CLUSTER_LIST:
+		attr->cluster		= malloc(sizeof(struct cluster_list));
+		attr->cluster->length	= len/4;
+		attr->cluster->list = malloc((attr->cluster->length) * sizeof(struct in_addr));
+	
+		int cluster_index;
+		for (cluster_index=0;cluster_index<attr->cluster->length;cluster_index++)
+			mstream_get_ipv4(s,&attr->cluster->list[cluster_index].s_addr);
+		break;
+
 	    default:
 		/* Unknown attribute. Save as is */
 		attr->unknown_num++;
@@ -1142,7 +1163,7 @@ void process_attr_aspath_string(struct aspath *as) {
 	case AS_SET:
 	case AS_CONFED_SET:
 	  count += 1;
-	break
+	break;
       }
 
       for (i = 0; i < assegment->length; i++)

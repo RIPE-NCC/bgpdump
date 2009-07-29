@@ -64,7 +64,7 @@ typedef struct struct_BGPDUMP {
 
 /* prototypes */
 
-BGPDUMP *bgpdump_open_dump(char *filename);
+BGPDUMP *bgpdump_open_dump(const char *filename);
 void	bgpdump_close_dump(BGPDUMP *dump);
 BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump);
 void	bgpdump_free_mem(BGPDUMP_ENTRY *entry);

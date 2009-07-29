@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     char *usage = "Usage: bgpdump [-m] [-M] [-t dump|change ] input_binary_file(s)\n\
 	-m and -M produce two different kinds of binary formats,\n\
 	-t defines whether timestamps in machine-readable format should be the timestamp of\n\
-		when the dump was made, or when the dumped route was last change (only effective for RIB dumps)\n";
+	   when the dump was made, or when the dumped route was last change (only effective for RIB dumps)\n";
 
     while ((c=getopt(argc,argv,"if:o:t:mM"))!=-1)
 	switch(c)
@@ -899,6 +899,20 @@ void show_attr(struct attr *attr) {
 
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_AGGREGATOR) ) !=0)		
 		    printf("AGGREGATOR: AS%s %s\n",print_asn(attr->aggregator_as),inet_ntoa(attr->aggregator_addr));
+
+	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ORIGINATOR_ID) ) !=0)
+			printf("ORIGINATOR_ID: %s\n",inet_ntoa(attr->originator_id));
+	
+	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_CLUSTER_LIST) ) !=0)
+		{
+			int cluster_index;
+
+			printf("CLUSTER_LIST: ");
+
+			for (cluster_index = 0;cluster_index<attr->cluster->length;cluster_index++)
+				printf("%s ",inet_ntoa(attr->cluster->list[cluster_index]));
+			printf("\n");
+		}
 
 	    if (attr->unknown_num)
 	    {
