@@ -1138,9 +1138,11 @@ void process_attr_aspath_string(struct aspath *as) {
 	case AS_SEQUENCE:
 	case AS_CONFED_SEQUENCE:
 	  count += assegment->length;
+	break;
 	case AS_SET:
 	case AS_CONFED_SET:
 	  count += 1;
+	break
       }
 
       for (i = 0; i < assegment->length; i++)
