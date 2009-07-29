@@ -30,6 +30,7 @@
 #ifndef _CFILE_TOOLS_DEFINES
 #define _CFILE_TOOLS_DEFINES
 
+#include "bgpdump-config.h"
 
 #define _GNU_SOURCE
 #define _FILE_OFFSET_BITS 64

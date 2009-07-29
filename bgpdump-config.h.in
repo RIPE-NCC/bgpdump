@@ -98,3 +98,9 @@
 
 /* Define if system headers do not define u_int8_t */
 #undef u_int8_t
+
+/* Define if libbzip2 not present */
+#undef DONT_HAVE_BZ2
+
+/* Define if libz not present */
+#undef DONT_HAVE_GZ
