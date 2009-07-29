@@ -889,10 +889,10 @@ void show_attr(struct attr *attr) {
 		    printf("NEXT_HOP: %s\n",inet_ntoa(attr->nexthop));
 
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) !=0)	
-		    printf("MULTI_EXIT_DISC: %d\n",attr->med);
+		    printf("MULTI_EXIT_DISC: %u\n",attr->med);
 
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) !=0)		
-		    printf("LOCAL_PREF: %d\n",attr->local_pref);
+		    printf("LOCAL_PREF: %u\n",attr->local_pref);
 
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE) ) !=0)	
 		    printf("ATOMIC_AGGREGATE\n");
@@ -1168,8 +1168,8 @@ void table_line_announce(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY 
 	//char buf2[128];
 	char tmp1[20];
 	char tmp2[20];
-	int  npref;
-	int  nmed;
+	unsigned int npref;
+	unsigned int nmed;
 				
 	switch (entry->attr->origin)
 	{
@@ -1214,7 +1214,7 @@ void table_line_announce(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY 
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-			printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
+			printf("%s|%u|%u|",inet_ntoa(entry->attr->nexthop),npref,nmed);
 			if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
 			else
@@ -1253,8 +1253,8 @@ void table_line_announce_1(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENT
 	//char buf2[128];
 	char tmp1[20];
 	char tmp2[20];
-	int  npref;
-	int  nmed;
+	unsigned int npref;
+	unsigned int nmed;
 				
 	switch (entry->attr->origin)
 	{
@@ -1377,8 +1377,8 @@ void table_line_announce6(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTR
 	char buf2[128];
 	char tmp1[20];
 	char tmp2[20];
-	int  npref;
-	int  nmed;
+	unsigned int npref;
+	unsigned int nmed;
 				
 	switch (entry->attr->origin)
 	{
@@ -1414,7 +1414,7 @@ void table_line_announce6(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTR
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-				printf("BGP4MP|%ld|A|%s|%s|%s/%d|%s|%s|%s|%d|%d|",entry->time,inet_ntop(AF_INET6,&entry->body.zebra_message.source_ip,buf1,128),print_asn(entry->body.zebra_message.source_as),inet_ntop(AF_INET6,&prefix->nlri[index].address.v6_addr,buf2,128),prefix->nlri[index].len,ATTR_ASPATH(entry->attr),tmp1,inet_ntop(AF_INET6,&prefix->nexthop,buf,128),npref,nmed);
+				printf("BGP4MP|%ld|A|%s|%s|%s/%d|%s|%s|%s|%u|%u|",entry->time,inet_ntop(AF_INET6,&entry->body.zebra_message.source_ip,buf1,128),print_asn(entry->body.zebra_message.source_as),inet_ntop(AF_INET6,&prefix->nlri[index].address.v6_addr,buf2,128),prefix->nlri[index].len,ATTR_ASPATH(entry->attr),tmp1,inet_ntop(AF_INET6,&prefix->nexthop,buf,128),npref,nmed);
 				break;
 			case AFI_IP:
 			default:
@@ -1427,7 +1427,7 @@ void table_line_announce6(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTR
 	            nmed=0;
 			    
 			//printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),nprof,nmed);
-				printf("BGP4MP|%ld|A|%s|%s|%s/%d|%s|%s|%s|%d|%d|",entry->time,inet_ntop(AF_INET,&entry->body.zebra_message.source_ip,buf1,128),print_asn(entry->body.zebra_message.source_as),inet_ntop(AF_INET6,&prefix->nlri[index].address.v6_addr,buf2,128),prefix->nlri[index].len,ATTR_ASPATH(entry->attr),tmp1,inet_ntop(AF_INET6,&prefix->nexthop,buf,128),npref,nmed);
+				printf("BGP4MP|%ld|A|%s|%s|%s/%d|%s|%s|%s|%u|%u|",entry->time,inet_ntop(AF_INET,&entry->body.zebra_message.source_ip,buf1,128),print_asn(entry->body.zebra_message.source_as),inet_ntop(AF_INET6,&prefix->nlri[index].address.v6_addr,buf2,128),prefix->nlri[index].len,ATTR_ASPATH(entry->attr),tmp1,inet_ntop(AF_INET6,&prefix->nexthop,buf,128),npref,nmed);
 				break;
 			}
 			if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
@@ -1468,8 +1468,8 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 	struct tm *time = NULL;
 	char tmp1[20];
 	char tmp2[20];	
-	int  npref;
-	int  nmed;
+	unsigned int npref;
+	unsigned int nmed;
 	char  time_str[20];
         char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
 
@@ -1531,7 +1531,7 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
                 {
 		    strncpy(nexthop, inet_ntoa(entry->attr->nexthop), BGPDUMP_ADDRSTRLEN);
 		}
-		   printf("%s|%d|%d|",nexthop,npref,nmed);
+		   printf("%s|%u|%u|",nexthop,npref,nmed);
 
 		   if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
@@ -1564,8 +1564,8 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 	struct tm *time = NULL;
 	char tmp1[20];
 	char tmp2[20];	
-	int  npref;
-	int  nmed;
+	unsigned int npref;
+	unsigned int nmed;
 	char  time_str[20];
     char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
 	
@@ -1633,7 +1633,7 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
                 {
 		    strncpy(nexthop, inet_ntoa(e->entries[i].attr->nexthop), BGPDUMP_ADDRSTRLEN);
 		}
-		   printf("%s|%d|%d|",nexthop,npref,nmed);
+		   printf("%s|%u|%u|",nexthop,npref,nmed);
 
 		   if( (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    		printf("%s|%s|",e->entries[i].attr->community->str+1,tmp2);

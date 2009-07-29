@@ -11,10 +11,12 @@ ISSUES, AS YOUR E-MAIL MAY BE LOST
 2009-07-29 Erik Romijn <eromijn@ripe.net>
 	* Fixing incorrect as path length count in case of AS_(CONFED_)SEQUENCE
 	  (issue IS-141)
+	  Patch contributed by Toby Ehrenkranz <tehrenkr@cs.uoregon.edu>
 	* Added support for the ORIGINATOR_ID and CLUSTER_LIST attributes
 	  (issue IS-181)
 	  Patch contributed by Maurizio Pizzonia <pizzonia@dia.uniroma3.it>
-	
+	* Fixed signedness of MED and localpref (issue IS-180)
+	  Patch contributed by Steve Hill <cheesy@sackheads.org>
 
 2009-07-27 Ruben van Staveren <ruben@ripe.net>
 	* Enabled extra compiler warnings
