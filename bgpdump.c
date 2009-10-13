@@ -1598,6 +1598,9 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 		    inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
 #endif
 		}
+
+    char *aspath_str = (e->entries[i].attr->aspath) ? e->entries[i].attr->aspath->str: "";
+
 			
 		if(e->afi == AFI_IP) {
 			inet_ntop(AF_INET, &e->prefix.v4_addr, prefix, BGPDUMP_ADDRSTRLEN);
@@ -1614,7 +1617,7 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 		   }else if(timetype==1){
 	   	   printf("TABLE_DUMP2|%u|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
 		   }
-	      	   printf("%s/%d|%s|%s|",prefix,e->prefix_length,e->entries[i].attr->aspath->str,tmp1);
+	      	   printf("%s/%d|%s|%s|",prefix,e->prefix_length,aspath_str,tmp1);
 
 		    npref=e->entries[i].attr->local_pref;
 	            if( (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
@@ -1655,7 +1658,7 @@ void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_
 		    }
 	            time2str(time,time_str);	
 	 	    printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));
-			printf("%s/%d|%s|%s\n",prefix,e->prefix_length,e->entries[i].attr->aspath->str,tmp1);
+			printf("%s/%d|%s|%s\n",prefix,e->prefix_length,aspath_str,tmp1);
 				
 		}
 	}

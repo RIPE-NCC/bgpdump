@@ -8,6 +8,11 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ===============================================
 
+2009-10-13 Ruben van Staveren <ruben@ripe.net>
+	* Fix segfaults with empty AS path on -m/-M 
+	  (issue IS-292)
+	  Patch contributed by Lorenzo Colitti <lorenzo@google.com> 
+
 2009-07-29 Erik Romijn <eromijn@ripe.net>
 	* Fixing incorrect as path length count in case of AS_(CONFED_)SEQUENCE
 	  (issue IS-141)
