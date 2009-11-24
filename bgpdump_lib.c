@@ -1368,7 +1368,7 @@ void process_mp_announce_only_nexthop(struct mstream *s, struct mp_info *info, i
 	u_int8_t safi;
 	struct mp_nlri *mp_nlri;
 
-	afi = AFI_IP;
+	afi = AFI_IP6;
 	safi = SAFI_UNICAST;
 
 	/* If there are 2 NLRI's for the same protocol, fail but don't burn and die */
