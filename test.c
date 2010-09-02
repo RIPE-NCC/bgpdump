@@ -67,14 +67,15 @@ int main(int argc, char **argv) {
     BGPDUMP *my_dump;
     BGPDUMP_ENTRY *my_entry=NULL;
 
-    if(argc>1) {
-	my_dump=bgpdump_open_dump(argv[1]);
-    } else {
-	my_dump=bgpdump_open_dump("dumps/updates.20020701.0032");
+    if(argc != 2) {
+        fprintf(stderr, "no dump file supplied\n");
+        exit(1);
     }
 
+    my_dump=bgpdump_open_dump(argv[1]);
+
     if(my_dump==NULL) {
-	printf("Error opening dump file ...\n");
+	printf("Error opening dump file\n");
 	exit(1);
     }
 

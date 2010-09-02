@@ -1,0 +1,9 @@
+\.o$
+config.log
+config.status
+bgpdump
+testbgpdump
+libbgpdump.a
+libbgpdump.so
+Makefile
+test_out/.*

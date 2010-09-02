@@ -2,7 +2,6 @@
 
 CC	= @CC@
 CFLAGS	= @CFLAGS@
-INCLUDES = -I./
 COMPILE  = $(CC) $(CFLAGS) $(INCLUDES)
 
 LD	= @CC@
@@ -18,21 +17,26 @@ LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o
 
 all: libbgpdump.so libbgpdump.a testbgpdump bgpdump 
 
-libbgpdump.so: $(LIB_H) $(LIB_C) Makefile
-	$(COMPILE) -fPIC -c $(LIB_C)
-	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
-
 libbgpdump.a: $(LIB_H) $(LIB_C) $(LIB_O) Makefile
 	$(AR) r libbgpdump.a $(LIB_O)
 	$(RANLIB) libbgpdump.a
 
-testbgpdump: test.c $(LIB_H) $(LIB_C) Makefile
+libbgpdump.so: libbgpdump.a
+	$(COMPILE) $(LDFLAGS) -o libbgpdump.so libbgpdump.a $(SYS_LIBS)
+
+testbgpdump: test.c libbgpdump.a
 	$(COMPILE) -o testbgpdump test.c libbgpdump.a $(SYS_LIBS)
 
-bgpdump: bgpdump.c $(LIB_H) $(LIB_C) Makefile
+bgpdump: bgpdump.c libbgpdump.a
 	$(COMPILE) -o bgpdump bgpdump.c libbgpdump.a $(SYS_LIBS)
 
-clean:
+test-clean:
+	rm -f test_out/*.bgp.gz
+
+test: test-clean bgpdump
+	./test.sh
+
+clean: test-clean
 	rm -f libbgpdump.so libbgpdump.a testbgpdump bgpdump *.o 
 
 distclean: clean

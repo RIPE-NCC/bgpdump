@@ -38,7 +38,7 @@ this license is included with libbgpdump.
 Original Author: Dan Ardelean (dan@ripe.net)
 */
 
-#include <bgpdump-config.h>
+#include "bgpdump-config.h"
 #include "bgpdump_mstream.h"
 
 #include <stdio.h>
