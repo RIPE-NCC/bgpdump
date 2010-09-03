@@ -23,8 +23,6 @@
   - no compression
   - bzip2  
   - gzip
-
-  $Revision$ $Date$
 */
 
 #ifndef _CFILE_TOOLS_DEFINES

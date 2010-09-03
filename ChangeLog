@@ -8,6 +8,13 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ===============================================
 
+2010-09-03 Devin Bayer <dbayer@ripe.net>
+        * Fix parsing of IPv6 NEXT_HOP attributes
+        * Add clearer command-line options
+        * Add logging to STDERR
+        * Add dumping to files instead of STDOUT
+        * Add regression test suite
+
 2009-11-24 Roman Kalyakin <roman@ripe.net>
 	* Fixed incorrect output when running with -m which was introduced by a change in one of the previous versions.
 	  (issue IS-439)

@@ -1,38 +1,27 @@
 /*
-
-Copyright (c) 2007                      RIPE NCC
-
-
-All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted, provided
-that the above copyright notice appear in all copies and that both that
-copyright notice and this permission notice appear in supporting
-documentation, and that the name of the author not be used in advertising or
-publicity pertaining to distribution of the software without specific,
-written prior permission.
-
-THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS; IN NO EVENT SHALL
-AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
-DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
-
-*/
-
-/* 
-
+ Copyright (c) 2007 - 2010 RIPE NCC - All Rights Reserved
+ 
+ Permission to use, copy, modify, and distribute this software and its
+ documentation for any purpose and without fee is hereby granted, provided
+ that the above copyright notice appear in all copies and that both that
+ copyright notice and this permission notice appear in supporting
+ documentation, and that the name of the author not be used in advertising or
+ publicity pertaining to distribution of the software without specific,
+ written prior permission.
+ 
+ THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS; IN NO EVENT SHALL
+ AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
+ DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
 Parts of this code have been engineered after analiyzing GNU Zebra's
 source code and therefore might contain declarations/code from GNU
 Zebra, Copyright (C) 1999 Kunihiro Ishiguro. Zebra is a free routing
 software, distributed under the GNU General Public License. A copy of
 this license is included with libbgpdump.
 
-*/
-
-/*
 Original Author: Shufu Mao(msf98@mails.tsinghua.edu.cn) 
 */
 
@@ -41,21 +30,26 @@ Original Author: Shufu Mao(msf98@mails.tsinghua.edu.cn)
 #endif
 
 #include "bgpdump_lib.h"
-#include <time.h>
+#include "util.h"
 
+#include <time.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <stdbool.h>
 
-    void process(BGPDUMP_ENTRY *entry);
-    void show_attr(struct attr *attr);
-    void show_prefixes(int count,struct prefix *prefix);
-    void table_line_announce_1(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
-    void table_line_announce(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
-    void table_line_withdraw(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
-    void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *entry, int timetype);
-	void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_ENTRY *entry,int timetype);
+void process(BGPDUMP_ENTRY *entry);
+void show_attr(attributes_t *attr);
+void show_prefixes(int count,struct prefix *prefix);
+void table_line_announce_1(int mode,struct mp_nlri *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
+void table_line_announce(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
+void table_line_withdraw(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
+void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *entry, int timetype);
+void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_ENTRY *entry,int timetype);
+
 #ifdef BGPDUMP_HAVE_IPV6
     void show_prefixes6(int count,struct prefix *prefix);
     void table_line_withdraw6(int mode,struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
@@ -63,8 +57,26 @@ Original Author: Shufu Mao(msf98@mails.tsinghua.edu.cn)
 #endif
 
 
-    static int mode=0;
-    static int timetype=0;
+static int mode=0;
+static int timetype=0;
+
+static const char USAGE[] = "\
+Usage: bgpdump [-m|-M] [-t dump|-t change] [-O <output-file>] <input-file>\n\
+bgpdump translates binary MRT files (possibly compressed) into readable output\n\
+Output mode:\n\
+    -H         multi-line human-readable output (the default)\n\
+    -m         output in one-line machine readable format 1\n\
+    -M         output in one-line machine readable format 2\n\
+\n\
+Common Options:\n\
+    -O <file>  output to <file> instead of STDOUT\n\
+    -s         log to syslog (the default)\n\
+    -v         log to STDERR\n\
+\n\
+Options for -m and -M modes:\n\
+    -t dump    timestamps for RIB dumps reflect the time of the dump (the default)\n\
+    -t change  timestamps for RIB dumps reflect the last route modification\n\
+\n";
 
 int main(int argc, char *argv[]) {
     
@@ -73,41 +85,74 @@ int main(int argc, char *argv[]) {
     extern char *optarg;
     char c;
     extern int optind;
-    char *usage = "Usage: bgpdump [-m] [-M] [-t dump|change ] input_binary_file(s)\n\
-	-m and -M produce two different kinds of binary formats,\n\
-	-t defines whether timestamps in machine-readable format should be the timestamp of\n\
-	   when the dump was made, or when the dumped route was last change (only effective for RIB dumps)\n";
-
-    while ((c=getopt(argc,argv,"if:o:t:mM"))!=-1)
+    int fd;
+    bool usage_error = false;
+    bool use_syslog = true;
+ 
+    log_to_stderr();
+    
+    while ((c=getopt(argc,argv,"if:o:t:mMHO:sv"))!=-1)
 	switch(c)
 	{
+       case 'H':
+                mode=0;
+                break;
 	case 'm':
-		mode=1;
-		break;
+                mode=1;
+                break;
 	case 'M':
-		mode=2;
-		break;
+                mode=2;
+                break;
 	case 't':
-		if(strcmp(optarg,"dump")==0){
-		  timetype=0;
-		}else if(strcmp(optarg,"change")==0){
-		  timetype=1;
-		}
-	default:
-		break;
+                if(strcmp(optarg,"dump")==0){
+                    timetype=0;
+                } else if(strcmp(optarg,"change")==0){
+                    timetype=1;
+                } else {
+                    printf("unknown -t option\n");
+                    exit(1);
+                }
+                break;
+        case 'O':
+                fprintf(stderr, "redirecting output to '%s'\n", optarg); 
+                fd = open(optarg, O_WRONLY|O_CREAT, 0666);
+                if(fd < 0 || 0 > dup2(fd, STDOUT_FILENO)) {
+                        perror("can't open output file");
+                        exit(1);
+                }
+                break;
+        case 's':
+                use_syslog = true;
+                break;
+        case 'v':
+                use_syslog = false;
+                break;
+        case 'i':
+        case 'f':
+        case 'o':
+                warn("ignoring option '-%c'", c);
+                break;
+        case '?':
+        default:
+                usage_error = true;
 	}
-	argc -= optind;
-	argv += optind;
+    argc -= optind;
+    argv += optind;
     
-    if(argc>=1 && argv[0] != NULL) {
-	my_dump=bgpdump_open_dump(argv[0]);
-    } else {
-	my_dump=bgpdump_open_dump("dumps/updates.20020701.0032");
+    if(use_syslog) {
+        info("logging to syslog");
+        log_to_syslog();
     }
     
-    if(my_dump==NULL) {
-	printf("%s",usage);
-	exit(1);
+    if(usage_error || argc != 1) {
+        if(argc != 1)
+            err("you must supply exactly one file to process");
+        fprintf(stderr, "%s", USAGE);
+        exit(1);        
+    }
+
+    if(argc>=1 && argv[0] != NULL) {
+        my_dump=bgpdump_open_dump(argv[0]);
     }
     
     do {
@@ -861,7 +906,7 @@ void process(BGPDUMP_ENTRY *entry) {
     	printf("\n");
 }
 
-void show_attr(struct attr *attr) {
+void show_attr(attributes_t *attr) {
     
     if(attr != NULL) {
 
@@ -1558,109 +1603,98 @@ void table_line_mrtd_route(int mode,BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY
 
 }
 
+static char *describe_origin(int origin) {
+    if(origin == 0) return "IGP";
+    if(origin == 1) return "EGP";
+    return "INCOMPLETE";
+}
 
 void table_line_dump_v2_prefix(int mode,BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_ENTRY *entry,int timetype)
 {
-	struct tm *time = NULL;
-	char tmp1[20];
-	char tmp2[20];	
-	unsigned int npref;
-	unsigned int nmed;
-	char  time_str[20];
+    struct tm *time = NULL;
+    unsigned int npref;
+    unsigned int nmed;
+    char  time_str[20];
     char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
-	
-	int i;
-
-	for(i = 0; i < e->entry_count; i++){
-
-		switch (e->entries[i].attr->origin) {
-
-		case 0 :
-			sprintf(tmp1,"IGP");
-			break;
-		case 1:
-			sprintf(tmp1,"EGP");
-			break;
-		case 2:
-		default:
-			sprintf(tmp1,"INCOMPLETE");
-			break;
-		}
-		if (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-			sprintf(tmp2,"AG");
-		else
-			sprintf(tmp2,"NAG");
-
-		if(e->entries[i].peer->afi == AFI_IP){
-		    inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
+    
+    int i;
+    
+    for(i = 0; i < e->entry_count; i++) {
+        attributes_t *attr = e->entries[i].attr;
+        if(! attr)
+            continue;
+        
+        char *origin = describe_origin(attr->origin);
+        char *aspath_str = (attr->aspath) ? attr->aspath->str: "";
+        char *aggregate = attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE) ? "AG" : "NAG";
+        
+        if(e->entries[i].peer->afi == AFI_IP){
+            inet_ntop(AF_INET, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
 #ifdef BGPDUMP_HAVE_IPV6
-		} else if(e->entries[i].peer->afi == AFI_IP6){
-		    inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
+        } else if(e->entries[i].peer->afi == AFI_IP6){
+            inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer, BGPDUMP_ADDRSTRLEN);
 #endif
-		}
-
-    char *aspath_str = (e->entries[i].attr->aspath) ? e->entries[i].attr->aspath->str: "";
-
-			
-		if(e->afi == AFI_IP) {
-			inet_ntop(AF_INET, &e->prefix.v4_addr, prefix, BGPDUMP_ADDRSTRLEN);
+        }
+        
+        if(e->afi == AFI_IP) {
+            inet_ntop(AF_INET, &e->prefix.v4_addr, prefix, BGPDUMP_ADDRSTRLEN);
 #ifdef BGPDUMP_HAVE_IPV6
-		} else if(e->afi == AFI_IP6) {
-			inet_ntop(AF_INET6, &e->prefix.v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
+        } else if(e->afi == AFI_IP6) {
+            inet_ntop(AF_INET6, &e->prefix.v6_addr, prefix, BGPDUMP_ADDRSTRLEN);
 #endif
-		}
-
-		if (mode == 1)
-		{
-		   if(timetype==0){
-	   	   printf("TABLE_DUMP2|%ld|B|%s|%s|",entry->time,peer,print_asn(e->entries[i].peer->peer_as));
-		   }else if(timetype==1){
-	   	   printf("TABLE_DUMP2|%u|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
-		   }
-	      	   printf("%s/%d|%s|%s|",prefix,e->prefix_length,aspath_str,tmp1);
-
-		    npref=e->entries[i].attr->local_pref;
-	            if( (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
-	            npref=0;
-		    nmed=e->entries[i].attr->med;
-	            if( (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
-	            nmed=0;
-			    
+        }
+        
+        if (mode == 1)
+        {
+            if(timetype==0){
+                printf("TABLE_DUMP2|%ld|B|%s|%s|",entry->time,peer,print_asn(e->entries[i].peer->peer_as));
+            }else if(timetype==1){
+                printf("TABLE_DUMP2|%u|B|%s|%s|",e->entries[i].originated_time,peer,print_asn(e->entries[i].peer->peer_as));
+            }
+            printf("%s/%d|%s|%s|",prefix,e->prefix_length,aspath_str,origin);
+            
+            npref=attr->local_pref;
+            if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
+                npref=0;
+            nmed=attr->med;
+            if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
+                nmed=0;
+            
 #ifdef BGPDUMP_HAVE_IPV6
-	    	if ((e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI)) && e->entries[i].attr->mp_info->announce[AFI_IP6][SAFI_UNICAST])
-		{
-		    inet_ntop(AF_INET6,&e->entries[i].attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,nexthop,sizeof(nexthop));
-		}
-	    	else
+            if ((attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI)) && attr->mp_info->announce[AFI_IP6][SAFI_UNICAST])
+            {
+                inet_ntop(AF_INET6,&attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,nexthop,sizeof(nexthop));
+            }
+            else
 #endif
-                {
-		    strncpy(nexthop, inet_ntoa(e->entries[i].attr->nexthop), BGPDUMP_ADDRSTRLEN);
-		}
-		   printf("%s|%u|%u|",nexthop,npref,nmed);
-
-		   if( (e->entries[i].attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
-		    		printf("%s|%s|",e->entries[i].attr->community->str+1,tmp2);
-			else
-				printf("|%s|",tmp2);
-				
-			if (e->entries[i].attr->aggregator_addr.s_addr != -1)
-				printf("%s %s|\n",print_asn(e->entries[i].attr->aggregator_as),inet_ntoa(e->entries[i].attr->aggregator_addr));
-			else
-				printf("|\n");
-		}
-		else
-		{
-                    if(timetype==0){
-                        time=gmtime(&entry->time);
-		    }else if(timetype==1){
-			time_t time_temp = (time_t)((e->entries[i]).originated_time);
-			time=gmtime(&time_temp);
-		    }
-	            time2str(time,time_str);	
-	 	    printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));
-			printf("%s/%d|%s|%s\n",prefix,e->prefix_length,aspath_str,tmp1);
-				
-		}
-	}
-	
+            {
+                strncpy(nexthop, inet_ntoa(attr->nexthop), BGPDUMP_ADDRSTRLEN);
+            }
+            printf("%s|%u|%u|",nexthop,npref,nmed);
+            
+            if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
+                printf("%s|%s|",attr->community->str+1,aggregate);
+            else
+                printf("|%s|",aggregate);
+            
+            if (attr->aggregator_addr.s_addr != -1)
+                printf("%s %s|\n",print_asn(attr->aggregator_as),inet_ntoa(attr->aggregator_addr));
+            else
+                printf("|\n");
+        }
+        else
+        {
+            if(timetype==0){
+                time=gmtime(&entry->time);
+            }else if(timetype==1){
+                time_t time_temp = (time_t)((e->entries[i]).originated_time);
+                time=gmtime(&time_temp);
+            }
+            time2str(time,time_str);	
+            printf("TABLE_DUMP_V2|%s|A|%s|%s|",time_str,peer,print_asn(e->entries[i].peer->peer_as));
+            printf("%s/%d|%s|%s\n",prefix,e->prefix_length,aspath_str,origin);
+            
+        }
+    }
+    
 }

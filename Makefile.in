@@ -11,13 +11,12 @@ RANLIB	= @RANLIB@
 
 SYS_LIBS= @LIBS@
 
-LIB_H	 = bgpdump.h bgpdump_attr.h bgpdump_formats.h bgpdump_lib.h bgpdump_mstream.h cfile_tools.h
-LIB_C    = bgpdump_lib.c bgpdump_mstream.c cfile_tools.c
-LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o
+LIB_H	 = bgpdump.h bgpdump_attr.h bgpdump_formats.h bgpdump_lib.h bgpdump_mstream.h cfile_tools.h util.h
+LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o util.o
 
-all: libbgpdump.so libbgpdump.a testbgpdump bgpdump 
+all: libbgpdump.so bgpdump 
 
-libbgpdump.a: $(LIB_H) $(LIB_C) $(LIB_O) Makefile
+libbgpdump.a: $(LIB_H) $(LIB_O) Makefile
 	$(AR) r libbgpdump.a $(LIB_O)
 	$(RANLIB) libbgpdump.a
 
@@ -37,7 +36,7 @@ test: test-clean bgpdump
 	./test.sh
 
 clean: test-clean
-	rm -f libbgpdump.so libbgpdump.a testbgpdump bgpdump *.o 
+	rm -f libbgpdump.so libbgpdump.a testbgpdump bgpdump $(LIB_O)
 
 distclean: clean
 	rm -rf config.log config.status *.dSYM core *.core autom4te.cache bgpdump-config.h Makefile

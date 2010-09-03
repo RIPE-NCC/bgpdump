@@ -1,0 +1,352 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 45;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4DF74766122D4E800092F3E2 /* bgpdump.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF7475F122D4E800092F3E2 /* bgpdump.c */; };
+		4DF7479F122D52510092F3E2 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477A122D51850092F3E2 /* libz.dylib */; };
+		4DF747A0122D525A0092F3E2 /* libbz2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477C122D51990092F3E2 /* libbz2.dylib */; };
+		4DF747A4122D52900092F3E2 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477A122D51850092F3E2 /* libz.dylib */; };
+		4DF747A5122D529D0092F3E2 /* libbz2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477C122D51990092F3E2 /* libbz2.dylib */; };
+		4DF747A6122D52C30092F3E2 /* bgpdump_lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF74759122D4E800092F3E2 /* bgpdump_lib.c */; };
+		4DF747A7122D52C30092F3E2 /* bgpdump_mstream.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF7475B122D4E800092F3E2 /* bgpdump_mstream.c */; };
+		4DF747A8122D52C50092F3E2 /* cfile_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF74761122D4E800092F3E2 /* cfile_tools.c */; };
+		4DF74863122E52060092F3E2 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF74862122E52060092F3E2 /* util.c */; };
+		4DF74864122E52060092F3E2 /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 4DF74861122E52060092F3E2 /* util.h */; };
+		4DF74865122E52060092F3E2 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF74862122E52060092F3E2 /* util.c */; };
+		8DD76FB00486AB0100D96B5E /* bgpdump.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = C6A0FF2C0290799A04C91782 /* bgpdump.1 */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		8DD76FAF0486AB0100D96B5E /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 8;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				8DD76FB00486AB0100D96B5E /* bgpdump.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		4DF74757122D4E800092F3E2 /* bgpdump_attr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_attr.h; sourceTree = "<group>"; };
+		4DF74758122D4E800092F3E2 /* bgpdump_formats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_formats.h; sourceTree = "<group>"; };
+		4DF74759122D4E800092F3E2 /* bgpdump_lib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bgpdump_lib.c; sourceTree = "<group>"; };
+		4DF7475A122D4E800092F3E2 /* bgpdump_lib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_lib.h; sourceTree = "<group>"; };
+		4DF7475B122D4E800092F3E2 /* bgpdump_mstream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bgpdump_mstream.c; sourceTree = "<group>"; };
+		4DF7475C122D4E800092F3E2 /* bgpdump_mstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_mstream.h; sourceTree = "<group>"; };
+		4DF7475D122D4E800092F3E2 /* bgpdump-config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "bgpdump-config.h"; sourceTree = "<group>"; };
+		4DF7475E122D4E800092F3E2 /* bgpdump-config.h.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "bgpdump-config.h.in"; sourceTree = "<group>"; };
+		4DF7475F122D4E800092F3E2 /* bgpdump.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bgpdump.c; sourceTree = "<group>"; };
+		4DF74760122D4E800092F3E2 /* bgpdump.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump.h; sourceTree = "<group>"; };
+		4DF74761122D4E800092F3E2 /* cfile_tools.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cfile_tools.c; sourceTree = "<group>"; };
+		4DF74762122D4E800092F3E2 /* cfile_tools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cfile_tools.h; sourceTree = "<group>"; };
+		4DF74763122D4E800092F3E2 /* test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = test.c; sourceTree = "<group>"; };
+		4DF7477A122D51850092F3E2 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		4DF7477C122D51990092F3E2 /* libbz2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libbz2.dylib; path = usr/lib/libbz2.dylib; sourceTree = SDKROOT; };
+		4DF7479C122D52440092F3E2 /* liblibbgpdump.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = liblibbgpdump.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		4DF747AD122D53000092F3E2 /* README */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README; sourceTree = "<group>"; };
+		4DF747AE122D53000092F3E2 /* README.ipv6 */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = README.ipv6; sourceTree = "<group>"; };
+		4DF747AF122D53130092F3E2 /* ChangeLog */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
+		4DF74861122E52060092F3E2 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		4DF74862122E52060092F3E2 /* util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = util.c; sourceTree = "<group>"; };
+		8DD76FB20486AB0100D96B5E /* bgpdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = bgpdump; sourceTree = BUILT_PRODUCTS_DIR; };
+		C6A0FF2C0290799A04C91782 /* bgpdump.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = bgpdump.1; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4DF7479A122D52440092F3E2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4DF7479F122D52510092F3E2 /* libz.dylib in Frameworks */,
+				4DF747A0122D525A0092F3E2 /* libbz2.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD76FAD0486AB0100D96B5E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4DF747A4122D52900092F3E2 /* libz.dylib in Frameworks */,
+				4DF747A5122D529D0092F3E2 /* libbz2.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		08FB7794FE84155DC02AAC07 /* bgpdump */ = {
+			isa = PBXGroup;
+			children = (
+				08FB7795FE84155DC02AAC07 /* Source */,
+				C6A0FF2B0290797F04C91782 /* Documentation */,
+				1AB674ADFE9D54B511CA2CBB /* Products */,
+				4DF7477A122D51850092F3E2 /* libz.dylib */,
+				4DF7477C122D51990092F3E2 /* libbz2.dylib */,
+			);
+			name = bgpdump;
+			sourceTree = "<group>";
+		};
+		08FB7795FE84155DC02AAC07 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				4DF74757122D4E800092F3E2 /* bgpdump_attr.h */,
+				4DF74758122D4E800092F3E2 /* bgpdump_formats.h */,
+				4DF74759122D4E800092F3E2 /* bgpdump_lib.c */,
+				4DF7475A122D4E800092F3E2 /* bgpdump_lib.h */,
+				4DF7475B122D4E800092F3E2 /* bgpdump_mstream.c */,
+				4DF7475C122D4E800092F3E2 /* bgpdump_mstream.h */,
+				4DF7475D122D4E800092F3E2 /* bgpdump-config.h */,
+				4DF7475E122D4E800092F3E2 /* bgpdump-config.h.in */,
+				4DF7475F122D4E800092F3E2 /* bgpdump.c */,
+				4DF74760122D4E800092F3E2 /* bgpdump.h */,
+				4DF74761122D4E800092F3E2 /* cfile_tools.c */,
+				4DF74762122D4E800092F3E2 /* cfile_tools.h */,
+				4DF74763122D4E800092F3E2 /* test.c */,
+				4DF74861122E52060092F3E2 /* util.h */,
+				4DF74862122E52060092F3E2 /* util.c */,
+			);
+			indentWidth = 4;
+			name = Source;
+			sourceTree = "<group>";
+			tabWidth = 8;
+		};
+		1AB674ADFE9D54B511CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8DD76FB20486AB0100D96B5E /* bgpdump */,
+				4DF7479C122D52440092F3E2 /* liblibbgpdump.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C6A0FF2B0290797F04C91782 /* Documentation */ = {
+			isa = PBXGroup;
+			children = (
+				4DF747AF122D53130092F3E2 /* ChangeLog */,
+				4DF747AD122D53000092F3E2 /* README */,
+				4DF747AE122D53000092F3E2 /* README.ipv6 */,
+				C6A0FF2C0290799A04C91782 /* bgpdump.1 */,
+			);
+			name = Documentation;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		4DF74798122D52440092F3E2 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4DF74864122E52060092F3E2 /* util.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		4DF7479B122D52440092F3E2 /* libbgpdump */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4DF747A3122D52850092F3E2 /* Build configuration list for PBXNativeTarget "libbgpdump" */;
+			buildPhases = (
+				4DF74798122D52440092F3E2 /* Headers */,
+				4DF74799122D52440092F3E2 /* Sources */,
+				4DF7479A122D52440092F3E2 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = libbgpdump;
+			productName = libbgpdump;
+			productReference = 4DF7479C122D52440092F3E2 /* liblibbgpdump.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		8DD76FA90486AB0100D96B5E /* bgpdump */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1DEB928508733DD80010E9CD /* Build configuration list for PBXNativeTarget "bgpdump" */;
+			buildPhases = (
+				8DD76FAB0486AB0100D96B5E /* Sources */,
+				8DD76FAD0486AB0100D96B5E /* Frameworks */,
+				8DD76FAF0486AB0100D96B5E /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = bgpdump;
+			productInstallPath = "$(HOME)/bin";
+			productName = bgpdump;
+			productReference = 8DD76FB20486AB0100D96B5E /* bgpdump */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		08FB7793FE84155DC02AAC07 /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = 1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "bgpdump" */;
+			compatibilityVersion = "Xcode 3.1";
+			hasScannedForEncodings = 1;
+			mainGroup = 08FB7794FE84155DC02AAC07 /* bgpdump */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8DD76FA90486AB0100D96B5E /* bgpdump */,
+				4DF7479B122D52440092F3E2 /* libbgpdump */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4DF74799122D52440092F3E2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4DF74865122E52060092F3E2 /* util.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8DD76FAB0486AB0100D96B5E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4DF74766122D4E800092F3E2 /* bgpdump.c in Sources */,
+				4DF747A6122D52C30092F3E2 /* bgpdump_lib.c in Sources */,
+				4DF747A7122D52C30092F3E2 /* bgpdump_mstream.c in Sources */,
+				4DF747A8122D52C50092F3E2 /* cfile_tools.c in Sources */,
+				4DF74863122E52060092F3E2 /* util.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1DEB928608733DD80010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = bgpdump;
+				RUN_CLANG_STATIC_ANALYZER = NO;
+				VALIDATE_PRODUCT = NO;
+			};
+			name = Debug;
+		};
+		1DEB928708733DD80010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/bin;
+				PRODUCT_NAME = bgpdump;
+			};
+			name = Release;
+		};
+		1DEB928A08733DD80010E9CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.6;
+			};
+			name = Debug;
+		};
+		1DEB928B08733DD80010E9CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				PREBINDING = NO;
+				SDKROOT = macosx10.6;
+			};
+			name = Release;
+		};
+		4DF7479D122D52440092F3E2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				EXECUTABLE_PREFIX = lib;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_MODEL_TUNING = G5;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				INSTALL_PATH = /usr/local/lib;
+				PREBINDING = NO;
+				PRODUCT_NAME = libbgpdump;
+			};
+			name = Debug;
+		};
+		4DF7479E122D52440092F3E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_MODEL_TUNING = G5;
+				INSTALL_PATH = /usr/local/lib;
+				PREBINDING = NO;
+				PRODUCT_NAME = libbgpdump;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1DEB928508733DD80010E9CD /* Build configuration list for PBXNativeTarget "bgpdump" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB928608733DD80010E9CD /* Debug */,
+				1DEB928708733DD80010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1DEB928908733DD80010E9CD /* Build configuration list for PBXProject "bgpdump" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1DEB928A08733DD80010E9CD /* Debug */,
+				1DEB928B08733DD80010E9CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4DF747A3122D52850092F3E2 /* Build configuration list for PBXNativeTarget "libbgpdump" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4DF7479D122D52440092F3E2 /* Debug */,
+				4DF7479E122D52440092F3E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 08FB7793FE84155DC02AAC07 /* Project object */;
+}

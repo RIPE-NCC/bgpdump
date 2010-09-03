@@ -1,51 +1,28 @@
-static const char RCSID[] = "$Id$";
 /*
-
-Copyright (c) 2002                      RIPE NCC
-
-
-All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and its
-documentation for any purpose and without fee is hereby granted, provided
-that the above copyright notice appear in all copies and that both that
-copyright notice and this permission notice appear in supporting
-documentation, and that the name of the author not be used in advertising or
-publicity pertaining to distribution of the software without specific,
-written prior permission.
-
-THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
-ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS; IN NO EVENT SHALL
-AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
-DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
-
-*/
-
-/* 
-
+ Copyright (c) 2007 - 2010 RIPE NCC - All Rights Reserved
+ 
+ Permission to use, copy, modify, and distribute this software and its
+ documentation for any purpose and without fee is hereby granted, provided
+ that the above copyright notice appear in all copies and that both that
+ copyright notice and this permission notice appear in supporting
+ documentation, and that the name of the author not be used in advertising or
+ publicity pertaining to distribution of the software without specific,
+ written prior permission.
+ 
+ THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
+ ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS; IN NO EVENT SHALL
+ AUTHOR BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
+ DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
+ AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ 
 Parts of this code have been engineered after analiyzing GNU Zebra's
 source code and therefore might contain declarations/code from GNU
 Zebra, Copyright (C) 1999 Kunihiro Ishiguro. Zebra is a free routing
 software, distributed under the GNU General Public License. A copy of
 this license is included with libbgpdump.
 
-*/
-
-/*
--------------------------------------------------------------------------------
-Module Header
-Filename          : test.c
-Author            : Dan Ardelean (dan@ripe.net)
-Date              : 02-SEP-2002
-Revision          : 
-Revised           : 
-Description       : Example of libbgpdump usage
-Language Version  : C
-OSs Tested        : Linux 2.2.19
-To Do             : 
--------------------------------------------------------------------------------
+Author: Dan Ardelean (dan@ripe.net)
 */
 
 #include "bgpdump_lib.h"
@@ -57,7 +34,7 @@ To Do             :
 #include <arpa/inet.h>
 
     void process(BGPDUMP_ENTRY *entry);
-    void show_attr(struct attr *attr);
+    void show_attr(attributes_t *attr);
     void show_prefixes(int count,struct prefix *prefix);
 #ifdef BGPDUMP_HAVE_IPV6
     void show_v6_prefixes(int count, struct prefix *prefix);
@@ -67,15 +44,14 @@ int main(int argc, char **argv) {
     BGPDUMP *my_dump;
     BGPDUMP_ENTRY *my_entry=NULL;
 
-    if(argc != 2) {
-        fprintf(stderr, "no dump file supplied\n");
-        exit(1);
+    if(argc>1) {
+	my_dump=bgpdump_open_dump(argv[1]);
+    } else {
+	my_dump=bgpdump_open_dump("dumps/updates.20020701.0032");
     }
 
-    my_dump=bgpdump_open_dump(argv[1]);
-
     if(my_dump==NULL) {
-	printf("Error opening dump file\n");
+	printf("Error opening dump file ...\n");
 	exit(1);
     }
 
@@ -376,7 +352,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
     printf("\n");
 }
 
-void show_attr(struct attr *attr) {
+void show_attr(attributes_t *attr) {
     int have_nexthop = 0;
     printf("ATTRIBUTES      :\n");
     

@@ -7,11 +7,10 @@ for mrt in `ls test_data`; do
     echo -n "      testing $mrt..."
     OUT=$mrt.bgp.gz
     ./bgpdump -vm test_data/$mrt | gzip > test_out/$OUT
-    cmp -si 6 test_out/$OUT test_expect/$OUT
+    cmp -i 10 test_out/$OUT test_expect/$OUT
     if [ $? == 0 ]; then
         echo "success"
     else
-        echo "FAILURE"
         FAILURES=$(( $FAILURES + 1 ))
     fi
 done

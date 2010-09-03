@@ -1,4 +1,3 @@
-
 /** 
   cfile_tools.c
  
@@ -9,10 +8,7 @@
   Distributed under the Gnu Public License version 2 or the modified
   BSD license (see file COPYING)
 
-  Support for gzip added by Bernhard Tellenbach <bernhard.tellenbach@gmail.com>
-
-  $Revision$ $Date$
-   
+  Support for gzip added by Bernhard Tellenbach <bernhard.tellenbach@gmail.com>   
 */
 
 #define _GNU_SOURCE
@@ -379,12 +375,11 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
 #ifndef DONT_HAVE_BZ2
   case 2:  // bzip2  
     {                
-      BZFILE * bzin; 
       size_t count;
       char c;
       size_t ret;
 
-      bzin = (BZFILE *) (stream->data2);
+	  //bzin = (BZFILE *) (stream->data2);
 
       // allocate initial buffer if none was passed or size was zero
       if (*lineptr == NULL) {
@@ -508,7 +503,7 @@ char * cfr_strerror(CFRFILE *stream) {
     free(msg);
     msg = msg2;
   }
-  snprintf(res, 120, msg);
+  snprintf(res, 120, "%s", msg);
   res[119] = 0;
   free(msg); 
   return(res);
