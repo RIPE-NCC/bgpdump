@@ -2,6 +2,8 @@
 
 FAILURES=0
 
+mkdir -p test_out
+
 echo "Running Regression Tests..."
 for mrt in `ls test_data`; do
     echo -n "      testing $mrt..."
