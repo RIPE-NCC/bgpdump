@@ -22,11 +22,17 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include "bgpdump.h"
+
 void log_to_stderr();
 void log_to_syslog();
 
 void err(char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void warn(char *fmt, ...) __attribute__((format(printf, 1, 2)));
 void info(char *fmt, ...) __attribute__((format(printf, 1, 2)));
+
+char *fmt_ipv4(BGPDUMP_IP_ADDRESS addr, char *buffer);
+char *fmt_ipv6(BGPDUMP_IP_ADDRESS addr, char *buffer);
+void test_fmt_ip();
 
 #endif

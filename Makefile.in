@@ -12,7 +12,7 @@ RANLIB	= @RANLIB@
 SYS_LIBS= @LIBS@
 
 LIB_H	 = bgpdump.h bgpdump_attr.h bgpdump_formats.h bgpdump_lib.h bgpdump_mstream.h cfile_tools.h util.h
-LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o util.o
+LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o util.o inet_ntop.o
 
 all: libbgpdump.so bgpdump 
 

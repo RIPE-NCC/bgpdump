@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4DA3ECA41237A8930007C28C /* inet_ntop.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DA3ECA31237A8930007C28C /* inet_ntop.c */; };
+		4DA3ECA51237A8930007C28C /* inet_ntop.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DA3ECA31237A8930007C28C /* inet_ntop.c */; };
 		4DF74766122D4E800092F3E2 /* bgpdump.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF7475F122D4E800092F3E2 /* bgpdump.c */; };
 		4DF7479F122D52510092F3E2 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477A122D51850092F3E2 /* libz.dylib */; };
 		4DF747A0122D525A0092F3E2 /* libbz2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477C122D51990092F3E2 /* libbz2.dylib */; };
@@ -35,6 +37,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4DA3ECA31237A8930007C28C /* inet_ntop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inet_ntop.c; sourceTree = "<group>"; };
 		4DF74757122D4E800092F3E2 /* bgpdump_attr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_attr.h; sourceTree = "<group>"; };
 		4DF74758122D4E800092F3E2 /* bgpdump_formats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_formats.h; sourceTree = "<group>"; };
 		4DF74759122D4E800092F3E2 /* bgpdump_lib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bgpdump_lib.c; sourceTree = "<group>"; };
@@ -97,6 +100,7 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				4DA3ECA31237A8930007C28C /* inet_ntop.c */,
 				4DF74757122D4E800092F3E2 /* bgpdump_attr.h */,
 				4DF74758122D4E800092F3E2 /* bgpdump_formats.h */,
 				4DF74759122D4E800092F3E2 /* bgpdump_lib.c */,
@@ -211,6 +215,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4DF74865122E52060092F3E2 /* util.c in Sources */,
+				4DA3ECA51237A8930007C28C /* inet_ntop.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -223,6 +228,7 @@
 				4DF747A7122D52C30092F3E2 /* bgpdump_mstream.c in Sources */,
 				4DF747A8122D52C50092F3E2 /* cfile_tools.c in Sources */,
 				4DF74863122E52060092F3E2 /* util.c in Sources */,
+				4DA3ECA41237A8930007C28C /* inet_ntop.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
