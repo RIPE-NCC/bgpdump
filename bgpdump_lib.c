@@ -972,155 +972,109 @@ void aspath_error(struct aspath *as) {
 }
 
 void process_attr_aspath_string(struct aspath *as) {
-  int space;
-  u_char type;
-  caddr_t pnt;
-  caddr_t end;
-  struct assegment *assegment;
-  int str_size = ASPATH_STR_DEFAULT_LEN;
-  int str_pnt;
-  char *str_buf;
-  int count = 0;
-
-  /* Empty aspath. */
-  if (as->length == 0)
-    {
-      str_buf = malloc(1);
-      str_buf[0] = '\0';
-      as->count = count;
-      as->str = str_buf;
-      return;
-    }
-
-  /* Set default value. */
-  space = 0;
-  type = AS_SEQUENCE;
-
-  /* Set initial pointer. */
-  pnt = as->data;
-  end = pnt + as->length;
-
-  str_buf = malloc(str_size);
-  str_pnt = 0;
-
-  assegment = (struct assegment *) pnt;
-
-  while (pnt < end)
-    {
+    const int MAX_ASPATH_LEN = 8000;  
+    as->str = malloc(MAX_ASPATH_LEN);
+    
+    /* Set default values */
+    int space = 0;
+    u_char type = AS_SEQUENCE;
+    int pos = 0;
+    
+    /* Set initial pointer. */
+    caddr_t pnt = as->data;
+    caddr_t end = pnt + as->length;
+    struct assegment *segment = NULL;
+    
+    while (pnt < end) {
       int i;
-      int estimate_len;
 
       /* For fetch value. */
-      assegment = (struct assegment *) pnt;
+      segment = (struct assegment *) pnt;
 
       /* Check AS type validity. */
-      if ((assegment->type != AS_SET) &&
-	  (assegment->type != AS_SEQUENCE) &&
-	  (assegment->type != AS_CONFED_SET) &&
-	  (assegment->type != AS_CONFED_SEQUENCE))
+      if ((segment->type != AS_SET) &&
+	  (segment->type != AS_SEQUENCE) &&
+	  (segment->type != AS_CONFED_SET) &&
+	  (segment->type != AS_CONFED_SEQUENCE))
 	{
-	  free(str_buf);
 	  aspath_error(as);
 	  return;
 	}
 
       /* Check AS length. */
-      if ((pnt + (assegment->length * as->asn_len) + AS_HEADER_SIZE) > end)
+      if ((pnt + (segment->length * as->asn_len) + AS_HEADER_SIZE) > end)
 	{
-	  free(str_buf);
 	  aspath_error(as);
 	  return;
 	}
 
-      /* Buffer length check. */
-      switch(as->asn_len) {
-        case ASN16_LEN:
-          estimate_len = ((assegment->length * 6) + 4);
-          break;
-        default:
-          estimate_len = ((assegment->length * 12) + 4);
-      }
-
-      /* String length check. */
-      while (str_pnt + estimate_len >= str_size)
-	{
-	  str_size *= 2;
-	  str_buf = realloc (str_buf, str_size);
-	}
-
-      /* If assegment type is changed, print previous type's end
+      /* If segment type is changed, print previous type's end
          character. */
       if (type != AS_SEQUENCE)
-	str_buf[str_pnt++] = aspath_delimiter_char (type, AS_SEG_END);
+	as->str[pos++] = aspath_delimiter_char (type, AS_SEG_END);
       if (space)
-	str_buf[str_pnt++] = ' ';
+	as->str[pos++] = ' ';
 
-      if (assegment->type != AS_SEQUENCE)
-	str_buf[str_pnt++] = aspath_delimiter_char (assegment->type, AS_SEG_START);
+      if (segment->type != AS_SEQUENCE)
+	as->str[pos++] = aspath_delimiter_char (segment->type, AS_SEG_START);
 
       space = 0;
 
-      /* Increment count - NOT ignoring CONFED_SETS/SEQUENCES any more.
+      /* Increment as->count - NOT ignoring CONFED_SETS/SEQUENCES any more.
          I doubt anybody was relying on this behaviour anyway. */
-      switch(assegment->type) {
+      switch(segment->type) {
 	case AS_SEQUENCE:
 	case AS_CONFED_SEQUENCE:
-	  count += assegment->length;
+	  as->count += segment->length;
 	break;
 	case AS_SET:
 	case AS_CONFED_SET:
-	  count += 1;
+	  as->count += 1;
 	break;
       }
 
-      for (i = 0; i < assegment->length; i++)
+      for (i = 0; i < segment->length; i++)
 	{
-	  int len;
 	  as_t asn;
-	  int asn_pos;
 
 	  if (space)
 	    {
-	      if (assegment->type == AS_SET
-		  || assegment->type == AS_CONFED_SET)
-		str_buf[str_pnt++] = ',';
+	      if (segment->type == AS_SET
+		  || segment->type == AS_CONFED_SET)
+		as->str[pos++] = ',';
 	      else
-		str_buf[str_pnt++] = ' ';
+		as->str[pos++] = ' ';
 	    }
 	  else
 	    space = 1;
 
-	  asn_pos = i * as->asn_len;
-	  switch(as->asn_len) {
-	    case ASN16_LEN:
-	      asn = ntohs (*(u_int16_t *) (assegment->data + asn_pos));
-	      break;
-	    case ASN32_LEN:
-	      asn = ntohl (*(u_int32_t *) (assegment->data + asn_pos));
-	      break;
-	    default:
-	      /* Not reached. Keep compiler happy*/
-	      asn = 0;
-	      break;
-	  }
+	  int asn_pos = i * as->asn_len;
+          switch(as->asn_len) {
+                case ASN16_LEN:
+                    asn = ntohs (*(u_int16_t *) (segment->data + asn_pos));
+                    break;
+                case ASN32_LEN:
+                    asn = ntohl (*(u_int32_t *) (segment->data + asn_pos));
+                    break;
+                default:
+                    assert("invalid asn_len" && false);
+          }
 
-	  len = sprintf (str_buf + str_pnt, "%s", print_asn(asn));
-	  str_pnt += len;
+          pos += int2str(asn, as->str + pos);
+          if(pos > MAX_ASPATH_LEN - 100) {
+              strcpy(as->str + pos, "...");
+              return;
+          };
 	}
 
-      type = assegment->type;
-      pnt += (assegment->length * as->asn_len) + AS_HEADER_SIZE;
+      type = segment->type;
+      pnt += (segment->length * as->asn_len) + AS_HEADER_SIZE;
     }
 
-  if (assegment->type != AS_SEQUENCE)
-    str_buf[str_pnt++] = aspath_delimiter_char (assegment->type, AS_SEG_END);
+  if (segment && segment->type != AS_SEQUENCE)
+    as->str[pos++] = aspath_delimiter_char (segment->type, AS_SEG_END);
 
-  str_buf[str_pnt] = '\0';
-
-  as->count = count;
-  as->str = malloc(strlen(str_buf)+1);
-  strcpy(as->str,str_buf);
-  free(str_buf);
+  as->str[pos] = '\0';
 }
 
 char aspath_delimiter_char (u_char type, u_char which) {
@@ -1340,15 +1294,6 @@ static as_t read_asn(struct mstream *s, as_t *asn, u_int8_t len) {
       /* Not reached. Avoid compiler warning */
       return 0;
   }
-}
-
-char *print_asn(as_t asn) {
-  /* This function is here because we don't yet know what the final
-     presentation format for 32-bit ASNs will be. If in the end it turns out to
-     be a 32-bit integer, it can simply be removed. */
-	static char asn_str[10 + 1];
-	sprintf(asn_str, "%u", asn);
-	return asn_str;
 }
 
 int check_new_aspath(struct aspath *aspath) {
