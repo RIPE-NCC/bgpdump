@@ -85,6 +85,7 @@
 #include <arpa/inet.h>
 
 #include "bgpdump.h"
+#include "util.h"
 
 char *fmt_ipv4(BGPDUMP_IP_ADDRESS addr, char *buffer)
 {

@@ -9,12 +9,13 @@
 /* Begin PBXBuildFile section */
 		4DA3ECA41237A8930007C28C /* inet_ntop.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DA3ECA31237A8930007C28C /* inet_ntop.c */; };
 		4DA3ECA51237A8930007C28C /* inet_ntop.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DA3ECA31237A8930007C28C /* inet_ntop.c */; };
+		4DD01F741243914100C66C04 /* bgpdump_lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DD01F731243914100C66C04 /* bgpdump_lib.c */; };
+		4DD01F751243914100C66C04 /* bgpdump_lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DD01F731243914100C66C04 /* bgpdump_lib.c */; };
 		4DF74766122D4E800092F3E2 /* bgpdump.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF7475F122D4E800092F3E2 /* bgpdump.c */; };
 		4DF7479F122D52510092F3E2 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477A122D51850092F3E2 /* libz.dylib */; };
 		4DF747A0122D525A0092F3E2 /* libbz2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477C122D51990092F3E2 /* libbz2.dylib */; };
 		4DF747A4122D52900092F3E2 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477A122D51850092F3E2 /* libz.dylib */; };
 		4DF747A5122D529D0092F3E2 /* libbz2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF7477C122D51990092F3E2 /* libbz2.dylib */; };
-		4DF747A6122D52C30092F3E2 /* bgpdump_lib.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF74759122D4E800092F3E2 /* bgpdump_lib.c */; };
 		4DF747A7122D52C30092F3E2 /* bgpdump_mstream.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF7475B122D4E800092F3E2 /* bgpdump_mstream.c */; };
 		4DF747A8122D52C50092F3E2 /* cfile_tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF74761122D4E800092F3E2 /* cfile_tools.c */; };
 		4DF74863122E52060092F3E2 /* util.c in Sources */ = {isa = PBXBuildFile; fileRef = 4DF74862122E52060092F3E2 /* util.c */; };
@@ -38,9 +39,9 @@
 
 /* Begin PBXFileReference section */
 		4DA3ECA31237A8930007C28C /* inet_ntop.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inet_ntop.c; sourceTree = "<group>"; };
+		4DD01F731243914100C66C04 /* bgpdump_lib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bgpdump_lib.c; sourceTree = "<group>"; };
 		4DF74757122D4E800092F3E2 /* bgpdump_attr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_attr.h; sourceTree = "<group>"; };
 		4DF74758122D4E800092F3E2 /* bgpdump_formats.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_formats.h; sourceTree = "<group>"; };
-		4DF74759122D4E800092F3E2 /* bgpdump_lib.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bgpdump_lib.c; sourceTree = "<group>"; };
 		4DF7475A122D4E800092F3E2 /* bgpdump_lib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_lib.h; sourceTree = "<group>"; };
 		4DF7475B122D4E800092F3E2 /* bgpdump_mstream.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bgpdump_mstream.c; sourceTree = "<group>"; };
 		4DF7475C122D4E800092F3E2 /* bgpdump_mstream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bgpdump_mstream.h; sourceTree = "<group>"; };
@@ -100,10 +101,10 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				4DD01F731243914100C66C04 /* bgpdump_lib.c */,
 				4DA3ECA31237A8930007C28C /* inet_ntop.c */,
 				4DF74757122D4E800092F3E2 /* bgpdump_attr.h */,
 				4DF74758122D4E800092F3E2 /* bgpdump_formats.h */,
-				4DF74759122D4E800092F3E2 /* bgpdump_lib.c */,
 				4DF7475A122D4E800092F3E2 /* bgpdump_lib.h */,
 				4DF7475B122D4E800092F3E2 /* bgpdump_mstream.c */,
 				4DF7475C122D4E800092F3E2 /* bgpdump_mstream.h */,
@@ -216,6 +217,7 @@
 			files = (
 				4DF74865122E52060092F3E2 /* util.c in Sources */,
 				4DA3ECA51237A8930007C28C /* inet_ntop.c in Sources */,
+				4DD01F751243914100C66C04 /* bgpdump_lib.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -224,11 +226,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				4DF74766122D4E800092F3E2 /* bgpdump.c in Sources */,
-				4DF747A6122D52C30092F3E2 /* bgpdump_lib.c in Sources */,
 				4DF747A7122D52C30092F3E2 /* bgpdump_mstream.c in Sources */,
 				4DF747A8122D52C50092F3E2 /* cfile_tools.c in Sources */,
 				4DF74863122E52060092F3E2 /* util.c in Sources */,
 				4DA3ECA41237A8930007C28C /* inet_ntop.c in Sources */,
+				4DD01F741243914100C66C04 /* bgpdump_lib.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,8 +246,6 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
-				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
 				INSTALL_PATH = /usr/local/bin;
 				PRODUCT_NAME = bgpdump;
 				RUN_CLANG_STATIC_ANALYZER = NO;
@@ -270,11 +270,20 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_VERSION = "";
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PREBINDING = NO;
 				SDKROOT = macosx10.6;
+				WARNING_CFLAGS = (
+					"-Wmissing-prototypes",
+					"-Wall",
+					"-Wshadow",
+					"-Wreturn-type",
+				);
 			};
 			name = Debug;
 		};
@@ -284,9 +293,17 @@
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				PREBINDING = NO;
 				SDKROOT = macosx10.6;
+				WARNING_CFLAGS = (
+					"-Wmissing-prototypes",
+					"-Wall",
+					"-Wshadow",
+					"-Wreturn-type",
+				);
 			};
 			name = Release;
 		};

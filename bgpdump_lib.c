@@ -198,7 +198,7 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     return this_entry;
 }
 
-void bgpdump_free_mp_info(struct mp_info *info) {
+static void bgpdump_free_mp_info(struct mp_info *info) {
     u_int16_t afi;
     u_int8_t safi;
 
@@ -325,7 +325,7 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     switch(afi) {
 	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
 	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
-	    mstream_get_ipv4(s, &entry->body.mrtd_table_dump.prefix.v4_addr.s_addr);
+	    entry->body.mrtd_table_dump.prefix.v4_addr = mstream_get_ipv4(s);
 	    break;
 #ifdef BGPDUMP_HAVE_IPV6
 	case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
@@ -346,7 +346,7 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
     switch(afi) {
       case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP:
       case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP_32BIT_AS:
-	mstream_get_ipv4(s, &entry->body.mrtd_table_dump.peer_ip.v4_addr.s_addr);
+	entry->body.mrtd_table_dump.peer_ip.v4_addr = mstream_get_ipv4(s);
 	break;
 #ifdef BGPDUMP_HAVE_IPV6
       case BGPDUMP_SUBTYPE_MRTD_TABLE_DUMP_AFI_IP6:
@@ -413,7 +413,7 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 	t = table_dump_v2_peer_index_table;
 	t->entries = NULL;
 
-    mstream_get_ipv4(s,(uint32_t *)&t->local_bgp_id);
+    t->local_bgp_id = mstream_get_ipv4(s);
 
     mstream_getw(s,&view_name_len);
 	strcpy(t->view_name, "");
@@ -436,17 +436,16 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 
 	for(i=0; i < t->peer_count; i++) {
     	mstream_getc(s,&peertype);
+                t->entries[i].afi = AFI_IP;
 #ifdef BGPDUMP_HAVE_IPV6
 		if(peertype & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AFI_IP6)
 			t->entries[i].afi = AFI_IP6;
-		else
 #endif
-			t->entries[i].afi = AFI_IP;
 
-    	mstream_get_ipv4(s,(uint32_t *)&t->entries[i].peer_bgp_id);
+                t->entries[i].peer_bgp_id = mstream_get_ipv4(s);
 
 		if(t->entries[i].afi == AFI_IP)
-			mstream_get_ipv4(s,&t->entries[i].peer_ip.v4_addr.s_addr);
+			t->entries[i].peer_ip.v4_addr = mstream_get_ipv4(s);
 #ifdef BGPDUMP_HAVE_IPV6
 		else
 			mstream_get(s, &t->entries[i].peer_ip.v6_addr.s6_addr, 16);
@@ -589,8 +588,8 @@ int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int
 		return 0;
 	    }
 
-	    mstream_get_ipv4(s,&entry->body.zebra_state_change.source_ip.v4_addr.s_addr);
-	    mstream_get_ipv4(s,&entry->body.zebra_state_change.destination_ip.v4_addr.s_addr);
+	    entry->body.zebra_state_change.source_ip.v4_addr = mstream_get_ipv4(s);
+	    entry->body.zebra_state_change.destination_ip.v4_addr = mstream_get_ipv4(s);
 	    break;
 #ifdef BGPDUMP_HAVE_IPV6
 	case AFI_IP6:
@@ -636,8 +635,8 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 
     switch(entry->body.zebra_message.address_family) {
 	case AFI_IP:
-	    mstream_get_ipv4(s,&entry->body.zebra_message.source_ip.v4_addr.s_addr);
-	    mstream_get_ipv4(s,&entry->body.zebra_message.destination_ip.v4_addr.s_addr);
+	    entry->body.zebra_message.source_ip.v4_addr = mstream_get_ipv4(s);
+	    entry->body.zebra_message.destination_ip.v4_addr = mstream_get_ipv4(s);
 	    mstream_get (s, marker, 16);
 	    break;
 #ifdef BGPDUMP_HAVE_IPV6
@@ -727,7 +726,7 @@ int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, u_in
     mstream_getc(s, &entry->body.zebra_message.version);
     read_asn(s, &entry->body.zebra_message.my_as, asn_len);
     mstream_getw(s, &entry->body.zebra_message.hold_time);
-    mstream_get_ipv4(s, &entry->body.zebra_message.bgp_id.s_addr);
+    entry->body.zebra_message.bgp_id = mstream_get_ipv4(s);
     mstream_getc(s, &entry->body.zebra_message.opt_len);
 
     if(entry->body.zebra_message.opt_len) {
@@ -765,7 +764,7 @@ int process_zebra_bgp_snapshot(struct mstream *s, BGPDUMP_ENTRY *entry) {
     return 0;
 }
 
-attributes_t *attr_init(struct mstream *s, int len) {
+static attributes_t *attr_init(struct mstream *s, int len) {
 
     attributes_t *attr = malloc(sizeof(struct attr));
     
@@ -774,13 +773,13 @@ attributes_t *attr_init(struct mstream *s, int len) {
     
     attr->len = len;
     attr->flag			= 0;
-    attr->origin			= -1;
-    attr->nexthop.s_addr		= INADDR_NONE;
+    attr->origin		= -1;
+    attr->nexthop.s_addr	= INADDR_NONE;
     attr->med			= -1;
     attr->local_pref		= -1;
     attr->aggregator_as		= -1;
-    attr->aggregator_addr.s_addr	= INADDR_NONE;
-    attr->weight			= -1;
+    attr->aggregator_addr.s_addr = INADDR_NONE;
+    attr->weight		= -1;
 
     attr->originator_id.s_addr	= -1;
     attr->cluster		= NULL;
@@ -788,7 +787,7 @@ attributes_t *attr_init(struct mstream *s, int len) {
     attr->aspath			= NULL;
     attr->community		= NULL;
     attr->transit		= NULL;
-    attr->mp_info		= NULL;
+    attr->mp_info		= calloc(1, sizeof(struct mp_info));;
 
     attr->unknown_num = 0;
     attr->unknown = NULL;
@@ -852,41 +851,42 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
         
     switch(type) {
         case BGP_ATTR_MP_REACH_NLRI:
-            if(! attr->mp_info)
-                attr->mp_info = calloc(1, sizeof(struct mp_info));
             process_mp_announce(s, attr->mp_info, incomplete);
             break;
         case BGP_ATTR_MP_UNREACH_NLRI:
-            if(! attr->mp_info)
-                attr->mp_info = calloc(1, sizeof(struct mp_info));
             process_mp_withdraw(s, attr->mp_info, incomplete);
             break;
         case BGP_ATTR_ORIGIN:
-            mstream_getc(s,&attr->origin);
+            assert(attr->origin == -1);
+            attr->origin = mstream_getc(s, NULL);
             break;
         case BGP_ATTR_AS_PATH:
-            //FIXME assert(! attr->aspath);
+            assert(! attr->aspath);
             attr->aspath = create_aspath(len, asn_len);
             mstream_get(s, attr->aspath->data, len);
             process_attr_aspath_string(attr->aspath);
             break;
         case BGP_ATTR_NEXT_HOP:
-            mstream_get_ipv4(s,&attr->nexthop.s_addr);
+            assert(INADDR_NONE == attr->nexthop.s_addr);
+            attr->nexthop = mstream_get_ipv4(s);
             break;
         case BGP_ATTR_MULTI_EXIT_DISC:
+            assert(-1 == attr->med);
             mstream_getl(s,&attr->med);
             break;
         case BGP_ATTR_LOCAL_PREF:
+            assert(-1 == attr->local_pref);
             mstream_getl(s,&attr->local_pref);
             break;
         case BGP_ATTR_ATOMIC_AGGREGATE:
             break;
         case BGP_ATTR_AGGREGATOR:
+            assert(-1 == attr->new_aggregator_as);
             read_asn(s, &attr->aggregator_as, asn_len);
-            mstream_get_ipv4(s,&attr->aggregator_addr.s_addr);
+            attr->aggregator_addr = mstream_get_ipv4(s);
             break;
         case BGP_ATTR_COMMUNITIES:
-            //FIXME assert(! attr->community);
+            assert(! attr->community);
             attr->community		= malloc(sizeof(struct community));
             attr->community->size	= len / 4;
             attr->community->val	= malloc(len);
@@ -895,7 +895,7 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             process_attr_community_string(attr->community);
             break;
         case BGP_ATTR_NEW_AS_PATH:
-            //FIXME assert(! attr->new_aspath);
+            assert(! attr->new_aspath);
             attr->new_aspath = create_aspath(len, ASN32_LEN);
             mstream_get(s,attr->new_aspath->data, len);
             process_attr_aspath_string(attr->new_aspath);
@@ -903,21 +903,23 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             check_new_aspath(attr->new_aspath);
             break;
         case BGP_ATTR_NEW_AGGREGATOR:
+            assert(-1 == attr->new_aggregator_as);
             read_asn(s, &attr->new_aggregator_as, ASN32_LEN);
-            mstream_get_ipv4(s,&attr->new_aggregator_addr.s_addr);
+            attr->new_aggregator_addr = mstream_get_ipv4(s);
             break;
         case BGP_ATTR_ORIGINATOR_ID:
-            mstream_get_ipv4(s,&attr->originator_id.s_addr);
+            assert(INADDR_NONE == attr->originator_id.s_addr);
+            attr->originator_id = mstream_get_ipv4(s);
             break;
         case BGP_ATTR_CLUSTER_LIST:
-            //FIXME assert(! attr->cluster);
+            assert(! attr->cluster);
             attr->cluster		= malloc(sizeof(struct cluster_list));
             attr->cluster->length	= len/4;
             attr->cluster->list = malloc((attr->cluster->length) * sizeof(struct in_addr));
             
             int i; // cluster index
             for (i = 0; i < attr->cluster->length; i++)
-                mstream_get_ipv4(s,&attr->cluster->list[i].s_addr);
+                attr->cluster->list[i] = mstream_get_ipv4(s);
             break;
         default:
             process_unknown_attr(s, attr, flag, type, len);
@@ -1200,7 +1202,7 @@ static struct mp_nlri *get_nexthop(struct mstream *s, u_int16_t afi) {
 
     if(afi == AFI_IP) {
         assert(nlri->nexthop_len == 4);
-        nlri->nexthop.v4_addr.s_addr = mstream_get_ipv4(s, NULL);
+        nlri->nexthop.v4_addr = mstream_get_ipv4(s);
         return nlri;
     }
 

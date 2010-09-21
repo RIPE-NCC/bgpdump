@@ -64,12 +64,11 @@ u_int32_t mstream_getl(struct mstream *s, u_int32_t *d) {
     return data;
 }
 
-u_int32_t mstream_get_ipv4(struct mstream *s, u_int32_t *d) {
-    u_int32_t data;
+struct in_addr mstream_get_ipv4(struct mstream *s) {
+    struct in_addr addr;
 
-    mstream_get(s, &data, sizeof(data));
-    if(d!=NULL) memcpy(d,&data,sizeof(data));
-    return data;
+    mstream_get(s, &addr.s_addr, 4);
+    return addr;
 }
 
 u_int32_t mstream_can_read(struct mstream *s) {

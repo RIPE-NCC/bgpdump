@@ -3,6 +3,12 @@
 /* The library will be compiled with IPv6 support */
 #undef BGPDUMP_HAVE_IPV6
 
+/* Define if libbzip2 not present */
+#undef DONT_HAVE_BZ2
+
+/* Define if libz not present */
+#undef DONT_HAVE_GZ
+
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
@@ -15,8 +21,14 @@
 /* Define to 1 if you have the `inet_ntoa' function. */
 #undef HAVE_INET_NTOA
 
+/* Define to 1 if you have the `inet_ntop' function. */
+#undef HAVE_INET_NTOP
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `bz2' library (-lbz2). */
+#undef HAVE_LIBBZ2
 
 /* Define to 1 if you have the `nsl' library (-lnsl). */
 #undef HAVE_LIBNSL
@@ -98,9 +110,3 @@
 
 /* Define if system headers do not define u_int8_t */
 #undef u_int8_t
-
-/* Define if libbzip2 not present */
-#undef DONT_HAVE_BZ2
-
-/* Define if libz not present */
-#undef DONT_HAVE_GZ

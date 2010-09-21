@@ -113,7 +113,7 @@ struct attr
   u_int32_t flag;
 
   /* Attributes. */
-  u_char 		origin;
+  int                   origin;
   struct in_addr 	nexthop;
   u_int32_t 		med;
   u_int32_t 		local_pref;
