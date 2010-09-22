@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 #include "cfile_tools.h"
 
 // Concrete formats. remember to adjust CFR_NUM_FORMATS if changed!
@@ -180,61 +181,34 @@ CFRFILE *cfr_open(const char *path) {
 int cfr_close(CFRFILE *stream) {
   /**************************/
   // Analog to 'fclose'.
-  
-  int retval = -1;
-  if (stream == NULL) return(-1);
-
-  if (stream->closed) { 
+  // FIXME - why is stream->* set, then freed?
+  if (stream == NULL || stream->closed) {
       errno = EBADF;
-        return(EOF);
-  }      
+      return -1;
+  }
+    
+  int retval = -1;
+  
   switch (stream->format) {
   case 1:  // uncompressed
-    { 
       retval = fclose((FILE *)(stream->data1));
-      free(stream);
       stream->error1 = retval;
-      return(retval);
-    }
-    break;
-#ifndef DONT_HAVE_BZ2
+      break;
   case 2: // bzip2
-    { 
-      BZFILE * bzin; 
-      int bzerror;
-      
-      bzerror = BZ_OK;
-      bzin = (BZFILE *) (stream->data2);
-          
-      BZ2_bzReadClose( &bzerror, bzin);
-      if (bzerror != BZ_OK) {
-        stream->error2 = bzerror;
-        stream->error1 = fclose((FILE *)(stream->data1));
-        free(stream);
-        return(-1);
-      }
-      retval = fclose((FILE *)(stream->data1));
-      free(stream);
-      stream->error1 = retval;
-      return(retval);
-    }
-    break;
-#endif
-#ifndef DONT_HAVE_GZ
+      #ifndef DONT_HAVE_BZ2
+      BZ2_bzReadClose( &stream->error2, (BZFILE *)stream->data2);
+      stream->error1 = retval = fclose((FILE *)(stream->data1));
+      break;
+      #endif
   case 3:  // gzip
-    { 
-	if(stream->data2!=NULL) {
-		retval=gzclose(stream->data2);
-		free(stream);
-	}
+      #ifndef DONT_HAVE_GZ
+      if(stream->data2!=NULL)
+          retval = gzclose(stream->data2);
       stream->error2 = retval;
-      return(retval);
-    }
-    break;
-#endif
-    default:  // this is an internal error, no diag yet.
-      fprintf(stderr,"illegal format '%d' in cfr_close!\n",stream->format);
-      exit(1);
+      break;
+      #endif
+    default:  // internal error
+          assert("illegal stream->format" && 0);
   }
   free(stream);
   return(retval);
