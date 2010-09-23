@@ -942,29 +942,17 @@ void show_attr(attributes_t *attr) {
 			printf("\n");
 		}
 
-	    if (attr->unknown_num)
-	    {
-		    u_int32_t idx,len;
-		    u_char *p;
-		    
-		    for (idx=0;idx<attr->unknown_num;idx++)
-		    {
-			    printf("   UNKNOWN_ATTR :");
-			    p = attr->unknown[idx].raw;
-			    if(p[0] & BGP_ATTR_FLAG_EXTLEN) {
-				len = attr->unknown[idx].real_len + 4;
-			    } else {
-				len = attr->unknown[idx].real_len + 3;
-			    }
+            int idx;
+            for (idx=0;idx<attr->unknown_num;idx++)
+            {
+                struct unknown_attr *unknown = attr->unknown + idx;
+                printf("   UNKNOWN_ATTR(%i, %i, %i):", unknown->flag, unknown->type, unknown->len);
+                int b;
+                for(b = 0; b < unknown->len; ++b)
+                    printf(" %02x", unknown->raw[b]);
+                printf("\n");
+            }
 
-			    while (len) {
-				printf(" %02x", *p);
-				p++;
-				len--;
-			    }
-			    printf("\n");
-		    }
-	    }
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI) )!=0)
 	    {
 		    printf("MP_REACH_NLRI");

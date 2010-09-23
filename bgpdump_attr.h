@@ -99,11 +99,10 @@ Original Author: Dan Ardelean (dan@ripe.net)
 
 struct unknown_attr
 {
-	u_int16_t	real_len;
-	u_int8_t	flag;
-	u_int8_t	type;
-	u_int16_t	len;
-	u_char *	raw;
+	int	flag;
+	int	type;
+	int	len;
+	u_char *raw;
 };
 
 typedef struct attr attributes_t;

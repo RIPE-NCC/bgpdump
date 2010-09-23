@@ -791,25 +791,16 @@ static void process_unknown_attr(struct mstream *s, attributes_t *attr, int flag
     attr->unknown = realloc(attr->unknown, attr->unknown_num * sizeof(struct unknown_attr));
     
     /* Pointer to the unknown attribute we want to fill in */
-    struct unknown_attr *unknown = attr->unknown + attr->unknown_num - 1;
+    struct unknown_attr unknown = {
+        .flag = flag,
+        .type = type,
+        .len = len,
+        .raw = malloc(len)
+    };
     
-    unknown->flag = flag;
-    unknown->type = type;
-    unknown->len = len;
+    attr->unknown[attr->unknown_num - 1] = unknown;
     
-    unknown->raw = malloc(unknown->real_len + ((flag & BGP_ATTR_FLAG_EXTLEN) ? 4 : 3));
-    
-    unknown->raw[0] = flag;
-    unknown->raw[1] = type;
-    
-    if(flag & BGP_ATTR_FLAG_EXTLEN) {
-        unknown->raw[2] = (len & 0xFF00) >> 8;
-        unknown->raw[3] = len & 0xFF;
-        mstream_get(s, unknown->raw + 4, unknown->real_len);
-    } else {
-        unknown->raw[2] = len;
-        mstream_get(s, unknown->raw + 3, unknown->real_len);
-    }
+    mstream_get(s, unknown.raw, len);
 }
 
 static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u_int8_t asn_len, struct zebra_incomplete *incomplete) {
