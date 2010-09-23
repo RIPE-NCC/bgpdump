@@ -58,7 +58,7 @@ PKG=@PACKAGE_NAME@-@PACKAGE_VERSION@
 dist:
 	mkdir $(PKG)
 	ln *.h *.c $(OTHER) $(PKG)
-	tar -czvf $(PKG).tgz $(PKG)
+	tar -czf $(PKG).tgz $(PKG)
 	rm $(PKG)/* && rmdir $(PKG)
 
 rpm: dist

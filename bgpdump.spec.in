@@ -8,7 +8,6 @@ Vendor: RIPE NCC Information Services department
 Group: System Environment/Libraries
 Source: @PACKAGE_NAME@-@PACKAGE_VERSION@.tgz
 BuildRoot: /var/tmp/%{name}-root
-BuildArch: x86_64, i386
 BuildRequires: bzip2-devel zlib-devel
 
 %description
