@@ -28,8 +28,6 @@
 #ifndef _CFILE_TOOLS_DEFINES
 #define _CFILE_TOOLS_DEFINES
 
-#include "bgpdump-config.h"
-
 #define _GNU_SOURCE
 #define _FILE_OFFSET_BITS 64
 
@@ -46,7 +44,7 @@
 
 // Types
 
-typedef struct _CFRFILE {
+struct _CFRFILE {
   int format;       // 0 = not open, 1 = uncompressed, 2 = bzip2, 3 = gzip
   int eof;          // 0 = not eof 
   int closed;       // indicates whether fclose has been called, 0 = not yet
@@ -57,7 +55,9 @@ typedef struct _CFRFILE {
   // compressor specific stuff 
   int bz2_stream_end; // True when a bz2 stream has ended. Needed since
                       // further reading returns error and not eof.
-} CFRFILE;
+};
+
+typedef struct _CFRFILE CFRFILE;
 
 // Formats
 

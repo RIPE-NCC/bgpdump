@@ -28,7 +28,6 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #ifndef _BGPDUMP_FORMATS_H
 #define _BGPDUMP_FORMATS_H
 
-#include "bgpdump.h"
 #include "bgpdump_attr.h"
 
 #include <stdio.h>

@@ -12,3 +12,6 @@
 ^Makefile$
 ^test_out/.*
 ^build/
+^bgpdump.spec$
+~$
+^libbgpdump-.*\.tgz$

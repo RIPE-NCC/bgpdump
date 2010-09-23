@@ -30,13 +30,16 @@ Original Author: Dan Ardelean (dan@ripe.net)
 
 #include <stdio.h>
 
-#include "bgpdump.h"
 #include "bgpdump_attr.h"
 #include "bgpdump_formats.h"
-#include "cfile_tools.h"
 
 #define BGPDUMP_MAX_FILE_LEN	1024
 #define BGPDUMP_MAX_AS_PATH_LEN	2000
+
+// if you include cfile_tools.h, include it first
+#ifndef _CFILE_TOOLS_DEFINES
+typedef struct _CFRFILE CFRFILE;
+#endif
 
 typedef struct struct_BGPDUMP {
     CFRFILE	*f;
@@ -53,5 +56,7 @@ BGPDUMP *bgpdump_open_dump(const char *filename);
 void	bgpdump_close_dump(BGPDUMP *dump);
 BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump);
 void	bgpdump_free_mem(BGPDUMP_ENTRY *entry);
+
+char *bgpdump_version(void);
 
 #endif

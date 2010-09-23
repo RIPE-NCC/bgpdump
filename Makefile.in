@@ -1,4 +1,3 @@
-# $Id$
 
 CC	= @CC@
 CFLAGS	= @CFLAGS@
@@ -11,12 +10,19 @@ RANLIB	= @RANLIB@
 
 SYS_LIBS= @LIBS@
 
-LIB_H	 = bgpdump.h bgpdump_attr.h bgpdump_formats.h bgpdump_lib.h bgpdump_mstream.h cfile_tools.h util.h
+prefix   = @prefix@
+exec_prefix = @exec_prefix@
+bindir   = @bindir@
+libdir   = @libdir@
+includedir = @includedir@
+
+LIB_H	 = bgpdump_attr.h bgpdump_formats.h bgpdump_lib.h bgpdump_mstream.h
 LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o util.o inet_ntop.o
+OTHER    = *.in configure bgpdump.spec README* ChangeLog License*
 
 all: libbgpdump.so bgpdump 
 
-libbgpdump.a: $(LIB_H) $(LIB_O) Makefile
+libbgpdump.a: $(LIB_H) $(LIB_O) Makefile cfile_tools.h util.h
 	$(AR) r libbgpdump.a $(LIB_O)
 	$(RANLIB) libbgpdump.a
 
@@ -39,4 +45,21 @@ clean: test-clean
 	rm -f libbgpdump.so libbgpdump.a testbgpdump bgpdump $(LIB_O)
 
 distclean: clean
-	rm -rf config.log config.status *.dSYM core *.core autom4te.cache bgpdump-config.h Makefile
+	rm -Rf config.log config.status *.dSYM core *.core autom4te.cache bgpdump-config.h Makefile
+	rm -Rf $(PKG)
+
+install: all testbgpdump
+	install -d $(bindir) $(includedir) $(libdir)
+	install bgpdump testbgpdump $(bindir)
+	install $(LIB_H) $(includedir)
+	install libbgpdump.so libbgpdump.a $(libdir)
+
+PKG=@PACKAGE_NAME@-@PACKAGE_VERSION@
+dist:
+	mkdir $(PKG)
+	ln *.h *.c $(OTHER) $(PKG)
+	tar -czvf $(PKG).tgz $(PKG)
+	rm $(PKG)/* && rmdir $(PKG)
+
+rpm: dist
+	rpmbuild -v -ta $(PKG).tgz

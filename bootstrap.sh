@@ -2,3 +2,4 @@
 
 autoheader
 autoconf
+./configure

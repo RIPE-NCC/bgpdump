@@ -84,7 +84,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-#include "bgpdump.h"
 #include "util.h"
 
 const char OCTETS[][4] = {        

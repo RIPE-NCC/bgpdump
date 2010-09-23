@@ -23,9 +23,10 @@ software, distributed under the GNU General Public License. A copy of
 this license is included with libbgpdump.
 */
 
+#include "bgpdump-config.h"
+#include "cfile_tools.h"
 #include "bgpdump_lib.h"
 #include "bgpdump_mstream.h"
-#include "cfile_tools.h"
 #include "util.h"
 
 #include <sys/stat.h>
@@ -79,6 +80,11 @@ BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE *table_dump_v2_peer_index_table = NULL;
 #if defined(linux)
 static    size_t strlcat(char *dst, const char *src, size_t size);
 #endif
+
+char *bgpdump_version(void) {
+    return PACKAGE_VERSION;
+}
+
 
 BGPDUMP *bgpdump_open_dump(const char *filename) {
     BGPDUMP *this_dump=NULL;

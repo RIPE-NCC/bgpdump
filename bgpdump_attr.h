@@ -28,7 +28,8 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #ifndef _BGPDUMP_ATTR_H
 #define _BGPDUMP_ATTR_H
 
-#include "bgpdump.h"
+#include <sys/types.h>
+#include <netinet/in.h>
 
 /* BGP Attribute flags. */
 #define BGP_ATTR_FLAG_OPTIONAL  0x80	/* Attribute is optional. */
@@ -104,6 +105,8 @@ struct unknown_attr
 	int	len;
 	u_char *raw;
 };
+
+typedef u_int32_t as_t;
 
 typedef struct attr attributes_t;
 struct attr
@@ -190,6 +193,19 @@ struct mp_info {
 #define MP_IPV6_ANNOUNCE(m) ((m)->announce[AFI_IP6][SAFI_UNICAST])
 #define MP_IPV6_WITHDRAW(m) ((m)->withdraw[AFI_IP6][SAFI_UNICAST])
 #endif
+
+typedef union union_BGPDUMP_IP_ADDRESS {
+    struct in_addr	v4_addr;
+    struct in6_addr	v6_addr;
+} BGPDUMP_IP_ADDRESS;
+
+
+#define BGPDUMP_ADDRSTRLEN 46
+
+#define ASN16_LEN sizeof(u_int16_t)
+#define ASN32_LEN sizeof(u_int32_t)
+
+#define AS_TRAN 23456
 
 struct prefix {
     BGPDUMP_IP_ADDRESS	address;

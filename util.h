@@ -23,7 +23,7 @@
 #define _UTIL_H
 #include <time.h>
 
-#include "bgpdump.h"
+#include "bgpdump_attr.h"
 
 void log_to_stderr(void);
 void log_to_syslog(void);
