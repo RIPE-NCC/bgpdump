@@ -192,6 +192,12 @@ struct mp_info {
 #define MP_IPV6_WITHDRAW(m) ((m)->withdraw[AFI_IP6][SAFI_UNICAST])
 #endif
 
+struct prefix {
+    BGPDUMP_IP_ADDRESS	address;
+    u_char		len;
+};
+
+#define MAX_PREFIXES 1000
 struct mp_nlri {
   u_char		nexthop_len;
 
@@ -199,7 +205,7 @@ struct mp_nlri {
   BGPDUMP_IP_ADDRESS 	nexthop_local;
 
   u_int16_t		prefix_count;
-  struct prefix		*nlri;
+  struct prefix		nlri[MAX_PREFIXES];
 };
 
 #endif /* _BGPDUMP_ATTR_H */

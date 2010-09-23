@@ -92,11 +92,6 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #define BGP_MSG_ROUTE_REFRESH_01           5
 #define BGP_MSG_ROUTE_REFRESH	         128
 
-struct prefix {
-    BGPDUMP_IP_ADDRESS	address;
-    u_char		len;
-};
-
 typedef struct struct_BGPDUMP_MRTD_MESSAGE {
     u_int16_t		source_as;
     struct in_addr	source_ip;
@@ -194,8 +189,8 @@ typedef struct struct_BGPDUMP_ZEBRA_MESSAGE {
     /* For UPDATE packets */
     u_int16_t		withdraw_count;
     u_int16_t		announce_count;
-    struct prefix	*withdraw;
-    struct prefix	*announce;
+    struct prefix	withdraw[MAX_PREFIXES];
+    struct prefix	announce[MAX_PREFIXES];
 
     /* For corrupt update dumps */
     u_int16_t cut_bytes;

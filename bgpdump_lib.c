@@ -64,7 +64,7 @@ static    void process_attr_community_string(struct community *com);
 
 static    void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete);
 static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete);
-static    int read_prefix_list(struct mstream *s, u_int16_t af, struct prefix **prefixarray, struct zebra_incomplete *incomplete);
+static    int read_prefix_list(struct mstream *s, u_int16_t af, struct prefix *prefixes, struct zebra_incomplete *incomplete);
 
 static    as_t read_asn(struct mstream *s, as_t *asn, u_int8_t len);
 static    struct aspath *create_aspath(u_int16_t len, u_int8_t asn_len);
@@ -205,10 +205,6 @@ static void bgpdump_free_mp_info(struct mp_info *info) {
     for(afi = 1; afi <= BGPDUMP_MAX_AFI; afi++) {
 	for(safi = 1; safi < BGPDUMP_MAX_SAFI; safi++) {
 	    if(info->announce[afi][safi])
-		if(info->announce[afi][safi]->nlri) {
-			free(info->announce[afi][safi]->nlri);
-			info->announce[afi][safi]->nlri = NULL;
-		}
 		free(info->announce[afi][safi]);
 		info->announce[afi][safi] = NULL;
 	    if(info->withdraw[afi][safi]) {
@@ -232,12 +228,6 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
 		switch(entry->subtype) {
 		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 			switch(entry->body.zebra_message.type) {
-			    case BGP_MSG_UPDATE:
-				if(entry->body.zebra_message.withdraw != NULL)
-				    free(entry->body.zebra_message.withdraw);
-    				if(entry->body.zebra_message.announce != NULL)
-				    free(entry->body.zebra_message.announce);
-				break;
 			    case BGP_MSG_NOTIFY:
 				if(entry->body.zebra_message.notify_data)
 				    free(entry->body.zebra_message.notify_data);
@@ -623,11 +613,6 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
     mstream_getw(s,&entry->body.zebra_message.interface_index);
     mstream_getw(s,&entry->body.zebra_message.address_family);
 
-    /* Initialize announce and withdraw arrays: if there is a
-     * parse error, they will not be free()d, and we will not segfault. */
-    entry->body.zebra_message.withdraw = NULL;
-    entry->body.zebra_message.announce = NULL;
-
     entry->body.zebra_message.opt_len = 0;
     entry->body.zebra_message.opt_data = NULL;
     entry->body.zebra_message.notify_len = 0;
@@ -742,13 +727,13 @@ int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry, u_
 
     mstream_t withdraw_stream = mstream_copy(s, mstream_getw(s, NULL));
     entry->body.zebra_message.withdraw_count = read_prefix_list(&withdraw_stream, AFI_IP,
-                         &entry->body.zebra_message.withdraw,
+                         entry->body.zebra_message.withdraw,
 			 &entry->body.zebra_message.incomplete);
 
     entry->attr = process_attributes(s, asn_len, &entry->body.zebra_message.incomplete);
 
     entry->body.zebra_message.announce_count = read_prefix_list(s, AFI_IP, 
-                         &entry->body.zebra_message.announce,
+                         entry->body.zebra_message.announce,
 			 &entry->body.zebra_message.incomplete);
 
     return 1;
@@ -1207,7 +1192,7 @@ void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_i
         mstream_get(s, NULL, mstream_getc(s, NULL));
     }
 
-    info->announce[afi][safi]->prefix_count = read_prefix_list(s, afi, &info->announce[afi][safi]->nlri, incomplete);
+    info->announce[afi][safi]->prefix_count = read_prefix_list(s, afi, info->announce[afi][safi]->nlri, incomplete);
 }
 
 void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete) {
@@ -1235,12 +1220,11 @@ void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_i
 	memset(mp_nlri, 0, sizeof(struct mp_nlri));
 	info->withdraw[afi][safi] = mp_nlri;
 
-	mp_nlri->prefix_count = read_prefix_list(s, afi, &mp_nlri->nlri, incomplete);
+	mp_nlri->prefix_count = read_prefix_list(s, afi, mp_nlri->nlri, incomplete);
 }
 
-static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix **nlri, struct zebra_incomplete *incomplete) {
-    u_int16_t count = 0;
-    struct prefix *prefixes = NULL;
+static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *prefixes, struct zebra_incomplete *incomplete) {
+    int count = 0;
     
     while(mstream_can_read(s)) {
         u_int8_t p_len = mstream_getc(s,NULL); // length in bits
@@ -1248,33 +1232,33 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix **nl
         
         /* Truncated prefix list? */
         if(mstream_can_read(s) < p_bytes) {
-            if(incomplete) {
-                /* Put prefix in incomplete structure */
-                memset(&incomplete->prefix, 0, sizeof(struct prefix));
-                incomplete->afi = afi;
-                incomplete->orig_len = p_len;
-                incomplete->prefix.len = mstream_can_read(s) * 8;
-                mstream_get(s, &incomplete->prefix.address, mstream_can_read(s));
-            } else {
-                /* Just skip over it */
-                mstream_get(s, NULL, mstream_can_read(s));
-            }
-            /* In either case, don't put it in the prefix array */
+            if(! incomplete)
+                break;
+            
+            /* Put prefix in incomplete structure */
+            incomplete->afi = afi;
+            incomplete->orig_len = p_len;
+            incomplete->prefix = (struct prefix) {
+                .len = mstream_can_read(s) * 8
+            };
+            mstream_get(s, &incomplete->prefix.address, p_bytes);
             break;
         }
         
-        /* Reallocate prefix array to add room for one more prefix*/
-        prefixes = realloc(prefixes, (count+1) * sizeof(struct prefix));
+        struct prefix *prefix = prefixes + count;
         
-        /* Fill new prefix with zeros, set prefix length */
-        memset(&prefixes[count],0,sizeof(struct prefix));
-        prefixes[count].len = p_len;
-        
-        /* Copy prefix */
-        mstream_get(s, &prefixes[count].address, p_bytes);
-        count++;
+        if(count++ > MAX_PREFIXES)
+            continue;
+
+        *prefix = (struct prefix) { .len = p_len };
+        mstream_get(s, &prefix->address, p_bytes);
     }
-    *nlri = prefixes;
+    
+    if(count > MAX_PREFIXES) {
+        err("too many prefixes (%i > %i)", count, MAX_PREFIXES);
+        return MAX_PREFIXES;
+    }
+    
     return count;
 }
 
