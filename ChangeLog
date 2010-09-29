@@ -8,17 +8,19 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ===============================================
 
-2010-09-03 Devin Bayer <dbayer@ripe.net>
+2010-09-24 Devin Bayer <dbayer@ripe.net> v1.4.99.12
+	* Remove --disable-ipv6 flag
         * Fix parsing of IPv6 NEXT_HOP attributes
         * Add clearer command-line options
         * Add logging to STDERR
         * Add dumping to files instead of STDOUT
         * Add regression test suite
 
-2009-11-24 Roman Kalyakin <roman@ripe.net>
-	* Fixed incorrect output when running with -m which was introduced by a change in one of the previous versions.
+2009-11-24 Roman Kalyakin <roman@ripe.net> v1.4.99.11
+	* Fixed incorrect output when running with -m which was
+	  introduced by a change in one of the previous versions.
 	  (issue IS-439)
- 
+
 2009-10-13 Ruben van Staveren <ruben@ripe.net>
 	* Fix segfaults with empty AS path on -m/-M 
 	  (issue IS-292)
@@ -35,7 +37,7 @@ ISSUES, AS YOUR E-MAIL MAY BE LOST
 	  Patch contributed by Steve Hill <cheesy@sackheads.org>
 	* Implemented conditional checking for compression libraries (issue IS-179)
 	  Patch contributed by Steve Hill <cheesy@sackheads.org>
-	
+
 2009-07-27 Ruben van Staveren <ruben@ripe.net>
 	* Enabled extra compiler warnings
 	* Fixed some potentially unsafe constructs (pointer arithmetic,
