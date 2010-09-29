@@ -28,19 +28,19 @@ libbgpdump.a: $(LIB_H) $(LIB_O) Makefile cfile_tools.h util.h
 libbgpdump.so: libbgpdump.a
 	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
 
-testbgpdump: test.c libbgpdump.a
-	$(COMPILE) -o testbgpdump test.c libbgpdump.a $(SYS_LIBS)
+example: example.c libbgpdump.a
+	$(COMPILE) -o testbgpdump example.c libbgpdump.a $(SYS_LIBS)
 
 bgpdump: bgpdump.c libbgpdump.a
 	$(COMPILE) -o bgpdump bgpdump.c libbgpdump.a $(SYS_LIBS)
 
-test-clean:
+check-clean:
 	rm -f test_out/*.bgp.gz
 
-test: test-clean bgpdump
+check: check-clean bgpdump
 	./test.sh
 
-clean: test-clean
+clean: check-clean
 	rm -f libbgpdump.so libbgpdump.a testbgpdump bgpdump $(LIB_O)
 
 distclean: clean

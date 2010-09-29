@@ -1,7 +1,16 @@
+
+==== INTRODUCTION ====
+
 This is libbgpdump - a C library designed to help with analyzing dump
 files produced by Zebra/Quagga or MRT.
 
+New versions are available for download at:
+http://www.ris.ripe.net/source/bgpdump/
 
+The <ris-users@ripe.net> mailing list is for discussion of RIS data and
+related tools, weekly reports and occasional public announcements.
+
+Please send bug reports and patches to <ris@ripe.net>.
 
 === SUPPORTED INPUT FORMAT ===
 
@@ -15,33 +24,25 @@ files produced by Zebra/Quagga or MRT.
 	- BGP state changes
 
 
-
 === COMPILING ===
 
-- ./configure [--disable-ipv6] ; make
-- Note that IPv6 is enabled by default, and if the library has IPv6
-  support your application must be able to handle or ignore the resulting
-  IPv6 data!
+- ./configure ; make
 - libbgpdump should compile on Linux, FreeBSD, Solaris, and Cygwin
-
-
 
 === HOW TO USE THE LIBRARY YOURSELF ===
 
 - include the file bgpdump_lib.h
 - call bgpdump_open_dump() to open desired Zebra/MRT dump/update file
-- call bgpdump_read_next() to read an entry
-- analyze the entry
-- call bgdump_free_mem() to free up memory allocated by bgpdump_read_next()
-- repeat last 3 steps until EOF of input
+- repeat the next 3 steps until EOF
+	- call bgpdump_read_next() to read an entry
+	- analyze the entry
+	- call bgdump_free_mem() to free up memory allocated by bgpdump_read_next()
 - call bgdump_close_dump() to close the dump file
 
 Please see bgdump_formats.h for a description of data structures used.
 
-An example is included - test.c - it lists all the information gathered
+An example is included - example.c - it lists all the information gathered
 from a dump/update file given as a command line parameter.
-
-
 
 === NOTES ON TABLE_DUMP_V2 ===
 
@@ -72,8 +73,31 @@ for AFI_IP or AFI_IP6 and *NOT* checking the contents of
   entry->subtype
 for BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST etc.
 
+=== NOTES ON IPv6 SUPPORT ===
 
+libbgpdump v1.3 and above support IPv6. Both address types are 
+usually stored the BGPDUMP_IP_ADDRESS data structure.
 
-=== BUGS ===
+IPv6 announcements and withdrawals aren't stored directly
+in the update data structures like their IPv4
+counterparts, they are stored in a separate struct
+mp_info. Two convenient macros, MP_IPV6_ANNOUNCE() and
+MP_IPV6_WITHDRAW(), are provided to get them out.
 
-If you find a bug, please report it to ris@ripe.net.
+So if for IPv4 prefixes you did something like:
+
+    for (i = 0; i < entry->body.zebra_message.announce_count; i++) {
+	do_something_with_prefix(entry->body.zebra_message.announce[i]);
+    }
+
+for IPv6 prefixes you would do this:
+
+    struct mp_nlri *v6_announce;
+    if(entry->attr->mp_info &&
+       (v6_announce = MP_IPV6_ANNOUNCE(entry->attr->mp_info)) != NULL) {
+	for (i = 0; i < v6_announce->prefix_count; i++) {
+	    do_something_with_prefix(v6_announce->nlri[i]);
+	}
+    }
+
+for withdrawals, do the same using MP_IPV6_WITHDRAW().
