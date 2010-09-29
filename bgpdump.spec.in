@@ -56,7 +56,6 @@ rm -rf %{buildroot}
 %{_includedir}/bgpdump_lib.h
 %{_includedir}/bgpdump_mstream.h
 
-
 %changelog
 * Wed Jul 04 2008 Erik Romijn <eromijn@ripe.net> 1.4.99.9-1
 - Initial release
