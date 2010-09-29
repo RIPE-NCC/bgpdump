@@ -1,7 +1,7 @@
 Summary: MRT file reader
 Name: @PACKAGE_NAME@
 Version: @PACKAGE_VERSION@
-Release: 0
+Release: 1
 License: GPL
 URL: http://www.ris.ripe.net/source/
 Vendor: RIPE NCC Information Services department

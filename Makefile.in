@@ -1,11 +1,10 @@
 
-CC	= @CC@
+CC	= @CC@ -fPIC
 CFLAGS	= @CFLAGS@
 COMPILE  = $(CC) $(CFLAGS) $(INCLUDES)
 
 LD	= @CC@
 LDFLAGS	= @LDFLAGS@
-AR	= @AR@
 RANLIB	= @RANLIB@
 
 SYS_LIBS= @LIBS@
@@ -23,7 +22,7 @@ OTHER    = *.in configure bgpdump.spec README* ChangeLog License*
 all: libbgpdump.so bgpdump 
 
 libbgpdump.a: $(LIB_H) $(LIB_O) Makefile cfile_tools.h util.h
-	$(AR) r libbgpdump.a $(LIB_O)
+	ar r libbgpdump.a $(LIB_O)
 	$(RANLIB) libbgpdump.a
 
 libbgpdump.so: libbgpdump.a
