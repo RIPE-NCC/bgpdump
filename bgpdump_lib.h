@@ -30,6 +30,8 @@ Original Author: Dan Ardelean (dan@ripe.net)
 
 #include <stdio.h>
 
+#define BGPDUMP_HAVE_IPV6
+
 #include "bgpdump_attr.h"
 #include "bgpdump_formats.h"
 

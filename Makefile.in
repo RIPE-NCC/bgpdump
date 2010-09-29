@@ -27,7 +27,7 @@ libbgpdump.a: $(LIB_H) $(LIB_O) Makefile cfile_tools.h util.h
 	$(RANLIB) libbgpdump.a
 
 libbgpdump.so: libbgpdump.a
-	$(COMPILE) $(LDFLAGS) -o libbgpdump.so libbgpdump.a $(SYS_LIBS)
+	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
 
 testbgpdump: test.c libbgpdump.a
 	$(COMPILE) -o testbgpdump test.c libbgpdump.a $(SYS_LIBS)
