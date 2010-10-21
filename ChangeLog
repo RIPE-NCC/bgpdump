@@ -8,6 +8,9 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ===============================================
 
+2010-10-21 Devin Bayer <dbayer@ripe.net> v1.4.99.13
+	* fix configure script for Darwin
+
 2010-09-24 Devin Bayer <dbayer@ripe.net> v1.4.99.12
 	* Remove --disable-ipv6 flag
         * Fix parsing of IPv6 NEXT_HOP attributes

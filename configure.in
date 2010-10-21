@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_REVISION($Revision$)
 
-AC_INIT([libbgpdump], 1.4.99.12, [ris@ripe.net])
+AC_INIT([libbgpdump], 1.4.99.13, [ris@ripe.net])
 AC_CONFIG_SRCDIR([bgpdump_lib.c])
 AC_CONFIG_HEADERS([bgpdump-config.h])
 
@@ -30,10 +30,9 @@ AC_CHECK_LIB(bz2, BZ2_bzReadOpen, [], AC_DEFINE(DONT_HAVE_BZ2, 1, Define if libb
 AC_CHECK_FUNCS(inet_ntoa, [], AC_CHECK_LIB(nsl, inet_ntoa, [], AC_MSG_ERROR([inet_ntoa not found],1)))
 AC_CHECK_FUNCS(inet_ntop, [], AC_CHECK_LIB(nsl, inet_ntop, [], AC_MSG_ERROR([inet_ntop not found],1)))
 
-OS=`uname|sed -e 'y/A-Z/a-z/'`
-case $OS in
-	darwin*) LDFLAGS="$LDFLAGS -dynamiclib" ;;
-	*) LDFLAGS="$LDFLAGS -shared" ;;
+case `uname` in
+	Darwin*) LDFLAGS="$LDFLAGS -dynamiclib" ;;
+	*)       LDFLAGS="$LDFLAGS -shared" ;;
 esac
 
 AC_SUBST(CFLAGS)
