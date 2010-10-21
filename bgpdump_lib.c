@@ -87,22 +87,17 @@ char *bgpdump_version(void) {
 
 
 BGPDUMP *bgpdump_open_dump(const char *filename) {
-    BGPDUMP *this_dump=NULL;
-    CFRFILE *f;
 
-    this_dump = malloc(sizeof(BGPDUMP));
-
-    f = cfr_open(filename);
-    if((filename == NULL) || (strcmp(filename, "-") == 0)) {
-	strcpy(this_dump->filename, "[STDIN]");
-    } else
-    {
-	strcpy(this_dump->filename, filename);
+    CFRFILE *f = cfr_open(filename);
+    if(! f) {
+        perror("can't open dumpfile");
+        return NULL;
     }
-
-    if(f == NULL) {
-	free(this_dump);
-	return NULL;
+    
+    BGPDUMP *this_dump = malloc(sizeof(BGPDUMP));
+    strcpy(this_dump->filename, "[STDIN]");
+    if(filename && strcmp(filename, "-")) {
+	strcpy(this_dump->filename, filename);
     }
 
     this_dump->f = f;
@@ -130,6 +125,8 @@ void bgpdump_close_dump(BGPDUMP *dump) {
 }
 
 BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
+    assert(dump);
+
     BGPDUMP_ENTRY *this_entry=NULL;
     struct mstream s;
     u_char *buffer;

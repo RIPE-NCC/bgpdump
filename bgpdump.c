@@ -169,6 +169,8 @@ int main(int argc, char *argv[]) {
     setbuffer(stdout, buffer, sizeof buffer);
     
     BGPDUMP *my_dump = bgpdump_open_dump(argv[0]);
+    if(! my_dump)
+        return 1;
     
     do {
         BGPDUMP_ENTRY *my_entry = bgpdump_read_next(my_dump);
