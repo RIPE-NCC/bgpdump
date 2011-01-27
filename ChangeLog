@@ -1,12 +1,12 @@
-===============================================
+==========================================================
 The current maintainer of this library is the
 RIPE NCC information services department.
 
-You can reach us at ris@ripe.net.
+You can reach us at https://bitbucket.org/ripencc/bgpdump
 
 PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
-===============================================
+==========================================================
 
 2011-01-25 Devin Bayer <dbayer@ripe.net>
 	* move development to bitbucket
