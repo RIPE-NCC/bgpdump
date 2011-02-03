@@ -29,7 +29,7 @@ libbgpdump.so: libbgpdump.a
 	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
 
 example: example.c libbgpdump.a
-	$(COMPILE) -o testbgpdump example.c libbgpdump.a $(SYS_LIBS)
+	$(COMPILE) -o example example.c libbgpdump.a $(SYS_LIBS)
 
 bgpdump: bgpdump.c libbgpdump.a
 	$(COMPILE) -o bgpdump bgpdump.c libbgpdump.a $(SYS_LIBS)
@@ -41,15 +41,15 @@ check: check-clean bgpdump
 	./test.sh
 
 clean: check-clean
-	rm -f libbgpdump.so libbgpdump.a testbgpdump bgpdump $(LIB_O)
+	rm -f libbgpdump.so libbgpdump.a example bgpdump $(LIB_O)
 
 distclean: clean
 	rm -Rf config.log config.status *.dSYM core *.core autom4te.cache bgpdump-config.h Makefile
 	rm -Rf $(PKG)
 
-install: all testbgpdump
+install: all
 	install -d $(bindir) $(includedir) $(libdir)
-	install bgpdump testbgpdump $(bindir)
+	install bgpdump $(bindir)
 	install $(LIB_H) $(includedir)
 	install libbgpdump.so libbgpdump.a $(libdir)
 
