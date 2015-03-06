@@ -68,44 +68,8 @@ void debug(const char *fmt, ...) { log(INFO, info); }
 
 void time2str(struct tm* date,char *time_str)
 {
-    char tmp_str[10];
-    
-    if (date->tm_mon+1<10)
-        sprintf(tmp_str,"0%d/",date->tm_mon+1);
-    else
-        sprintf(tmp_str,"%d/",date->tm_mon+1);
-    strcpy(time_str,tmp_str);
-    
-    if (date->tm_mday<10)
-        sprintf(tmp_str,"0%d/",date->tm_mday);
-    else
-        sprintf(tmp_str,"%d/",date->tm_mday);
-    strcat(time_str,tmp_str);
-    
-    if (date->tm_year%100 <10)
-        sprintf(tmp_str,"0%d ",date->tm_year%100);
-    else
-        sprintf(tmp_str,"%d ",date->tm_year%100);
-    strcat(time_str,tmp_str);
-    
-    if (date->tm_hour<10)
-        sprintf(tmp_str,"0%d:",date->tm_hour);
-    else
-        sprintf(tmp_str,"%d:",date->tm_hour);
-    strcat(time_str,tmp_str);
-    
-    if (date->tm_min<10)
-        sprintf(tmp_str,"0%d:",date->tm_min);
-    else
-        sprintf(tmp_str,"%d:",date->tm_min);
-    strcat(time_str,tmp_str);
-    
-    if (date->tm_sec <10)
-        sprintf(tmp_str,"0%d",date->tm_sec);
-    else
-        sprintf(tmp_str,"%d",date->tm_sec);
-    strcat(time_str,tmp_str);
-    
+    sprintf(time_str, "%02d/%02d/%02d %02d:%02d:%02d", date->tm_mon+1, date->tm_mday, date->tm_year%100,
+            date->tm_hour, date->tm_min, date->tm_sec);
 }
 
 int int2str(uint32_t value, char* str)
