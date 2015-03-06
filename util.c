@@ -110,17 +110,7 @@ void time2str(struct tm* date,char *time_str)
 
 int int2str(uint32_t value, char* str)
 {
-    const int LEN = 11;
-    char b[LEN];
-    int i = LEN;
-    b[i--] = '\0';
-    
-    do {
-        b[i--] = (char)(48 + (value % 10));
-    } while (value /= 10);
-
-    memcpy(str, b + i + 1, LEN - i);
-    return LEN - i - 1;
+    return sprintf(str, "%u", value);
 }
 
 static void ti2s(uint32_t value) {
@@ -136,3 +126,4 @@ void test_utils()
     ti2s(99999);
     ti2s(4294967295L);
 }
+
