@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
     }
 
     // more efficient then line buffering
-    char buffer[16000];
+    static char buffer[16000];
     setbuffer(stdout, buffer, sizeof buffer);
     
     BGPDUMP *my_dump = bgpdump_open_dump(argv[0]);
