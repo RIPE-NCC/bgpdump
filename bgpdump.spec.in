@@ -44,7 +44,6 @@ rm -rf %{buildroot}
 %files
 %defattr(0755,root,root)
 %{_bindir}/bgpdump
-%{_bindir}/testbgpdump
 %defattr(-,root,root)
 %{_libdir}/libbgpdump.a
 %{_libdir}/libbgpdump.so
