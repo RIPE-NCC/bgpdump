@@ -36,15 +36,16 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #include <netinet/in.h>
 
 /* type and subtypes values */
+/* RFC6396 */
 #define BGPDUMP_TYPE_MRTD_BGP			5
 #define BGPDUMP_SUBTYPE_MRTD_BGP_NULL		0
-#define BGPDUMP_SUBTYPE_MRTD_BGP_PREFUPDATE	1
-#define BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE		2
+#define BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE		1
+#define BGPDUMP_SUBTYPE_MRTD_BGP_PREFUPDATE	2
 #define BGPDUMP_SUBTYPE_MRTD_BGP_STATE_CHANGE	3
 #define BGPDUMP_SUBTYPE_MRTD_BGP_SYNC		4
-#define BGPDUMP_SUBTYPE_MRTD_BGP_OPEN		129
-#define BGPDUMP_SUBTYPE_MRTD_BGP_NOTIFICATION	131
-#define BGPDUMP_SUBTYPE_MRTD_BGP_KEEPALIVE	132
+#define BGPDUMP_SUBTYPE_MRTD_BGP_OPEN		5
+#define BGPDUMP_SUBTYPE_MRTD_BGP_NOTIFICATION	6
+#define BGPDUMP_SUBTYPE_MRTD_BGP_KEEPALIVE	7
 #define BGPDUMP_SUBTYPE_MRTD_BGP_ROUT_REFRESH	133
 
 #define BGPDUMP_TYPE_MRTD_TABLE_DUMP				12
@@ -90,14 +91,6 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #define	BGP_MSG_KEEPALIVE	           4
 #define BGP_MSG_ROUTE_REFRESH_01           5
 #define BGP_MSG_ROUTE_REFRESH	         128
-
-typedef struct struct_BGPDUMP_MRTD_MESSAGE {
-    u_int16_t		source_as;
-    struct in_addr	source_ip;
-    u_int16_t		destination_as;
-    struct in_addr	destination_ip;
-    u_char		*bgp_message;
-} BGPDUMP_MRTD_MESSAGE;
 
 typedef struct struct_BGPDUMP_MRTD_TABLE_DUMP {
     u_int16_t		view;
@@ -223,8 +216,31 @@ typedef struct struct_BGPDUMP_ZEBRA_SNAPSHOT {
     u_int16_t	file;
 } BGPDUMP_ZEBRA_SNAPSHOT;
 
+typedef struct struct_BGPDUMP_MRTD_MESSAGE {
+    u_int16_t		source_as;
+    struct in_addr	source_ip;
+    u_int16_t		destination_as;
+    struct in_addr	destination_ip;
+
+    u_int16_t		withdraw_count;
+    u_int16_t		announce_count;
+    struct prefix	withdraw[MAX_PREFIXES];
+    struct prefix	announce[MAX_PREFIXES];
+
+    /* For corrupt update dumps */
+    struct zebra_incomplete incomplete;
+} BGPDUMP_MRTD_MESSAGE;
+
+typedef struct struct_BGPDUMP_MRTD_STATE_CHANGE {
+    u_int16_t           destination_as;
+    struct in_addr      destination_ip;
+    u_int16_t           old_state;
+    u_int16_t           new_state;
+} BGPDUMP_MRTD_STATE_CHANGE;
+
 typedef union union_BGPDUMP_BODY {
 	BGPDUMP_MRTD_MESSAGE		mrtd_message;
+        BGPDUMP_MRTD_STATE_CHANGE       mrtd_state_change;
 	BGPDUMP_MRTD_TABLE_DUMP		mrtd_table_dump;
 	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE		mrtd_table_dump_v2_peer_table;
 	BGPDUMP_TABLE_DUMP_V2_PREFIX		mrtd_table_dump_v2_prefix;

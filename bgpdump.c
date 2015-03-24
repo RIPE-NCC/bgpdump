@@ -39,13 +39,18 @@ Original Author: Shufu Mao(msf98@mails.tsinghua.edu.cn)
 #include <stdbool.h>
 
 static void process(BGPDUMP_ENTRY *entry);
+static void process_bgpdump_mrtd_bgp(BGPDUMP_ENTRY *entry);
+static void show_ipv4_address(struct in_addr ip);
 static void show_attr(attributes_t *attr);
 static void show_prefixes(int count,struct prefix *prefix);
 static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
 static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
+static void mrtd_table_line_withdraw(struct prefix *prefix, int count, BGPDUMP_ENTRY *entry, char *time_str);
+static void mrtd_table_line_announce(struct prefix *prefix, int count, BGPDUMP_ENTRY *entry, char *time_str);
 static void table_line_withdraw(struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
 static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *entry);
 static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_ENTRY *entry);
+static char *describe_origin(int origin);
 
 #ifdef BGPDUMP_HAVE_IPV6
     void show_prefixes6(int count,struct prefix *prefix);
@@ -341,6 +346,10 @@ void process(BGPDUMP_ENTRY *entry) {
                     table_line_dump_v2_prefix(&entry->body.mrtd_table_dump_v2_prefix,entry);	     
 		}
 	    break;
+
+        case BGPDUMP_TYPE_MRTD_BGP:
+            process_bgpdump_mrtd_bgp(entry);
+            break;
 	    
 	case BGPDUMP_TYPE_ZEBRA_BGP:
 	    
@@ -897,6 +906,128 @@ void process(BGPDUMP_ENTRY *entry) {
     	printf("\n");
 }
 
+void process_bgpdump_mrtd_bgp(BGPDUMP_ENTRY *entry) {
+    struct tm *date;
+    char time_str[128];
+    date=gmtime(&entry->time);
+    time2str(date,time_str);	
+
+    switch (entry->subtype) {
+    case BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE:
+    case BGPDUMP_SUBTYPE_MRTD_BGP_KEEPALIVE:
+        if (mode == 0) {
+            if (entry->subtype == BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE)
+                printf("TYPE: BGP/MESSAGE/Update\n");
+            else
+                printf("TYPE: BGP/MESSAGE/Keepalive\n"); 
+            if (entry->body.mrtd_message.source_as) {
+                printf("FROM:");
+                show_ipv4_address(entry->body.mrtd_message.source_ip);
+                printf("AS%u\n", entry->body.mrtd_message.source_as);
+            }
+            if (entry->body.mrtd_message.destination_as) {
+                printf("TO:");
+                show_ipv4_address(entry->body.mrtd_message.destination_ip);
+                printf("AS%u\n", entry->body.mrtd_message.destination_as);                
+            }
+            if (entry->attr && entry->attr->len)
+                show_attr(entry->attr);
+            if (entry->body.mrtd_message.withdraw_count) {
+                printf("WITHDRAW\n");
+                show_prefixes(entry->body.mrtd_message.withdraw_count, entry->body.mrtd_message.withdraw);
+            }
+            if (entry->body.mrtd_message.announce_count) {
+                printf("ANNOUNCE\n");
+                show_prefixes(entry->body.mrtd_message.announce_count, entry->body.mrtd_message.announce);
+            }
+        }
+        else {
+            if (entry->subtype != BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE)
+                break;
+            if (entry->body.mrtd_message.withdraw_count)
+                mrtd_table_line_withdraw(entry->body.mrtd_message.withdraw, entry->body.mrtd_message.withdraw_count,
+                                         entry, time_str);
+            if (entry->body.mrtd_message.announce_count)
+                mrtd_table_line_announce(entry->body.mrtd_message.announce, entry->body.mrtd_message.announce_count,
+                                         entry, time_str);
+        }
+        break;
+    case BGPDUMP_SUBTYPE_MRTD_BGP_STATE_CHANGE:
+        if (mode == 0) {
+            printf("TYPE: BGP/STATE_CHANGE\n");
+            printf("PEER:");
+            show_ipv4_address(entry->body.mrtd_state_change.destination_ip);
+            printf("AS%u\n", entry->body.mrtd_state_change.destination_as);
+            printf("STATE: %s/%s\n", bgp_state_name[entry->body.mrtd_state_change.old_state],
+                   bgp_state_name[entry->body.mrtd_state_change.new_state]);
+        }
+        else if (mode == 1) {
+            printf("BGP|%ld|STATE|%s|%u|%d|%d\n",
+                   entry->time,
+                   inet_ntoa(entry->body.mrtd_state_change.destination_ip),
+                   entry->body.mrtd_state_change.destination_as,
+                   entry->body.mrtd_state_change.old_state,
+                   entry->body.mrtd_state_change.new_state);
+        }
+        else if (mode == 2) {
+            printf("BGP|%s|STATE|%s|%u|%d|%d\n",
+                   time_str,
+                   inet_ntoa(entry->body.mrtd_state_change.destination_ip),
+                   entry->body.mrtd_state_change.destination_as,
+                   entry->body.mrtd_state_change.old_state,
+                   entry->body.mrtd_state_change.new_state);
+        }
+        break;
+    default:
+        if (mode == 0) {
+            printf("TYPE: Subtype %d not supported yet\n", entry->subtype);
+        }
+    }
+}
+
+
+void mrtd_table_line_withdraw(struct prefix *prefix, int count, BGPDUMP_ENTRY *entry, char *time_str) {
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (mode == 1)
+            printf("BGP|%ld", entry->time);
+        else
+            printf("BGP|%s", time_str);
+
+        printf("|W|%s|", inet_ntoa(entry->body.mrtd_message.source_ip));
+        printf("%u|%s/%d\n", entry->body.mrtd_message.source_as,
+               inet_ntoa(prefix[i].address.v4_addr), prefix[i].len);
+    }
+}
+
+
+void mrtd_table_line_announce(struct prefix *prefix, int count, BGPDUMP_ENTRY *entry, char *time_str) {
+    int i;
+
+    for (i = 0; i < count; i++) {
+        if (mode == 1)
+            printf("BGP|%ld", entry->time);
+        else
+            printf("BGP|%s", time_str);
+
+        printf("|A|%s|%u", inet_ntoa(entry->body.mrtd_message.source_ip),
+               entry->body.mrtd_message.source_as);
+        printf("|%s/%d|%s|%s\n", inet_ntoa(prefix[i].address.v4_addr), prefix[i].len,
+               attr_aspath(entry->attr), describe_origin(entry->attr->origin));
+    }
+}
+
+
+
+void show_ipv4_address(struct in_addr ip) {
+    if (ip.s_addr != 0x00000000L)
+        printf(" %s ", inet_ntoa(ip));
+    else
+        printf(" N/A ");
+}
+
+
 void show_attr(attributes_t *attr) {
     
     if(attr != NULL) {
@@ -1212,31 +1343,15 @@ static void table_line_withdraw6(struct prefix *prefix,int count,BGPDUMP_ENTRY *
 }
 #endif
 
+
 static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str)
 {
 	int idx  ;
 	char buf[128];
-	//char buf1[128];
-	//char buf2[128];
-	char tmp1[20];
 	char tmp2[20];
 	unsigned int npref;
 	unsigned int nmed;
-				
-	switch (entry->attr->origin)
-	{
 
-	case 0 :
-		sprintf(tmp1,"IGP");
-		break;
-	case 1:
-		sprintf(tmp1,"EGP");
-		break;
-	case 2:
-	default:
-		sprintf(tmp1,"INCOMPLETE");
-		break;
-	}
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
 		sprintf(tmp2,"AG");
 	else
@@ -1258,7 +1373,7 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 				printf("BGP4MP|%ld|A|%s|%u|",entry->time,inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
 				break;
 			}
-			printf("%s/%d|%s|%s|",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),tmp1);
+			printf("%s/%d|%s|%s|",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 		    npref=entry->attr->local_pref;
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
 	            npref=0;
@@ -1291,7 +1406,7 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 				printf("BGP4MP|%s|A|%s|%u|",time_str,inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
 				break;
 			}
-			printf("%s/%d|%s|%s\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),tmp1);
+			printf("%s/%d|%s|%s\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				
 		}
 	}
@@ -1301,27 +1416,10 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 {
 	int idx  ;
 	char buf[128];
-	//char buf1[128];
-	//char buf2[128];
-	char tmp1[20];
 	char tmp2[20];
 	unsigned int npref;
 	unsigned int nmed;
-				
-	switch (entry->attr->origin)
-	{
 
-	case 0 :
-		sprintf(tmp1,"IGP");
-		break;
-	case 1:
-		sprintf(tmp1,"EGP");
-		break;
-	case 2:
-	default:
-		sprintf(tmp1,"INCOMPLETE");
-		break;
-	}
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
 		sprintf(tmp2,"AG");
 	else
@@ -1345,7 +1443,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 					printf("BGP4MP|%ld|A|%s|%u|",entry->time,inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
 					break;
 				}
-				printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),tmp1);
+				printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 
 		    npref=entry->attr->local_pref;
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
@@ -1376,7 +1474,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 					printf("BGP4MP|%ld|A|%s|%u|",entry->time,inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
 					break;
 				}
-				printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),tmp1);
+				printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 
 		    npref=entry->attr->local_pref;
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
@@ -1413,7 +1511,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 				printf("BGP4MP|%s|A|%s|%u|",time_str,inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
 				break;
 			}
-			printf("%s/%d|%s|%s\n",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),tmp1);
+			printf("%s/%d|%s|%s\n",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				
 		}
 	}
@@ -1427,25 +1525,10 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 	char buf[128];
 	char buf1[128];
 	char buf2[128];
-	char tmp1[20];
 	char tmp2[20];
 	unsigned int npref;
 	unsigned int nmed;
-				
-	switch (entry->attr->origin)
-	{
 
-	case 0 :
-		sprintf(tmp1,"IGP");
-		break;
-	case 1:
-		sprintf(tmp1,"EGP");
-		break;
-	case 2:
-	default:
-		sprintf(tmp1,"INCOMPLETE");
-		break;
-	}
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
 		sprintf(tmp2,"AG");
 	else
@@ -1466,7 +1549,7 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-				printf("BGP4MP|%ld|A|%s|%u|%s/%d|%s|%s|%s|%u|%u|",entry->time,fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),tmp1,fmt_ipv6(prefix->nexthop,buf),npref,nmed);
+				printf("BGP4MP|%ld|A|%s|%u|%s/%d|%s|%s|%s|%u|%u|",entry->time,fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
 				break;
 			case AFI_IP:
 			default:
@@ -1479,7 +1562,7 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 	            nmed=0;
 			    
 			//printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),nprof,nmed);
-				printf("BGP4MP|%ld|A|%s|%u|%s/%d|%s|%s|%s|%u|%u|",entry->time,fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),tmp1,fmt_ipv6(prefix->nexthop,buf),npref,nmed);
+				printf("BGP4MP|%ld|A|%s|%u|%s/%d|%s|%s|%s|%u|%u|",entry->time,fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
 				break;
 			}
 			if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
@@ -1499,11 +1582,11 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 			switch(entry->body.zebra_message.address_family)
 			{
 			case AFI_IP6:
-				printf("BGP4MP|%s|A|%s|%u|%s/%d|%s|%s\n",time_str,fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),tmp1);
+				printf("BGP4MP|%s|A|%s|%u|%s/%d|%s|%s\n",time_str,fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				break;
 			case AFI_IP:
 			default:
-				printf("BGP4MP|%s|A|%s|%u|%s/%d|%s|%s\n",time_str,fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),tmp1);
+				printf("BGP4MP|%s|A|%s|%u|%s/%d|%s|%s\n",time_str,fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				break;
 			}
 		}		
@@ -1518,27 +1601,12 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 {
 	
 	struct tm *date = NULL;
-	char tmp1[20];
 	char tmp2[20];	
 	unsigned int npref;
 	unsigned int nmed;
 	char  time_str[20];
         char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
 
-	switch (entry->attr->origin)
-	{
-
-	case 0 :
-		sprintf(tmp1,"IGP");
-		break;
-	case 1:
-		sprintf(tmp1,"EGP");
-		break;
-	case 2:
-	default:
-		sprintf(tmp1,"INCOMPLETE");
-		break;
-	}
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
 		sprintf(tmp2,"AG");
 	else
@@ -1564,7 +1632,7 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 		   }else if(timetype==1){
 	   	   printf("TABLE_DUMP|%ld|B|%s|%u|",route->uptime,peer,route->peer_as);
 		   }
-	      	   printf("%s/%d|%s|%s|",prefix,route->mask,attr_aspath(entry->attr),tmp1);
+	      	   printf("%s/%d|%s|%s|",prefix,route->mask,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 
 		    npref=entry->attr->local_pref;
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
@@ -1604,7 +1672,7 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 		    }
 	            time2str(date,time_str);	
 	 	    printf("TABLE_DUMP|%s|A|%s|%u|",time_str,peer,route->peer_as);
-			printf("%s/%d|%s|%s\n",prefix,route->mask,attr_aspath(entry->attr),tmp1);
+			printf("%s/%d|%s|%s\n",prefix,route->mask,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				
 		}
 

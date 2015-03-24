@@ -179,6 +179,7 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
 
     switch(this_entry->type) {
 	case BGPDUMP_TYPE_MRTD_BGP:
+		ok = process_mrtd_bgp(&s,this_entry);
 		break;
 	case BGPDUMP_TYPE_MRTD_TABLE_DUMP:
 		ok = process_mrtd_table_dump(&s,this_entry);
@@ -307,6 +308,38 @@ void bgpdump_free_attr(attributes_t *attr){
 
 	    free(attr);
 	}
+}
+
+
+int process_mrtd_bgp(struct mstream *s, BGPDUMP_ENTRY *entry) {
+    switch(entry->subtype) {
+    case BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE:
+    case BGPDUMP_SUBTYPE_MRTD_BGP_KEEPALIVE:
+	read_asn(s, &entry->body.mrtd_message.source_as, ASN16_LEN);
+	entry->body.mrtd_message.source_ip = mstream_get_ipv4(s);
+
+	read_asn(s, &entry->body.mrtd_message.destination_as, ASN16_LEN);
+	entry->body.mrtd_message.destination_ip = mstream_get_ipv4(s);
+
+	mstream_t withdraw_stream = mstream_copy(s, mstream_getw(s, NULL));
+	entry->body.mrtd_message.withdraw_count = read_prefix_list(&withdraw_stream, AFI_IP,
+								   entry->body.mrtd_message.withdraw,
+								   &entry->body.mrtd_message.incomplete);
+
+	entry->attr = process_attributes(s, ASN16_LEN, &entry->body.mrtd_message.incomplete);
+
+	entry->body.mrtd_message.announce_count = read_prefix_list(s, AFI_IP, 
+								   entry->body.mrtd_message.announce,
+								   &entry->body.mrtd_message.incomplete);
+	break;
+    case BGPDUMP_SUBTYPE_MRTD_BGP_STATE_CHANGE:
+	read_asn(s, &entry->body.mrtd_state_change.destination_as, ASN16_LEN);
+	entry->body.mrtd_state_change.destination_ip = mstream_get_ipv4(s);
+	entry->body.mrtd_state_change.old_state = mstream_getw(s, NULL);
+	entry->body.mrtd_state_change.new_state = mstream_getw(s, NULL);
+	break;
+    }
+    return 1;
 }
 
 int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
