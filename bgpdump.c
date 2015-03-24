@@ -170,8 +170,8 @@ int main(int argc, char *argv[]) {
     }
 
     // more efficient then line buffering
-    static char buffer[16000];
-    setbuffer(stdout, buffer, sizeof buffer);
+    //    static char buffer[16000];
+    //    setbuffer(stdout, buffer, sizeof buffer);
     
     BGPDUMP *my_dump = bgpdump_open_dump(argv[0]);
     if(! my_dump)
@@ -1003,7 +1003,8 @@ void mrtd_table_line_withdraw(struct prefix *prefix, int count, BGPDUMP_ENTRY *e
 
 
 void mrtd_table_line_announce(struct prefix *prefix, int count, BGPDUMP_ENTRY *entry, char *time_str) {
-    int i;
+    int i, npref, nmed;
+    char *aggregate = entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE) ? "AG" : "NAG";
 
     for (i = 0; i < count; i++) {
         if (mode == 1)
@@ -1013,8 +1014,25 @@ void mrtd_table_line_announce(struct prefix *prefix, int count, BGPDUMP_ENTRY *e
 
         printf("|A|%s|%u", inet_ntoa(entry->body.mrtd_message.source_ip),
                entry->body.mrtd_message.source_as);
-        printf("|%s/%d|%s|%s\n", inet_ntoa(prefix[i].address.v4_addr), prefix[i].len,
+        printf("|%s/%d|%s|%s", inet_ntoa(prefix[i].address.v4_addr), prefix[i].len,
                attr_aspath(entry->attr), describe_origin(entry->attr->origin));
+        if (mode == 1) {
+            npref = ((entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF)) == 0) ? 0 : entry->attr->local_pref;
+            nmed  = ((entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC)) == 0) ? 0 : entry->attr->med;
+            printf("|%s|%u|%u", inet_ntoa(entry->attr->nexthop), npref, nmed);
+
+            if ((entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES)) != 0)
+                printf("%s|%s|", entry->attr->community->str+1, aggregate);
+            else
+                printf("|%s|", aggregate);
+				
+            if (entry->attr->aggregator_addr.s_addr != -1)
+                printf("%u %s|\n", entry->attr->aggregator_as, inet_ntoa(entry->attr->aggregator_addr));
+            else
+                printf("|\n");
+        }
+        else
+            printf("\n");
     }
 }
 
