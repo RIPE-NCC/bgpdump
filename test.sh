@@ -8,8 +8,9 @@ echo "Running Regression Tests..."
 for mrt in `ls test_data`; do
     echo -n "      testing $mrt..."
     OUT=$mrt.bgp.gz
-    ./bgpdump -vm test_data/$mrt | gzip > test_out/$OUT
-    cmp -i 10 test_out/$OUT test_expect/$OUT
+    ./bgpdump -vm test_data/$mrt > test_out/$OUT
+    gzcat test_expect/$OUT | diff -q test_out/$OUT -
+#    cmp -i 10 test_out/$OUT test_expect/$OUT
     if [ $? == 0 ]; then
         echo "success"
     else
