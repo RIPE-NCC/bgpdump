@@ -8,6 +8,9 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2015-07-16 Max Lapan <mlapan@ripe.net>
+	* -p option to show packet index
+
 2011-01-25 Devin Bayer <dbayer@ripe.net>
 	* move development to bitbucket
 
