@@ -568,8 +568,10 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE_AS4:
 	    return process_zebra_bgp_state_change(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
 	    return process_zebra_bgp_message(s, entry, ASN16_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
 	    return process_zebra_bgp_message(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_ENTRY:
 	    return process_zebra_bgp_entry(s,entry);
@@ -644,8 +646,22 @@ int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int
 int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     u_char marker[16]; /* BGP marker */
 
-    read_asn(s, &entry->body.zebra_message.source_as, asn_len);
-    read_asn(s, &entry->body.zebra_message.destination_as, asn_len);
+	switch(entry->subtype) {
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+    		read_asn(s, &entry->body.zebra_message.source_as, asn_len);
+    		read_asn(s, &entry->body.zebra_message.destination_as, asn_len);
+			break;
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+    		read_asn(s, &entry->body.zebra_message.destination_as, asn_len);
+    		read_asn(s, &entry->body.zebra_message.source_as, asn_len);
+			break;
+    	default:
+			warn("process_zebra_bgp_message: unknown subtype %d", entry->subtype);
+            return 0;
+	}
+
     mstream_getw(s,&entry->body.zebra_message.interface_index);
     mstream_getw(s,&entry->body.zebra_message.address_family);
 
@@ -656,14 +672,34 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 
     switch(entry->body.zebra_message.address_family) {
 	case AFI_IP:
-	    entry->body.zebra_message.source_ip.v4_addr = mstream_get_ipv4(s);
-	    entry->body.zebra_message.destination_ip.v4_addr = mstream_get_ipv4(s);
+		switch(entry->subtype) {
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+	    		entry->body.zebra_message.source_ip.v4_addr = mstream_get_ipv4(s);
+	    		entry->body.zebra_message.destination_ip.v4_addr = mstream_get_ipv4(s);
+				break;
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+	    		entry->body.zebra_message.destination_ip.v4_addr = mstream_get_ipv4(s);
+	    		entry->body.zebra_message.source_ip.v4_addr = mstream_get_ipv4(s);
+				break;
+		}
 	    mstream_get (s, marker, 16);
 	    break;
 #ifdef BGPDUMP_HAVE_IPV6
 	case AFI_IP6:
-	    mstream_get(s,&entry->body.zebra_message.source_ip.v6_addr.s6_addr, 16);
-	    mstream_get(s,&entry->body.zebra_message.destination_ip.v6_addr.s6_addr, 16);
+		switch(entry->subtype) {
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+				mstream_get(s,&entry->body.zebra_message.source_ip.v6_addr.s6_addr, 16);
+				mstream_get(s,&entry->body.zebra_message.destination_ip.v6_addr.s6_addr, 16);
+				break;
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+				mstream_get(s,&entry->body.zebra_message.destination_ip.v6_addr.s6_addr, 16);
+				mstream_get(s,&entry->body.zebra_message.source_ip.v6_addr.s6_addr, 16);
+				break;
+		}
 	    mstream_get (s, marker, 16);
 	    break;
 #endif
