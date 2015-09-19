@@ -8,6 +8,12 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2015-09-19 Colin Petrie <cpetrie@ripe.net>
+	* Adding support for BGP4MP_MESSAGE_LOCAL and BGP4MP_MESSAGE_AS4_LOCAL subtypes
+	  Note that this changes the semantics of the output of bgpdump - when an entry is
+	  prefixed by BG4MP_LOCAL (-m/-M) then the output fields are the *destination* IP/AS
+	  rather than the source.
+
 2015-07-16 Max Lapan <mlapan@ripe.net>
 	* -p option to show packet index
 
