@@ -1277,40 +1277,32 @@ static void table_line_withdraw(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 	
 	for (idx=0;idx<count;idx++)
 	{
-		if (bgp4mp_message_direction_receive(entry)) {
-			show_line_prefix("BGP4MP", entry->time, time_str, "W");
-			switch(entry->body.zebra_message.address_family) {
+		bgp4mp_message_direction_receive(entry)
+			? show_line_prefix("BGP4MP", entry->time, time_str, "W")
+			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
+
+		switch(entry->body.zebra_message.address_family) {
 #ifdef BGPDUMP_HAVE_IPV6
-				case AFI_IP6:
-					printf("%s|%u|",
+			case AFI_IP6:
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|",
 						fmt_ipv6(entry->body.zebra_message.source_ip,buf),
-						entry->body.zebra_message.source_as);
-					break;
-#endif
-            			case AFI_IP:
-            			default:
-                			printf("%s|%u|",
-                       				inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),
-                       				entry->body.zebra_message.source_as);
-                			break;
-			}
-		 } else { 
-			show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
-			switch(entry->body.zebra_message.address_family) {
-#ifdef BGPDUMP_HAVE_IPV6
-				case AFI_IP6:
-					printf("%s|%u|",
+						entry->body.zebra_message.source_as)
+					: printf("%s|%u|",
 						fmt_ipv6(entry->body.zebra_message.destination_ip,buf),
 						entry->body.zebra_message.destination_as);
-					break;
+				break;
 #endif
-            			case AFI_IP:
-            			default:
-               				printf("%s|%u|",
+            		case AFI_IP:
+            		default:
+				bgp4mp_message_direction_receive(entry)
+                			? printf("%s|%u|",
+                       				inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),
+                       				entry->body.zebra_message.source_as)
+					: printf("%s|%u|",
                       				inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),
                       				entry->body.zebra_message.destination_as);
-                			break;
-			}
+                		break;
 		}
 		printf("%s/%d\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len);
         }
@@ -1326,40 +1318,34 @@ static void table_line_withdraw6(struct prefix *prefix,int count,BGPDUMP_ENTRY *
 
 	for (idx=0;idx<count;idx++)
 	{
-		if  (bgp4mp_message_direction_receive(entry)) {
-			show_line_prefix("BGP4MP", entry->time, time_str, "W");
-			switch(entry->body.zebra_message.address_family) {
-				case AFI_IP6:
-					printf("%s|%u|%s/%d\n",
+		bgp4mp_message_direction_receive(entry)
+			? show_line_prefix("BGP4MP", entry->time, time_str, "W")
+			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
+
+		switch(entry->body.zebra_message.address_family) {
+			case AFI_IP6:
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|%s/%d\n",
 						fmt_ipv6(entry->body.zebra_message.source_ip,buf1),
 						entry->body.zebra_message.source_as,
-						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-					break;
-            			case AFI_IP:
-            			default:
-					printf("%s|%u|%s/%d\n",
-						fmt_ipv4(entry->body.zebra_message.source_ip,buf1),
-						entry->body.zebra_message.source_as,
-						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-                			break;
-			}
-		} else {
-			show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
-			switch(entry->body.zebra_message.address_family) {
-				case AFI_IP6:
-					printf("%s|%u|%s/%d\n",
+						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len)
+					: printf("%s|%u|%s/%d\n",
 						fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),
 						entry->body.zebra_message.destination_as,
 						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-					break;
-            			case AFI_IP:
-            			default:
-					printf("%s|%u|%s/%d\n",
-						fmt_ipv4(entry->body.zebra_message.destination_ip,buf1),
+				break;
+            		case AFI_IP:
+            		default:
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|%s/%d\n",
+						fmt_ipv4(entry->body.zebra_message.source_ip,buf1),
+						entry->body.zebra_message.source_as,
+						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len)
+					: printf("%s|%u|%s/%d\n",
+						fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),
 						entry->body.zebra_message.destination_as,
 						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-                			break;
-			}
+                		break;
 		}
         }	
 }
