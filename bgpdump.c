@@ -51,6 +51,7 @@ static void table_line_withdraw(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *entry);
 static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_ENTRY *entry);
 static char *describe_origin(int origin);
+static int  bgp4mp_message_direction_receive(BGPDUMP_ENTRY *entry);
 
 #ifdef BGPDUMP_HAVE_IPV6
     void show_prefixes6(int count,struct prefix *prefix);
@@ -67,6 +68,20 @@ static char *attr_aspath(attributes_t *a) {
         return a->aspath->str;
     }
     return "";
+}
+
+/* Helper function to return the direction of a BGP4MP_MESSAGE
+ * returns true if it is a received message, false if it is a sent message */
+static int bgp4mp_message_direction_receive(BGPDUMP_ENTRY *entry) {
+	switch(entry->subtype) {
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+			return 0;
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+		default:
+			return 1;
+	}
 }
 
 static int mode=0;
@@ -374,16 +389,10 @@ void process(BGPDUMP_ENTRY *entry) {
 			case BGP_MSG_UPDATE:
 			   if (mode ==0)
 		    	   {
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("TYPE: BGP4MP/MESSAGE/Update\n");
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("TYPE: BGP4MP/MESSAGE_LOCAL/Update\n");
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("TYPE: BGP4MP/MESSAGE/Update\n")
+					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Update\n");
+
 				if (entry->body.zebra_message.source_as)
 			        {
 					printf("FROM:");
@@ -566,16 +575,10 @@ void process(BGPDUMP_ENTRY *entry) {
 			case BGP_MSG_OPEN:
 			    if (mode != 0)
 				    break;
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("TYPE: BGP4MP/MESSAGE/Open\n");
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("TYPE: BGP4MP/MESSAGE_LOCAL/Open\n");
-						break;
-				}
+
+				bgp4mp_message_direction_receive(entry)
+					? printf("TYPE: BGP4MP/MESSAGE/Open\n")
+					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Open\n");
 
 			    if (entry->body.zebra_message.source_as)
 			    {
@@ -630,16 +633,9 @@ void process(BGPDUMP_ENTRY *entry) {
 			case BGP_MSG_NOTIFY:
 			    if (mode != 0)
 				    break;
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("TYPE: BGP4MP/MESSAGE/Notify\n");
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("TYPE: BGP4MP/MESSAGE_LOCAL/Notify\n");
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("TYPE: BGP4MP/MESSAGE/Notify\n")
+					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Notify\n");
 			    if (entry->body.zebra_message.source_as)
 			    {
 				printf("FROM:");
@@ -812,16 +808,9 @@ void process(BGPDUMP_ENTRY *entry) {
 			    	if ( mode != 0)
 					break;
 
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("TYPE: BGP4MP/MESSAGE/Keepalive\n");
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("TYPE: BGP4MP/MESSAGE_LOCAL/Keepalive\n");
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("TYPE: BGP4MP/MESSAGE/Keepalive\n")
+					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Keepalive\n");
 				if (entry->body.zebra_message.source_as)
 				{
 					printf("FROM:");
@@ -1288,45 +1277,40 @@ static void table_line_withdraw(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 	
 	for (idx=0;idx<count;idx++)
 	{
-		switch(entry->subtype) {
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-				show_line_prefix("BGP4MP", entry->time, time_str, "W");
-				switch(entry->body.zebra_message.address_family) {
+		if (bgp4mp_message_direction_receive(entry)) {
+			show_line_prefix("BGP4MP", entry->time, time_str, "W");
+			switch(entry->body.zebra_message.address_family) {
 #ifdef BGPDUMP_HAVE_IPV6
-					case AFI_IP6:
-						printf("%s|%u|",
-							fmt_ipv6(entry->body.zebra_message.source_ip,buf),
-							entry->body.zebra_message.source_as);
-						break;
+				case AFI_IP6:
+					printf("%s|%u|",
+						fmt_ipv6(entry->body.zebra_message.source_ip,buf),
+						entry->body.zebra_message.source_as);
+					break;
 #endif
-            				case AFI_IP:
-            				default:
-                				printf("%s|%u|",
-                       					inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),
-                       					entry->body.zebra_message.source_as);
-                				break;
-				}
-				break;
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-				show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
-				switch(entry->body.zebra_message.address_family) {
+            			case AFI_IP:
+            			default:
+                			printf("%s|%u|",
+                       				inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),
+                       				entry->body.zebra_message.source_as);
+                			break;
+			}
+		 } else { 
+			show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
+			switch(entry->body.zebra_message.address_family) {
 #ifdef BGPDUMP_HAVE_IPV6
-					case AFI_IP6:
-						printf("%s|%u|",
-							fmt_ipv6(entry->body.zebra_message.destination_ip,buf),
-							entry->body.zebra_message.destination_as);
-						break;
+				case AFI_IP6:
+					printf("%s|%u|",
+						fmt_ipv6(entry->body.zebra_message.destination_ip,buf),
+						entry->body.zebra_message.destination_as);
+					break;
 #endif
-            				case AFI_IP:
-            				default:
-                				printf("%s|%u|",
-                       					inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),
-                       					entry->body.zebra_message.destination_as);
-                				break;
-				}
-				break;
+            			case AFI_IP:
+            			default:
+               				printf("%s|%u|",
+                      				inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),
+                      				entry->body.zebra_message.destination_as);
+                			break;
+			}
 		}
 		printf("%s/%d\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len);
         }
@@ -1342,45 +1326,40 @@ static void table_line_withdraw6(struct prefix *prefix,int count,BGPDUMP_ENTRY *
 
 	for (idx=0;idx<count;idx++)
 	{
-		switch(entry->subtype) {
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-				show_line_prefix("BGP4MP", entry->time, time_str, "W");
-				switch(entry->body.zebra_message.address_family) {
-					case AFI_IP6:
-						printf("%s|%u|%s/%d\n",
-							fmt_ipv6(entry->body.zebra_message.source_ip,buf1),
-							entry->body.zebra_message.source_as,
-							fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-						break;
-            				case AFI_IP:
-            				default:
-						printf("%s|%u|%s/%d\n",
-							fmt_ipv4(entry->body.zebra_message.source_ip,buf1),
-							entry->body.zebra_message.source_as,
-							fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-                				break;
-				}
-				break;
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-				show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
-				switch(entry->body.zebra_message.address_family) {
-					case AFI_IP6:
-						printf("%s|%u|%s/%d\n",
-							fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),
-							entry->body.zebra_message.destination_as,
-							fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-						break;
-            				case AFI_IP:
-            				default:
-						printf("%s|%u|%s/%d\n",
-							fmt_ipv4(entry->body.zebra_message.destination_ip,buf1),
-							entry->body.zebra_message.destination_as,
-							fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
-                				break;
-				}
-				break;
+		if  (bgp4mp_message_direction_receive(entry)) {
+			show_line_prefix("BGP4MP", entry->time, time_str, "W");
+			switch(entry->body.zebra_message.address_family) {
+				case AFI_IP6:
+					printf("%s|%u|%s/%d\n",
+						fmt_ipv6(entry->body.zebra_message.source_ip,buf1),
+						entry->body.zebra_message.source_as,
+						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
+					break;
+            			case AFI_IP:
+            			default:
+					printf("%s|%u|%s/%d\n",
+						fmt_ipv4(entry->body.zebra_message.source_ip,buf1),
+						entry->body.zebra_message.source_as,
+						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
+                			break;
+			}
+		} else {
+			show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
+			switch(entry->body.zebra_message.address_family) {
+				case AFI_IP6:
+					printf("%s|%u|%s/%d\n",
+						fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),
+						entry->body.zebra_message.destination_as,
+						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
+					break;
+            			case AFI_IP:
+            			default:
+					printf("%s|%u|%s/%d\n",
+						fmt_ipv4(entry->body.zebra_message.destination_ip,buf1),
+						entry->body.zebra_message.destination_as,
+						fmt_ipv6(prefix[idx].address,buf),prefix[idx].len);
+                			break;
+			}
 		}
         }	
 }
@@ -1402,46 +1381,26 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 
 	for (idx=0;idx<count;idx++)
 	{
-		switch(entry->subtype) {
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-				show_line_prefix("BGP4MP", entry->time, time_str, "A");
-				break;
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-				show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
-				break;
-		}
+		bgp4mp_message_direction_receive(entry)
+			? show_line_prefix("BGP4MP", entry->time, time_str, "A")
+			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
+
 		if (mode == 1)
 		{
 			switch(entry->body.zebra_message.address_family)
 			{
 #ifdef BGPDUMP_HAVE_IPV6
 			case AFI_IP6:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as)
+					: printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
 				break;
 #endif
 			case AFI_IP:
 			default:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as)
+					: printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
 				break;
 			}
 			printf("%s/%d|%s|%s|",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
@@ -1469,30 +1428,16 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 			{
 #ifdef BGPDUMP_HAVE_IPV6
 			case AFI_IP6:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as)
+					: printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
 				break;
 #endif
 			case AFI_IP:
 			default:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as)
+					: printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
 				break;
 			}
 			printf("%s/%d|%s|%s\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
@@ -1516,16 +1461,10 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 
 	for (idx=0;idx<count;idx++)
 	{
-		switch(entry->subtype) {
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-				show_line_prefix("BGP4MP", entry->time, time_str, "A");
-				break;
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-				show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
-				break;
-		}
+		bgp4mp_message_direction_receive(entry) 
+			? show_line_prefix("BGP4MP", entry->time, time_str, "A")
+			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
+
 		if (mode == 1)
 		{
 			if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI))
@@ -1534,30 +1473,16 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 				{
 #ifdef BGPDUMP_HAVE_IPV6
 				case AFI_IP6:
-					switch(entry->subtype) {
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-							printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as);
-							break;
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-							printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
-							break;
-					}
+					bgp4mp_message_direction_receive(entry)
+						? printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as)
+						: printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
 					break;
 #endif
 				case AFI_IP:
 				default:
-					switch(entry->subtype) {
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-							printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
-							break;
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-							printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
-							break;
-					}
+					bgp4mp_message_direction_receive(entry)
+						? printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as)
+						: printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
 					break;
 				}
 				printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
@@ -1583,30 +1508,16 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 				{
 #ifdef BGPDUMP_HAVE_IPV6
 				case AFI_IP6:
-					switch(entry->subtype) {
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-							printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as);
-							break;
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-							printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
-							break;
-					}
+					bgp4mp_message_direction_receive(entry)
+						? printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as)
+						: printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
 					break;
 #endif
 				case AFI_IP:
 				default:
-					switch(entry->subtype) {
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-							printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
-							break;
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-						case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-							printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
-							break;
-					}
+					bgp4mp_message_direction_receive(entry)
+						? printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as)
+						: printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
 					break;
 				}
 				printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
@@ -1638,30 +1549,16 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 			{
 #ifdef BGPDUMP_HAVE_IPV6
 			case AFI_IP6:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf),entry->body.zebra_message.source_as)
+					: printf("%s|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf),entry->body.zebra_message.destination_as);
 				break;
 #endif
 			case AFI_IP:
 			default:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr),entry->body.zebra_message.source_as)
+					: printf("%s|%u|",inet_ntoa(entry->body.zebra_message.destination_ip.v4_addr),entry->body.zebra_message.destination_as);
 				break;
 			}
 			printf("%s/%d|%s|%s\n",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
@@ -1689,16 +1586,10 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 
 	for (idx=0;idx<count;idx++)
 	{
-		switch(entry->subtype) {
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-				show_line_prefix("BGP4MP", entry->time, time_str, "A");
-				break;
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-				show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
-				break;
-		}
+		bgp4mp_message_direction_receive(entry)
+			? show_line_prefix("BGP4MP", entry->time, time_str, "A")
+			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
+
 		if (mode == 1)
 		{
 			switch(entry->body.zebra_message.address_family)
@@ -1712,16 +1603,9 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed)
+					: printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
 				break;
 			case AFI_IP:
 			default:
@@ -1734,16 +1618,9 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 	            nmed=0;
 			    
 			//printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),nprof,nmed);
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv4(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed)
+					: printf("%s|%u|%s/%d|%s|%s|%s|%u|%u|",fmt_ipv4(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf2),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
 				break;
 			}
 			if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
@@ -1763,29 +1640,15 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 			switch(entry->body.zebra_message.address_family)
 			{
 			case AFI_IP6:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv6(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
+					: printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv6(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				break;
 			case AFI_IP:
 			default:
-				switch(entry->subtype) {
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
-						printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
-						break;
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
-					case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
-						printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv4(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
-						break;
-				}
+				bgp4mp_message_direction_receive(entry)
+					? printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv4(entry->body.zebra_message.source_ip,buf1),entry->body.zebra_message.source_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
+					: printf("%s|%u|%s/%d|%s|%s\n",fmt_ipv4(entry->body.zebra_message.destination_ip,buf1),entry->body.zebra_message.destination_as,fmt_ipv6(prefix->nlri[idx].address,buf),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				break;
 			}
 		}		
