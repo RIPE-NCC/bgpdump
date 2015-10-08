@@ -16,3 +16,4 @@
 ~$
 ^libbgpdump-.*\.tgz$
 ^autom4te.cache/
+.DS_Store
