@@ -84,13 +84,13 @@ static int bgp4mp_message_direction_receive(BGPDUMP_ENTRY *entry) {
 	}
 }
 
-/* Helper function that returns the type of BGP4 message:
+/* Helper function that returns the format of a BGP4MP_MESSAGE:
  - BGP4M (Standard)
  - BGP4M_ET (Extended Header)
  - BGP4M_LOCAL (Local)
  - BGP4M_ET_LOCAL (Local and Extended Header)
  */
-static const char* get_bgp4m_type(BGPDUMP_ENTRY *entry) {
+static const char* get_bgp4m_format(BGPDUMP_ENTRY *entry) {
     if (entry->type == BGPDUMP_TYPE_ZEBRA_BGP_ET &&
             !bgp4mp_message_direction_receive(entry)) {
         return "BGP4MP_ET_LOCAL";
@@ -1311,7 +1311,7 @@ static void table_line_withdraw(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 	
 	for (idx=0;idx<count;idx++)
 	{
-        show_line_prefix(get_bgp4m_type(entry), time_str, "W");
+        show_line_prefix(get_bgp4m_format(entry), time_str, "W");
 
 		switch(entry->body.zebra_message.address_family) {
 #ifdef BGPDUMP_HAVE_IPV6
@@ -1350,7 +1350,7 @@ static void table_line_withdraw6(struct prefix *prefix,int count,BGPDUMP_ENTRY *
 
 	for (idx=0;idx<count;idx++)
 	{
-		show_line_prefix(get_bgp4m_type(entry), time_str, "W");
+		show_line_prefix(get_bgp4m_format(entry), time_str, "W");
 
 		switch(entry->body.zebra_message.address_family) {
 			case AFI_IP6:
@@ -1397,7 +1397,7 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 
 	for (idx=0;idx<count;idx++)
 	{
-        show_line_prefix(get_bgp4m_type(entry), time_str, "A");
+        show_line_prefix(get_bgp4m_format(entry), time_str, "A");
 
 		if (mode == 1)
 		{
@@ -1475,7 +1475,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 
 	for (idx=0;idx<count;idx++)
 	{
-        show_line_prefix(get_bgp4m_type(entry), time_str, "A");
+        show_line_prefix(get_bgp4m_format(entry), time_str, "A");
 
 		if (mode == 1)
 		{
@@ -1598,7 +1598,7 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 
 	for (idx=0;idx<count;idx++)
 	{
-        show_line_prefix(get_bgp4m_type(entry), time_str, "A");
+        show_line_prefix(get_bgp4m_format(entry), time_str, "A");
 
 		if (mode == 1)
 		{
