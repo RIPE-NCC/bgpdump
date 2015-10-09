@@ -69,6 +69,7 @@ Original Author: Dan Ardelean (dan@ripe.net)
 
 /* Zebra record types */
 #define BGPDUMP_TYPE_ZEBRA_BGP			16 /* MSG_PROTOCOL_BGP4MP */
+#define BGPDUMP_TYPE_ZEBRA_BGP_ET       17 /* MSG_PROTOCOL_BGP4MP_ET */
 #define BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE	0  /* BGP4MP_STATE_CHANGE */
 #define BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE	1  /* BGP4MP_MESSAGE */
 #define BGPDUMP_SUBTYPE_ZEBRA_BGP_ENTRY		2  /* BGP4MP_ENTRY */
@@ -254,12 +255,13 @@ typedef union union_BGPDUMP_BODY {
 
 /* The MRT header. Common to all records. */
 typedef struct struct_BGPDUMP_ENTRY {
-    time_t		time;
-    u_int16_t		type;
-    u_int16_t		subtype;
-    u_int32_t		length;
-    attributes_t       *attr;
-    BGPDUMP_BODY 	body;
+    time_t time;
+    long ms;
+    u_int16_t type;
+    u_int16_t subtype;
+    u_int32_t length;
+    attributes_t *attr;
+    BGPDUMP_BODY body;
 } BGPDUMP_ENTRY;
 
 #endif

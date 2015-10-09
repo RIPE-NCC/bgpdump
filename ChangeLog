@@ -7,6 +7,11 @@ You can reach us at https://bitbucket.org/ripencc/bgpdump
 PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
+2015-09-19 Alexis Fasquel <alexis@pch.net>
+	* Adding support for Extended Timestamp MRT Header corresponding to MRT type BGP4MP_ET
+	  Note that this changes the semantics of the output of bgpdump - when a messages
+	  with Extended Timestamp MRT Header is parsed, the microseconds attribute
+	  is appended to the timestamp (.xxxxxx)
 
 2015-09-19 Colin Petrie <cpetrie@ripe.net>
 	* Adding support for BGP4MP_MESSAGE_LOCAL and BGP4MP_MESSAGE_AS4_LOCAL subtypes

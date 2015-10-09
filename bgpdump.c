@@ -59,7 +59,7 @@ static int  bgp4mp_message_direction_receive(BGPDUMP_ENTRY *entry);
     static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY *entry,char *time_str);
 #endif
 
-static void show_line_prefix(const char* format, long long ts, const char* time_str, const char* type);
+static void show_line_prefix(const char* format, const char* time_str, const char* type);
 
 /* If no aspath was present as a string in the packet, return an empty string
  * so everything stays machine parsable */
@@ -82,6 +82,25 @@ static int bgp4mp_message_direction_receive(BGPDUMP_ENTRY *entry) {
 		default:
 			return 1;
 	}
+}
+
+/* Helper function that returns the type of BGP4 message:
+ - BGP4M (Standard)
+ - BGP4M_ET (Extended Header)
+ - BGP4M_LOCAL (Local)
+ - BGP4M_ET_LOCAL (Local and Extended Header)
+ */
+static const char* get_bgp4m_type(BGPDUMP_ENTRY *entry) {
+    if (entry->type == BGPDUMP_TYPE_ZEBRA_BGP_ET &&
+            !bgp4mp_message_direction_receive(entry)) {
+        return "BGP4MP_ET_LOCAL";
+    } else if (entry->type == BGPDUMP_TYPE_ZEBRA_BGP_ET) {
+        return "BGP4MP_ET";
+    } else if (!bgp4mp_message_direction_receive(entry)) {
+        return "BGP4MP_LOCAL";
+    } else {
+        return "BGP4MP";
+    }
 }
 
 static int mode=0;
@@ -231,11 +250,23 @@ void process(BGPDUMP_ENTRY *entry) {
 	char time_str[128];
 	char time_str2[128];
 	char time_str_fixed[128];
-    char prefix[BGPDUMP_ADDRSTRLEN];  
+    char prefix[BGPDUMP_ADDRSTRLEN];
+    char *bgp4_format;
 	
 	date=gmtime(&entry->time);
-	time2str(date,time_str);	
-	time2str(date,time_str_fixed);	
+	time2str(date,time_str_fixed);
+    
+    if (mode == 1) {
+        // Timestamp mode
+        sprintf(time_str, "%ld", entry->time);
+    } else {
+        time2str(date,time_str);
+    }
+    // Appending microseconds to time_str if needed
+    if (entry->type == BGPDUMP_TYPE_ZEBRA_BGP_ET) {
+        sprintf(time_str, "%s.%06ld", time_str, entry->ms);
+    }
+    
 	if (mode==0)
 	{
 		printf("TIME: %s\n", time_str);
@@ -376,6 +407,13 @@ void process(BGPDUMP_ENTRY *entry) {
             break;
 	    
 	case BGPDUMP_TYPE_ZEBRA_BGP:
+    case BGPDUMP_TYPE_ZEBRA_BGP_ET:
+
+        if (entry->type == BGPDUMP_TYPE_ZEBRA_BGP) {
+            bgp4_format = "BGP4MP";
+        } else {
+            bgp4_format = "BGP4MP_ET";
+        }
 	    
 	    switch(entry->subtype) 
 	    {
@@ -390,8 +428,8 @@ void process(BGPDUMP_ENTRY *entry) {
 			   if (mode ==0)
 		    	   {
 				bgp4mp_message_direction_receive(entry)
-					? printf("TYPE: BGP4MP/MESSAGE/Update\n")
-					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Update\n");
+					? printf("TYPE: %s/MESSAGE/Update\n", bgp4_format)
+					: printf("TYPE: %s/MESSAGE_LOCAL/Update\n", bgp4_format);
 
 				if (entry->body.zebra_message.source_as)
 			        {
@@ -577,8 +615,8 @@ void process(BGPDUMP_ENTRY *entry) {
 				    break;
 
 				bgp4mp_message_direction_receive(entry)
-					? printf("TYPE: BGP4MP/MESSAGE/Open\n")
-					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Open\n");
+					? printf("TYPE: %s/MESSAGE/Open\n", bgp4_format)
+					: printf("TYPE: %s/MESSAGE_LOCAL/Open\n", bgp4_format);
 
 			    if (entry->body.zebra_message.source_as)
 			    {
@@ -634,8 +672,8 @@ void process(BGPDUMP_ENTRY *entry) {
 			    if (mode != 0)
 				    break;
 				bgp4mp_message_direction_receive(entry)
-					? printf("TYPE: BGP4MP/MESSAGE/Notify\n")
-					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Notify\n");
+					? printf("TYPE: %s/MESSAGE/Notify\n", bgp4_format)
+					: printf("TYPE: %s/MESSAGE_LOCAL/Notify\n", bgp4_format);
 			    if (entry->body.zebra_message.source_as)
 			    {
 				printf("FROM:");
@@ -809,8 +847,8 @@ void process(BGPDUMP_ENTRY *entry) {
 					break;
 
 				bgp4mp_message_direction_receive(entry)
-					? printf("TYPE: BGP4MP/MESSAGE/Keepalive\n")
-					: printf("TYPE: BGP4MP/MESSAGE_LOCAL/Keepalive\n");
+					? printf("TYPE: %s/MESSAGE/Keepalive\n", bgp4_format)
+					: printf("TYPE: %s/MESSAGE_LOCAL/Keepalive\n", bgp4_format);
 				if (entry->body.zebra_message.source_as)
 				{
 					printf("FROM:");
@@ -863,7 +901,7 @@ void process(BGPDUMP_ENTRY *entry) {
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_STATE_CHANGE_AS4:
 		    if (mode==0)
 		    {
-		    	printf("TYPE: BGP4MP/STATE_CHANGE\n");
+		    	printf("TYPE: %s/STATE_CHANGE\n", bgp4_format);
 
 		    	printf("PEER:");
 			switch(entry->body.zebra_state_change.address_family)
@@ -896,25 +934,20 @@ void process(BGPDUMP_ENTRY *entry) {
 			{
 #ifdef BGPDUMP_HAVE_IPV6
 				case AFI_IP6:
-					fmt_ipv6(entry->body.zebra_state_change.source_ip,prefix);
-                                        show_line_prefix("BGP4MP", entry->time, time_str, "STATE");
-                                        printf("%s|%u|%d|%d\n",
-                                               prefix,
-                                               entry->body.zebra_state_change.source_as,
-                                               entry->body.zebra_state_change.old_state,
-                                               entry->body.zebra_state_change.new_state);
+                    fmt_ipv6(entry->body.zebra_state_change.source_ip, prefix);
 					break;
 #endif
 				case AFI_IP:
 				default:
-                                        show_line_prefix("BGP4MP", entry->time, time_str, "STATE");
-                                        printf("%s|%u|%d|%d\n",
-                                               inet_ntoa(entry->body.zebra_state_change.source_ip.v4_addr),
-                                               entry->body.zebra_state_change.source_as,
-                                               entry->body.zebra_state_change.old_state,
-                                               entry->body.zebra_state_change.new_state);
+                    sprintf(prefix, "%s", inet_ntoa(entry->body.zebra_state_change.source_ip.v4_addr));
 					break;
 			}
+            show_line_prefix(bgp4_format, time_str, "STATE");
+            printf("%s|%u|%d|%d\n", prefix,
+                    entry->body.zebra_state_change.source_as,
+                    entry->body.zebra_state_change.old_state,
+                    entry->body.zebra_state_change.new_state);
+                
 		    }
 		    break;
 		
@@ -928,18 +961,13 @@ void process(BGPDUMP_ENTRY *entry) {
 // print line prefix with respect of mode and show_packet_index flags
 // output will have format:
 // format|[packet_index|]time|type|
-void show_line_prefix(const char* format, long long ts, const char* time_str, const char* type)
+void show_line_prefix(const char* format, const char* time_str, const char* type)
 {
     printf("%s|", format);
     if (show_packet_index)
         printf("%d|", packet_index);
-
-    if (mode == 1)
-        printf("%lld|", ts);
-    else 
-        printf("%s|", time_str);
-
-    printf("%s|", type);
+    
+    printf("%s|%s|", time_str, type);
 } 
 
 
@@ -947,8 +975,14 @@ void process_bgpdump_mrtd_bgp(BGPDUMP_ENTRY *entry) {
     struct tm *date;
     char time_str[128];
     date=gmtime(&entry->time);
-    time2str(date,time_str);	
 
+    if (mode == 1) {
+        sprintf(time_str, "%ld", entry->time);
+    } else {
+        
+        time2str(date, time_str);
+    }
+    
     switch (entry->subtype) {
     case BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE:
     case BGPDUMP_SUBTYPE_MRTD_BGP_KEEPALIVE:
@@ -999,7 +1033,7 @@ void process_bgpdump_mrtd_bgp(BGPDUMP_ENTRY *entry) {
                    bgp_state_name[entry->body.mrtd_state_change.new_state]);
         }
         else if (mode == 1 || mode == 2) {
-            show_line_prefix("BGP", entry->time, time_str, "STATE");
+            show_line_prefix("BGP", time_str, "STATE");
             printf("%s|%u|%d|%d\n",
                    inet_ntoa(entry->body.mrtd_state_change.destination_ip),
                    entry->body.mrtd_state_change.destination_as,
@@ -1019,7 +1053,7 @@ void mrtd_table_line_withdraw(struct prefix *prefix, int count, BGPDUMP_ENTRY *e
     int i;
 
     for (i = 0; i < count; i++) {
-        show_line_prefix("BGP", entry->time, time_str, "W");
+        show_line_prefix("BGP", time_str, "W");
         printf("%s|%u|%s/%d\n", inet_ntoa(entry->body.mrtd_message.source_ip),
                entry->body.mrtd_message.source_as,
                inet_ntoa(prefix[i].address.v4_addr), prefix[i].len);
@@ -1032,7 +1066,7 @@ void mrtd_table_line_announce(struct prefix *prefix, int count, BGPDUMP_ENTRY *e
     char *aggregate = entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE) ? "AG" : "NAG";
 
     for (i = 0; i < count; i++) {
-        show_line_prefix("BGP", entry->time, time_str, "A");
+        show_line_prefix("BGP", time_str, "A");
         printf("%s|%u", inet_ntoa(entry->body.mrtd_message.source_ip),
                entry->body.mrtd_message.source_as);
         printf("|%s/%d|%s|%s", inet_ntoa(prefix[i].address.v4_addr), prefix[i].len,
@@ -1277,9 +1311,7 @@ static void table_line_withdraw(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 	
 	for (idx=0;idx<count;idx++)
 	{
-		bgp4mp_message_direction_receive(entry)
-			? show_line_prefix("BGP4MP", entry->time, time_str, "W")
-			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
+        show_line_prefix(get_bgp4m_type(entry), time_str, "W");
 
 		switch(entry->body.zebra_message.address_family) {
 #ifdef BGPDUMP_HAVE_IPV6
@@ -1318,9 +1350,7 @@ static void table_line_withdraw6(struct prefix *prefix,int count,BGPDUMP_ENTRY *
 
 	for (idx=0;idx<count;idx++)
 	{
-		bgp4mp_message_direction_receive(entry)
-			? show_line_prefix("BGP4MP", entry->time, time_str, "W")
-			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "W");
+		show_line_prefix(get_bgp4m_type(entry), time_str, "W");
 
 		switch(entry->body.zebra_message.address_family) {
 			case AFI_IP6:
@@ -1367,9 +1397,7 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 
 	for (idx=0;idx<count;idx++)
 	{
-		bgp4mp_message_direction_receive(entry)
-			? show_line_prefix("BGP4MP", entry->time, time_str, "A")
-			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
+        show_line_prefix(get_bgp4m_type(entry), time_str, "A");
 
 		if (mode == 1)
 		{
@@ -1447,9 +1475,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 
 	for (idx=0;idx<count;idx++)
 	{
-		bgp4mp_message_direction_receive(entry) 
-			? show_line_prefix("BGP4MP", entry->time, time_str, "A")
-			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
+        show_line_prefix(get_bgp4m_type(entry), time_str, "A");
 
 		if (mode == 1)
 		{
@@ -1572,9 +1598,7 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 
 	for (idx=0;idx<count;idx++)
 	{
-		bgp4mp_message_direction_receive(entry)
-			? show_line_prefix("BGP4MP", entry->time, time_str, "A")
-			: show_line_prefix("BGP4MP_LOCAL", entry->time, time_str, "A");
+        show_line_prefix(get_bgp4m_type(entry), time_str, "A");
 
 		if (mode == 1)
 		{
@@ -1660,16 +1684,19 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 	else
 		sprintf(tmp2,"NAG");
 
-        if (timetype==0) {
-            date=gmtime(&entry->time);
-            time2str(date,time_str);	
-            show_line_prefix("TABLE_DUMP", entry->time, time_str, "B");
-        }
-        else {
-            date=gmtime(&route->uptime);
-            time2str(date,time_str);	
-            show_line_prefix("TABLE_DUMP", route->uptime, time_str, "B");
-        }
+    time_t *t;
+    if (timetype==0) {
+        t = &entry->time;
+    } else {
+        t = &route->uptime;
+    }
+    if (mode == 1) {
+        sprintf(time_str, "%ld", *t);
+    } else {
+        date=gmtime(t);
+        time2str(date, time_str);
+    }
+    show_line_prefix("TABLE_DUMP", time_str, "B");
 
 #ifdef BGPDUMP_HAVE_IPV6
 	    	if (entry->subtype == AFI_IP6)
@@ -1768,17 +1795,21 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
 #endif
         }
 
+        time_t *t;
         if (timetype==0) {
-            date=gmtime(&entry->time);            
-            time2str(date,time_str);
-            show_line_prefix("TABLE_DUMP2", entry->time, time_str, "B");
+            t = &entry->time;
+        } else {
+            time_t tmp = (time_t)((e->entries[i]).originated_time);
+            t = &tmp;
         }
-        else {
-            time_t time_temp = (time_t)((e->entries[i]).originated_time);
-            date=gmtime(&time_temp);
-            time2str(date,time_str);
-            show_line_prefix("TABLE_DUMP2", e->entries[i].originated_time, time_str, "B");
+        if (mode == 1) {
+            sprintf(time_str, "%ld", *t);
+        } else {
+            date=gmtime(t);
+            time2str(date, time_str);
         }
+        show_line_prefix("TABLE_DUMP2", time_str, "B");
+
         
         if (mode == 1)
         {

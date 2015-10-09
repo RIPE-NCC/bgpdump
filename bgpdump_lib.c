@@ -139,27 +139,40 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     bytes_read += cfr_read_n(dump->f, &(this_entry->type), 2);
     bytes_read += cfr_read_n(dump->f, &(this_entry->subtype), 2);
     bytes_read += cfr_read_n(dump->f, &(this_entry->length), 4);
-    if(bytes_read != 12) {
-	if(bytes_read > 0) {
-	    /* Malformed record */
-	    dump->parsed++;
-	    err("bgpdump_read_next: incomplete MRT header (%d bytes read, expecting 12)",
-		   bytes_read);
-	}
-	/* Nothing more to read, quit */
-	free(this_entry);
-	dump->eof=1;
-	return(NULL);
+    
+    if (bytes_read == 12) {
+        /* Intel byte ordering stuff ... */
+        this_entry->type = ntohs(this_entry->type);
+        this_entry->subtype = ntohs(this_entry->subtype);
+        this_entry->time = ntohl(this_entry->time);
+        this_entry->length = ntohl(this_entry->length);
+        
+        /* If Extended Header format, then reading the miscroseconds attribute */
+        if (this_entry->type == BGPDUMP_TYPE_ZEBRA_BGP_ET) {
+            bytes_read += cfr_read_n(dump->f, &(this_entry->ms), 4);
+            if (bytes_read == 16) {
+                this_entry->ms = ntohl(this_entry->ms);
+                ok = 1;
+            }
+        } else {
+            this_entry->ms = 0;
+            ok = 1;
+        }
+    }
+
+    if (!ok) {
+        if(bytes_read > 0) {
+            /* Malformed record */
+            err("bgpdump_read_next: incomplete MRT header (%d bytes read, expecting 12 or 16)",
+                bytes_read);
+        }
+        /* Nothing more to read, quit */
+        free(this_entry);
+        dump->eof = 1;
+        return(NULL);
     }
 
     dump->parsed++;
-
-    /* Intel byte ordering stuff ... */
-    this_entry->type=ntohs(this_entry->type);
-    this_entry->subtype=ntohs(this_entry->subtype);
-    this_entry->time=ntohl(this_entry->time);
-    this_entry->length=ntohl(this_entry->length);
-
     this_entry->attr=NULL;
 
     buffer = malloc(this_entry->length);
@@ -185,6 +198,7 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
 		ok = process_mrtd_table_dump(&s,this_entry);
 		break;
 	case BGPDUMP_TYPE_ZEBRA_BGP:
+    case BGPDUMP_TYPE_ZEBRA_BGP_ET:
 		ok = process_zebra_bgp(&s,this_entry);
 		break;
 	case BGPDUMP_TYPE_TABLE_DUMP_V2:
