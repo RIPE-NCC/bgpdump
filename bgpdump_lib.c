@@ -152,6 +152,9 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
             bytes_read += cfr_read_n(dump->f, &(this_entry->ms), 4);
             if (bytes_read == 16) {
                 this_entry->ms = ntohl(this_entry->ms);
+                /* "The Microsecond Timestamp is included in the computation of
+                 * the Length field value." (RFC6396 2011) */
+                this_entry->length -= 4;
                 ok = 1;
             }
         } else {
