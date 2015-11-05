@@ -456,12 +456,15 @@ int process_mrtd_table_dump_v2(struct mstream *s,BGPDUMP_ENTRY *entry) {
 		return process_mrtd_table_dump_v2_peer_index_table(s, entry);
 	break;
 	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST_ADDPATH:
 		return process_mrtd_table_dump_v2_ipv4_unicast(s, entry);
 	break;
 	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST_ADDPATH:
 		return process_mrtd_table_dump_v2_ipv6_unicast(s, entry);
 	break;
 	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_GENERIC:
+	case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_GENERIC_ADDPATH:
 		//return process_mrtd_table_dump_v2_generic(s, entry);
 	break;
 	}
@@ -537,6 +540,7 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *entry){
 	BGPDUMP_TABLE_DUMP_V2_PREFIX *prefixdata;
 	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
+    int addpath = is_addpath(entry);
 	uint16_t i;
 
 	prefixdata->afi = AFI_IP;
@@ -561,6 +565,9 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		mstream_getw(s, &e->peer_index);
 		e->peer = &table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
+
+        if (addpath)
+		    mstream_getl(s, &e->originated_time);
             
 		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
 	}
@@ -573,6 +580,7 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 #ifdef BGPDUMP_HAVE_IPV6
 	BGPDUMP_TABLE_DUMP_V2_PREFIX *prefixdata;
 	prefixdata = &entry->body.mrtd_table_dump_v2_prefix;
+    int addpath = is_addpath(entry);
 	uint16_t i;
 
 	prefixdata->afi = AFI_IP6;
@@ -599,6 +607,9 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		mstream_getw(s, &e->peer_index);
 		e->peer = &table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
+
+        if (addpath)
+		    mstream_getl(s, &e->originated_time);
 
 		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
 	}

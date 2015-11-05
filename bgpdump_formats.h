@@ -136,6 +136,7 @@ typedef struct struct_BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE {
 typedef struct struct_BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY {
 	uint16_t            peer_index;
 	uint32_t            originated_time;
+    pathid_t            path_id;
 	BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY *peer;
         attributes_t        *attr;
 } BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY;
