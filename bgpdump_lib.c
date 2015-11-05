@@ -567,7 +567,7 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		mstream_getl(s, &e->originated_time);
 
         if (addpath)
-		    mstream_getl(s, &e->originated_time);
+		    mstream_getl(s, &e->path_id);
             
 		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
 	}
@@ -609,7 +609,7 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		mstream_getl(s, &e->originated_time);
 
         if (addpath)
-		    mstream_getl(s, &e->originated_time);
+		    mstream_getl(s, &e->path_id);
 
 		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
 	}
