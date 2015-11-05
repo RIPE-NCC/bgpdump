@@ -107,6 +107,7 @@ struct unknown_attr
 };
 
 typedef u_int32_t as_t;
+typedef u_int32_t pathid_t;
 
 typedef struct attr attributes_t;
 struct attr
@@ -210,6 +211,7 @@ typedef union union_BGPDUMP_IP_ADDRESS {
 struct prefix {
     BGPDUMP_IP_ADDRESS	address;
     u_char		len;
+    pathid_t    pathid;
 };
 
 #define MAX_PREFIXES 2050
