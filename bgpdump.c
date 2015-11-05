@@ -374,6 +374,7 @@ void process(BGPDUMP_ENTRY *entry) {
 			char peer_ip[BGPDUMP_ADDRSTRLEN];
 			//char time_str[30];
 			int i;
+            int addpath = is_addpath(entry);
 
 			BGPDUMP_TABLE_DUMP_V2_PREFIX *e;
 			e = &entry->body.mrtd_table_dump_v2_prefix;
@@ -391,13 +392,22 @@ void process(BGPDUMP_ENTRY *entry) {
 				// for multiple peers, we may need to print another TIME ourselves
 				if(i) printf("\nTIME: %s\n",time_str_fixed);
 				if(e->afi == AFI_IP){
-    				printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
+                    if (addpath)
+    				    printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST_ADDPATH\n");
+                    else  
+    				    printf("TYPE: TABLE_DUMP_V2/IPV4_UNICAST\n");
 #ifdef BGPDUMP_HAVE_IPV6
 				} else if(e->afi == AFI_IP6){
-    				printf("TYPE: TABLE_DUMP_V2/IPV6_UNICAST\n");
+                    if (addpath)
+    				    printf("TYPE: TABLE_DUMP_V2/IPV6_UNICAST_ADDPATH\n");
+                    else
+    				    printf("TYPE: TABLE_DUMP_V2/IPV6_UNICAST\n");
 #endif
 				}
-	    		printf("PREFIX: %s/%d\n",prefix, e->prefix_length);
+	    		printf("PREFIX: %s/%d",prefix, e->prefix_length);
+                if (addpath)
+                    printf("PATH_ID: %u", e->entries[i].path_id);
+                printf("\n");
     			printf("SEQUENCE: %d\n",e->seq);
 
 				if(e->entries[i].peer->afi == AFI_IP){
@@ -1325,7 +1335,7 @@ void show_prefixes(int count,struct prefix *prefix, int addpath) {
     int i;
     for(i=0;i<count;i++)
         if (addpath)
-	        printf("  %s/%d PathID: %u\n",inet_ntoa(prefix[i].address.v4_addr),prefix[i].len, prefix[i].pathid);
+	        printf("  %s/%d PATH_ID: %u\n",inet_ntoa(prefix[i].address.v4_addr),prefix[i].len, prefix[i].path_id);
         else
 	        printf("  %s/%d\n",inet_ntoa(prefix[i].address.v4_addr),prefix[i].len);
 
@@ -1338,7 +1348,7 @@ void show_prefixes6(int count,struct prefix *prefix, int addpath)
 
 	for (i=0;i<count;i++)
         if (addpath)
-	        printf("  %s/%d PathID: %u\n",fmt_ipv6(prefix[i].address,buf),prefix[i].len, prefix[i].pathid);
+	        printf("  %s/%d PATH_ID: %u\n",fmt_ipv6(prefix[i].address,buf),prefix[i].len, prefix[i].path_id);
         else
 	        printf("  %s/%d\n",fmt_ipv6(prefix[i].address,buf),prefix[i].len);
 
@@ -1379,7 +1389,7 @@ static void table_line_withdraw(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
                 		break;
 		}
         is_addpath(entry)
-            ? printf("%s/%d|%u\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,prefix[idx].pathid)
+            ? printf("%s/%d|%u\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,prefix[idx].path_id)
             : printf("%s/%d\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len);
         }
 }
@@ -1422,7 +1432,7 @@ static void table_line_withdraw6(struct prefix *prefix,int count,BGPDUMP_ENTRY *
                 		break;
 		}
         is_addpath(entry)
-            ? printf("|%u\n", prefix[idx].pathid)
+            ? printf("|%u\n", prefix[idx].path_id)
             : printf("\n");
         }	
 }
@@ -1466,7 +1476,7 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 			}
 
             is_addpath(entry)
-                ? printf("%s/%d|%u|%s|%s|",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,prefix[idx].pathid,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
+                ? printf("%s/%d|%u|%s|%s|",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,prefix[idx].path_id,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
                 : printf("%s/%d|%s|%s|",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 
 		    npref=entry->attr->local_pref;
@@ -1507,7 +1517,7 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 			}
 
             is_addpath(entry)
-                ? printf("%s/%d|%u|%s|%s\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,prefix[idx].pathid,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
+                ? printf("%s/%d|%u|%s|%s\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,prefix[idx].path_id,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
                 : printf("%s/%d|%s|%s\n",inet_ntoa(prefix[idx].address.v4_addr),prefix[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				
 		}
@@ -1553,7 +1563,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 				}
 
                 is_addpath(entry)
-                    ? printf("%s/%d|%u|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,prefix->nlri[idx].pathid,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
+                    ? printf("%s/%d|%u|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,prefix->nlri[idx].path_id,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
                     : printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 
 		    npref=entry->attr->local_pref;
@@ -1591,7 +1601,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 				}
 
                 is_addpath(entry)
-                    ? printf("%s/%d|%u|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,prefix->nlri[idx].pathid,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
+                    ? printf("%s/%d|%u|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,prefix->nlri[idx].path_id,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
                     : printf("%s/%d|%s|%s|",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 
 		    npref=entry->attr->local_pref;
@@ -1634,7 +1644,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 				break;
 			}
             is_addpath(entry)
-                ? printf("%s/%d|%u|%s|%s\n",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,prefix->nlri[idx].pathid,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
+                ? printf("%s/%d|%u|%s|%s\n",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,prefix->nlri[idx].path_id,attr_aspath(entry->attr),describe_origin(entry->attr->origin))
                 : printf("%s/%d|%s|%s\n",inet_ntoa(prefix->nlri[idx].address.v4_addr),prefix->nlri[idx].len,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 				
 		}
@@ -1700,7 +1710,7 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 			}
 
             if (is_addpath(entry))
-                printf("%u|", prefix->nlri[idx].pathid);
+                printf("%u|", prefix->nlri[idx].path_id);
 
             printf("%s|%s|%s|%u|%u|", attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
 
@@ -1734,7 +1744,7 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 			}
 
             if (is_addpath(entry))
-                printf("%u|", prefix->nlri[idx].pathid);
+                printf("%u|", prefix->nlri[idx].path_id);
 
             printf("%s|%s\n",attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 		}		
@@ -1845,6 +1855,7 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
     char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
     
     int i;
+    int addpath = is_addpath(entry);
     
     for(i = 0; i < e->entry_count; i++) {
         attributes_t *attr = e->entries[i].attr;
@@ -1884,13 +1895,18 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
             date=gmtime(t);
             time2str(date, time_str);
         }
-        show_line_prefix("TABLE_DUMP2", time_str, "B");
 
-        
+        (addpath)
+            ? show_line_prefix("TABLE_DUMP2_AP", time_str, "B")
+            : show_line_prefix("TABLE_DUMP2", time_str, "B");
+
         if (mode == 1)
         {
             printf("%s|%u|",peer,e->entries[i].peer->peer_as);
-            printf("%s/%d|%s|%s|",prefix,e->prefix_length,aspath_str,origin);
+
+            (addpath)
+                ? printf("%s/%d|%u|%s|%s|",prefix,e->prefix_length,e->entries[i].path_id,aspath_str,origin)
+                : printf("%s/%d|%s|%s|",prefix,e->prefix_length,aspath_str,origin);
             
             npref=attr->local_pref;
             if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LOCAL_PREF) ) ==0)
@@ -1924,7 +1940,9 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
         else
         {
             printf("%s|%u|",peer,e->entries[i].peer->peer_as);
-            printf("%s/%d|%s|%s\n",prefix,e->prefix_length,aspath_str,origin);
+            (addpath)
+                ? printf("%s/%d|%u|%s|%s\n",prefix,e->prefix_length,e->entries[i].path_id,aspath_str,origin)
+                : printf("%s/%d|%s|%s\n",prefix,e->prefix_length,aspath_str,origin);
             
         }
     }

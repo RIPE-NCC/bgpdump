@@ -211,7 +211,7 @@ typedef union union_BGPDUMP_IP_ADDRESS {
 struct prefix {
     BGPDUMP_IP_ADDRESS	address;
     u_char		len;
-    pathid_t    pathid;
+    pathid_t    path_id;
 };
 
 #define MAX_PREFIXES 2050

@@ -1368,9 +1368,9 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
 
         /* If this is an Additional Paths enabled NLRI, then there is a
          * 4 octet identifier preceeding each prefix entry */
-        pathid_t pathid;
+        pathid_t path_id;
         if (is_addpath)
-            pathid = mstream_getl(s, NULL);
+            path_id = mstream_getl(s, NULL);
 
         u_int8_t p_len = mstream_getc(s,NULL); // length in bits
         u_int8_t p_bytes = (p_len + 7) / 8;
@@ -1385,7 +1385,7 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
             incomplete->orig_len = p_len;
             incomplete->prefix = (struct prefix) {
                 .len = mstream_can_read(s) * 8,
-                .pathid = pathid
+                .path_id = path_id
             };
             mstream_get(s, &incomplete->prefix.address, p_bytes);
             break;
@@ -1396,7 +1396,7 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
         if(count++ > MAX_PREFIXES)
             continue;
 
-        *prefix = (struct prefix) { .len = p_len, .pathid = pathid };
+        *prefix = (struct prefix) { .len = p_len, .path_id = path_id };
         mstream_get(s, &prefix->address, p_bytes);
     }
     
