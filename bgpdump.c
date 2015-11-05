@@ -1325,7 +1325,7 @@ void show_prefixes(int count,struct prefix *prefix, int addpath) {
     int i;
     for(i=0;i<count;i++)
         if (addpath)
-	        printf("  %s/%d PathID:%u\n",inet_ntoa(prefix[i].address.v4_addr),prefix[i].len, prefix[i].pathid);
+	        printf("  %s/%d PathID: %u\n",inet_ntoa(prefix[i].address.v4_addr),prefix[i].len, prefix[i].pathid);
         else
 	        printf("  %s/%d\n",inet_ntoa(prefix[i].address.v4_addr),prefix[i].len);
 
@@ -1338,7 +1338,7 @@ void show_prefixes6(int count,struct prefix *prefix, int addpath)
 
 	for (i=0;i<count;i++)
         if (addpath)
-	        printf("  %s/%d PathID:%u\n",fmt_ipv6(prefix[i].address,buf),prefix[i].len, prefix[i].pathid);
+	        printf("  %s/%d PathID: %u\n",fmt_ipv6(prefix[i].address,buf),prefix[i].len, prefix[i].pathid);
         else
 	        printf("  %s/%d\n",fmt_ipv6(prefix[i].address,buf),prefix[i].len);
 
