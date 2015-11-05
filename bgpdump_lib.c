@@ -615,9 +615,13 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 	    return process_zebra_bgp_state_change(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
+    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_ADDPATH:
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL_ADDPATH:
 	    return process_zebra_bgp_message(s, entry, ASN16_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_ADDPATH:
+	case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL_ADDPATH:
 	    return process_zebra_bgp_message(s, entry, ASN32_LEN);
 	case BGPDUMP_SUBTYPE_ZEBRA_BGP_ENTRY:
 	    return process_zebra_bgp_entry(s,entry);
@@ -695,11 +699,15 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 	switch(entry->subtype) {
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL_ADDPATH:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL_ADDPATH:
 			read_asn(s, &entry->body.zebra_message.destination_as, asn_len);
 			read_asn(s, &entry->body.zebra_message.source_as, asn_len);
 			break;
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_ADDPATH:
+		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_ADDPATH:
 		default:
 			read_asn(s, &entry->body.zebra_message.source_as, asn_len);
 			read_asn(s, &entry->body.zebra_message.destination_as, asn_len);
@@ -719,11 +727,15 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 		switch(entry->subtype) {
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL_ADDPATH:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL_ADDPATH:
 		    		entry->body.zebra_message.destination_ip.v4_addr = mstream_get_ipv4(s);
 		    		entry->body.zebra_message.source_ip.v4_addr = mstream_get_ipv4(s);
 				break;
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_ADDPATH:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_ADDPATH:
 			default:
 				entry->body.zebra_message.source_ip.v4_addr = mstream_get_ipv4(s);
 				entry->body.zebra_message.destination_ip.v4_addr = mstream_get_ipv4(s);
@@ -736,11 +748,15 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 		switch(entry->subtype) {
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL_ADDPATH:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL_ADDPATH:
 				mstream_get(s,&entry->body.zebra_message.destination_ip.v6_addr.s6_addr, 16);
 				mstream_get(s,&entry->body.zebra_message.source_ip.v6_addr.s6_addr, 16);
 				break;
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_ADDPATH:
+			case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_ADDPATH:
 			default:
 				mstream_get(s,&entry->body.zebra_message.source_ip.v6_addr.s6_addr, 16);
 				mstream_get(s,&entry->body.zebra_message.destination_ip.v6_addr.s6_addr, 16);
