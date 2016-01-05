@@ -123,6 +123,7 @@ typedef struct struct_BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY {
 	u_char              afi;
 	BGPDUMP_IP_ADDRESS  peer_ip;
 	struct in_addr      peer_bgp_id;
+    uint8_t             peer_type;
 	as_t                peer_as;
 } BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY;
 

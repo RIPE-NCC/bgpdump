@@ -1,12 +1,27 @@
 ==========================================================
 The current maintainer of this library is the
-RIPE NCC information services department.
+RIPE NCC Global Information Infrastructure department.
 
 You can reach us at https://bitbucket.org/ripencc/bgpdump
 
 PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
+
+2015-12-31 Colin Petrie <cpetrie@ripe.net>
+	* Adding support for decoding AS2 + AS_TRANS in TABLE_DUMP_V2 messages
+	  This is likely to have never been encountered before as Quagga
+	  hard-coded the ASN length to 4 (as internally it stores everything as
+	  AS4 and has already performed as_trans translation). Use of this feature
+	  is also an RFC violation. But in the developer's opinion, a necessary
+	  one.
+
+2015-11-05 Colin Petrie <cpetrie@ripe.net>
+	* Adding support for draft-petrie-grow-mrt-add-paths
+	  Note that this adds various output format changes, when reading messages
+	  with Add-path Path-IDs in them, there are extra columns and fields in
+	  the bgpdump output
+
 2015-10-08 Alexis Fasquel <alexis@pch.net>
 	* Adding support for Extended Timestamp MRT Header corresponding to MRT type BGP4MP_ET
 	  Note that this changes the semantics of the output of bgpdump - when a messages
