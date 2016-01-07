@@ -511,7 +511,6 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 
 	for(i=0; i < t->peer_count; i++) {
     	mstream_getc(s,&peertype);
-        t->entries[i].peer_type = peertype;
                 t->entries[i].afi = AFI_IP;
 #ifdef BGPDUMP_HAVE_IPV6
 		if(peertype & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AFI_IP6)
@@ -569,17 +568,8 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 
         if (addpath)
 		    mstream_getl(s, &e->path_id);
-
-        // In theory this is violating RFC6396:
-        //       " All AS numbers in the AS_PATH attribute MUST be encoded as 4-byte AS numbers "
-        // However, IMHO the RFC is silly.
-        // And Quagga hard-coded this value to AS4 anyway.
-        // Therefore this exists only for decoding RIS's new non-quagga (ExaBGP) MRT files
-        // This behaviour is also mirrored by zebra-dump-parser.pl
-        if (e->peer->peer_type & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AS4)
-            e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
-        else
-            e->attr = process_attributes(s, 2, NULL, is_addpath(entry));
+            
+		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
 	}
 
 	return 1;
@@ -621,17 +611,7 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
         if (addpath)
 		    mstream_getl(s, &e->path_id);
 
-        // In theory this is violating RFC6396:
-        //       " All AS numbers in the AS_PATH attribute MUST be encoded as 4-byte AS numbers "
-        // However, IMHO the RFC is silly.
-        // And Quagga hard-coded this value to AS4 anyway.
-        // Therefore this exists only for decoding RIS's new non-quagga (ExaBGP) MRT files
-        // This behaviour is also mirrored by zebra-dump-parser.pl
-        if (e->peer->peer_type & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AS4)
-		    e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
-        else
-		    e->attr = process_attributes(s, 2, NULL, is_addpath(entry));
-
+		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
 	}
 
 #endif

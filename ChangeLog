@@ -8,14 +8,6 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
-2015-12-31 Colin Petrie <cpetrie@ripe.net>
-	* Adding support for decoding AS2 + AS_TRANS in TABLE_DUMP_V2 messages
-	  This is likely to have never been encountered before as Quagga
-	  hard-coded the ASN length to 4 (as internally it stores everything as
-	  AS4 and has already performed as_trans translation).
-	  This feature is needed for parsing upcoming new RIS collector MRT files
-	  that are not based on Quagga.
-
 2015-11-05 Colin Petrie <cpetrie@ripe.net>
 	* Adding support for draft-petrie-grow-mrt-add-paths
 	  Note that this adds various output format changes, when reading messages
