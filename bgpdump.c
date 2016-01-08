@@ -406,7 +406,7 @@ void process(BGPDUMP_ENTRY *entry) {
 				}
 	    		printf("PREFIX: %s/%d",prefix, e->prefix_length);
                 if (addpath)
-                    printf("PATH_ID: %u", e->entries[i].path_id);
+                    printf(" PATH_ID: %u", e->entries[i].path_id);
                 printf("\n");
     			printf("SEQUENCE: %d\n",e->seq);
 
