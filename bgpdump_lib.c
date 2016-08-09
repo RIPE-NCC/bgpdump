@@ -247,8 +247,16 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
 
 	switch(entry->type) {
 	    case BGPDUMP_TYPE_ZEBRA_BGP:
+	    case BGPDUMP_TYPE_ZEBRA_BGP_ET:
 		switch(entry->subtype) {
 		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
+		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
+		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL:
+		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
+		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_ADDPATH:
+		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_ADDPATH:
+		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL_ADDPATH:
+		    case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL_ADDPATH:
 			switch(entry->body.zebra_message.type) {
 			    case BGP_MSG_NOTIFY:
 				if(entry->body.zebra_message.notify_data)
@@ -263,17 +271,21 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
 		}
 		break;
 	    case BGPDUMP_TYPE_TABLE_DUMP_V2:
-		if(entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST ||
-		   entry->subtype == BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST ){
+        switch(entry->subtype) {
+            case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST:
+            case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST:
+            case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV4_UNICAST_ADDPATH:
+            case BGPDUMP_SUBTYPE_TABLE_DUMP_V2_RIB_IPV6_UNICAST_ADDPATH:
+            {
+                BGPDUMP_TABLE_DUMP_V2_PREFIX *e;
+                e = &entry->body.mrtd_table_dump_v2_prefix;
+                int i;
 
-			BGPDUMP_TABLE_DUMP_V2_PREFIX *e;
-			e = &entry->body.mrtd_table_dump_v2_prefix;
-			int i;
-
-			for(i = 0; i < e->entry_count; i++){
-				bgpdump_free_attr(e->entries[i].attr);
-			}
-			free(e->entries);
+                for(i = 0; i < e->entry_count; i++){
+                    bgpdump_free_attr(e->entries[i].attr);
+                }
+                free(e->entries);
+            }
 		}
 		break;
 	}
