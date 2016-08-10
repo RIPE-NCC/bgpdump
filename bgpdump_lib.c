@@ -42,7 +42,7 @@ this license is included with libbgpdump.
 #include <assert.h>
 
 void	  bgpdump_free_attr(attributes_t *attr);
-int       process_mrtd_bgp(struct mstream *s, BGPDUMP_ENTRY *entry);
+static    int process_mrtd_bgp(struct mstream *s, BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY *entry);
