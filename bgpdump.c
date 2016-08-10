@@ -276,7 +276,7 @@ void process(BGPDUMP_ENTRY *entry) {
     
     if (mode == 1) {
         // Timestamp mode
-        sprintf(time_str, "%ld", entry->time);
+        sprintf(time_str, "%lld", (long long)entry->time);
     } else {
         time2str(date,time_str);
     }
@@ -1021,7 +1021,7 @@ void process_bgpdump_mrtd_bgp(BGPDUMP_ENTRY *entry) {
     date=gmtime(&entry->time);
 
     if (mode == 1) {
-        sprintf(time_str, "%ld", entry->time);
+        sprintf(time_str, "%lld", (long long)entry->time);
     } else {
         
         time2str(date, time_str);
@@ -1777,7 +1777,7 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
         t = &route->uptime;
     }
     if (mode == 1) {
-        sprintf(time_str, "%ld", *t);
+        sprintf(time_str, "%lld", (long long)*t);
     } else {
         date=gmtime(t);
         time2str(date, time_str);
@@ -1890,7 +1890,7 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
             t = &tmp;
         }
         if (mode == 1) {
-            sprintf(time_str, "%ld", *t);
+            sprintf(time_str, "%lld", (long long)*t);
         } else {
             date=gmtime(t);
             time2str(date, time_str);
