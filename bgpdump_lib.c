@@ -59,14 +59,14 @@ static    int process_zebra_bgp_message_notify(struct mstream *s,BGPDUMP_ENTRY *
 static    int process_zebra_bgp_entry(struct mstream *s,BGPDUMP_ENTRY *entry);
 static    int process_zebra_bgp_snapshot(struct mstream *s,BGPDUMP_ENTRY *entry);
 
-static    attributes_t *process_attributes(struct mstream *s, u_int8_t asn_len, struct zebra_incomplete *incomplete, int is_addpath);
+static    attributes_t *process_attributes(struct mstream *s, u_int8_t asn_len, struct zebra_incomplete *incomplete, int is_addp);
 static    void process_attr_aspath_string(struct aspath *as);
 static    char aspath_delimiter_char (u_char type, u_char which);
 static    void process_attr_community_string(struct community *com);
 
-static    void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addpath);
-static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addpath);
-static    int read_prefix_list(struct mstream *s, u_int16_t af, struct prefix *prefixes, struct zebra_incomplete *incomplete, int is_addpath);
+static    void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp);
+static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp);
+static    int read_prefix_list(struct mstream *s, u_int16_t af, struct prefix *prefixes, struct zebra_incomplete *incomplete, int is_addp);
 
 static    as_t read_asn(struct mstream *s, as_t *asn, u_int8_t len);
 static    struct aspath *create_aspath(u_int16_t len, u_int8_t asn_len);
@@ -970,7 +970,7 @@ static void process_unknown_attr(struct mstream *s, attributes_t *attr, int flag
     mstream_get(s, unknown.raw, len);
 }
 
-static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u_int8_t asn_len, struct zebra_incomplete *incomplete, int is_addpath) {
+static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u_int8_t asn_len, struct zebra_incomplete *incomplete, int is_addp) {
     int flag = mstream_getc(outer_stream, NULL);
     int type = mstream_getc(outer_stream, NULL);
     int len;
@@ -994,10 +994,10 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
         
     switch(type) {
         case BGP_ATTR_MP_REACH_NLRI:
-            process_mp_announce(s, attr->mp_info, incomplete, is_addpath);
+            process_mp_announce(s, attr->mp_info, incomplete, is_addp);
             break;
         case BGP_ATTR_MP_UNREACH_NLRI:
-            process_mp_withdraw(s, attr->mp_info, incomplete, is_addpath);
+            process_mp_withdraw(s, attr->mp_info, incomplete, is_addp);
             break;
         case BGP_ATTR_ORIGIN:
             assert(attr->origin == -1);
@@ -1069,7 +1069,7 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
     }    
 }
 
-attributes_t *process_attributes(struct mstream *s, u_int8_t asn_len, struct zebra_incomplete *incomplete, int is_addpath) {
+attributes_t *process_attributes(struct mstream *s, u_int8_t asn_len, struct zebra_incomplete *incomplete, int is_addp) {
     int	total = mstream_getw(s, NULL);
     
     attributes_t *attr = attr_init(s, total);
@@ -1079,7 +1079,7 @@ attributes_t *process_attributes(struct mstream *s, u_int8_t asn_len, struct zeb
         warn("entry is truncated: expected=%u remaining=%u", total, mstream_can_read(&copy));
     
     while(mstream_can_read(&copy))
-        process_one_attr(&copy, attr, asn_len, incomplete, is_addpath);
+        process_one_attr(&copy, attr, asn_len, incomplete, is_addp);
     
     // Once all attributes have been read, take care of ASN32 transition
     process_asn32_trans(attr, asn_len);
@@ -1316,7 +1316,7 @@ static struct mp_nlri *get_nexthop(struct mstream *s, u_int16_t afi) {
     return nlri;
 }
 
-void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addpath) {
+void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp) {
     u_int16_t afi;
     u_int8_t safi;
 
@@ -1350,10 +1350,10 @@ void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_i
         mstream_get(s, NULL, mstream_getc(s, NULL));
     }
 
-    info->announce[afi][safi]->prefix_count = read_prefix_list(s, afi, info->announce[afi][safi]->nlri, incomplete, is_addpath);
+    info->announce[afi][safi]->prefix_count = read_prefix_list(s, afi, info->announce[afi][safi]->nlri, incomplete, is_addp);
 }
 
-void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addpath) {
+void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp) {
 	u_int16_t afi;
 	u_int8_t safi;
 	struct mp_nlri *mp_nlri;
@@ -1378,10 +1378,10 @@ void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_i
 	memset(mp_nlri, 0, sizeof(struct mp_nlri));
 	info->withdraw[afi][safi] = mp_nlri;
 
-	mp_nlri->prefix_count = read_prefix_list(s, afi, mp_nlri->nlri, incomplete, is_addpath);
+	mp_nlri->prefix_count = read_prefix_list(s, afi, mp_nlri->nlri, incomplete, is_addp);
 }
 
-static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *prefixes, struct zebra_incomplete *incomplete, int is_addpath) {
+static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *prefixes, struct zebra_incomplete *incomplete, int is_addp) {
     int count = 0;
     
     while(mstream_can_read(s)) {
@@ -1389,7 +1389,7 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
         /* If this is an Additional Paths enabled NLRI, then there is a
          * 4 octet identifier preceeding each prefix entry */
         pathid_t path_id;
-        if (is_addpath)
+        if (is_addp)
             path_id = mstream_getl(s, NULL);
 
         u_int8_t p_len = mstream_getc(s,NULL); // length in bits
