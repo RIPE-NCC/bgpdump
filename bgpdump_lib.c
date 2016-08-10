@@ -114,19 +114,17 @@ BGPDUMP *bgpdump_open_dump(const char *filename) {
 }
 
 void bgpdump_close_dump(BGPDUMP *dump) {
-    if(dump!=NULL) {
 
-    	if(dump->table_dump_v2_peer_index_table){
-		if(dump->table_dump_v2_peer_index_table->entries) {
-			free(dump->table_dump_v2_peer_index_table->entries);
-			dump->table_dump_v2_peer_index_table->entries = NULL;
-		}
-		free(dump->table_dump_v2_peer_index_table);
-		dump->table_dump_v2_peer_index_table = NULL;
-	}
-	cfr_close(dump->f);
-        free(dump);
+    if(dump == NULL) {
+        return;
     }
+
+    if(dump->table_dump_v2_peer_index_table){
+        free(dump->table_dump_v2_peer_index_table->entries);
+    }
+    free(dump->table_dump_v2_peer_index_table);
+	cfr_close(dump->f);
+    free(dump);
 }
 
 BGPDUMP_ENTRY* bgpdump_entry_create(BGPDUMP *dump){
@@ -501,11 +499,10 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 	uint8_t peertype;
 	uint16_t view_name_len;
 
-	if(entry->dump->table_dump_v2_peer_index_table){
-		if(entry->dump->table_dump_v2_peer_index_table->entries)
-			free(entry->dump->table_dump_v2_peer_index_table->entries);
-		free(entry->dump->table_dump_v2_peer_index_table);
+	if(entry->dump->table_dump_v2_peer_index_table) {
+		free(entry->dump->table_dump_v2_peer_index_table->entries);
 	}
+	free(entry->dump->table_dump_v2_peer_index_table);
 
 	entry->dump->table_dump_v2_peer_index_table = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE));
 	t = entry->dump->table_dump_v2_peer_index_table;
