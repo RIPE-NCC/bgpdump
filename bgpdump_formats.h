@@ -274,6 +274,7 @@ typedef struct struct_BGPDUMP_ENTRY {
     u_int32_t length;
     attributes_t *attr;
     BGPDUMP_BODY body;
+    struct struct_BGPDUMP * dump;
 } BGPDUMP_ENTRY;
 
 #endif

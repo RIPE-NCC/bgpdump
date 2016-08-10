@@ -50,6 +50,7 @@ typedef struct struct_BGPDUMP {
     char	filename[BGPDUMP_MAX_FILE_LEN];
     int		parsed;
     int		parsed_ok;
+    BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE *table_dump_v2_peer_index_table;
 } BGPDUMP;
 
 /* prototypes */

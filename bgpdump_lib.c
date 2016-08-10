@@ -76,8 +76,6 @@ static    void process_asn32_trans(attributes_t *attr, u_int8_t asn_len);
 static    struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath);
 static    void asn32_expand_16_to_32(char *dst, char *src, int len);
 
-BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE *table_dump_v2_peer_index_table = NULL;
-
 #if defined(linux)
 static    size_t strlcat(char *dst, const char *src, size_t size);
 #endif
@@ -109,6 +107,8 @@ BGPDUMP *bgpdump_open_dump(const char *filename) {
     this_dump->eof=0;
     this_dump->parsed = 0;
     this_dump->parsed_ok = 0;
+    // peer index table shared among entries
+    this_dump->table_dump_v2_peer_index_table = NULL;
 
     return this_dump;
 }
@@ -116,29 +116,35 @@ BGPDUMP *bgpdump_open_dump(const char *filename) {
 void bgpdump_close_dump(BGPDUMP *dump) {
     if(dump!=NULL) {
 
-    	if(table_dump_v2_peer_index_table){
-		if(table_dump_v2_peer_index_table->entries) {
-			free(table_dump_v2_peer_index_table->entries);
-			table_dump_v2_peer_index_table->entries = NULL;
+    	if(dump->table_dump_v2_peer_index_table){
+		if(dump->table_dump_v2_peer_index_table->entries) {
+			free(dump->table_dump_v2_peer_index_table->entries);
+			dump->table_dump_v2_peer_index_table->entries = NULL;
 		}
-		free(table_dump_v2_peer_index_table);
-		table_dump_v2_peer_index_table = NULL;
+		free(dump->table_dump_v2_peer_index_table);
+		dump->table_dump_v2_peer_index_table = NULL;
 	}
 	cfr_close(dump->f);
         free(dump);
     }
 }
 
+BGPDUMP_ENTRY* bgpdump_entry_create(BGPDUMP *dump){
+    BGPDUMP_ENTRY *this_entry = malloc(sizeof(BGPDUMP_ENTRY));
+    memset(this_entry, 0, sizeof(BGPDUMP_ENTRY));
+    this_entry->dump = dump;
+    return this_entry;
+}
+
 BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     assert(dump);
 
-    BGPDUMP_ENTRY *this_entry=NULL;
     struct mstream s;
     u_char *buffer;
     int ok=0;
     u_int32_t bytes_read;
 
-    this_entry = malloc(sizeof(BGPDUMP_ENTRY));
+    BGPDUMP_ENTRY *this_entry = bgpdump_entry_create(dump);
 
     bytes_read = cfr_read_n(dump->f, &(this_entry->time), 4);
     bytes_read += cfr_read_n(dump->f, &(this_entry->type), 2);
@@ -495,14 +501,14 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 	uint8_t peertype;
 	uint16_t view_name_len;
 
-	if(table_dump_v2_peer_index_table){
-		if(table_dump_v2_peer_index_table->entries)
-			free(table_dump_v2_peer_index_table->entries);
-		free(table_dump_v2_peer_index_table);
+	if(entry->dump->table_dump_v2_peer_index_table){
+		if(entry->dump->table_dump_v2_peer_index_table->entries)
+			free(entry->dump->table_dump_v2_peer_index_table->entries);
+		free(entry->dump->table_dump_v2_peer_index_table);
 	}
 
-	table_dump_v2_peer_index_table = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE));
-	t = table_dump_v2_peer_index_table;
+	entry->dump->table_dump_v2_peer_index_table = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE));
+	t = entry->dump->table_dump_v2_peer_index_table;
 	t->entries = NULL;
 
     t->local_bgp_id = mstream_get_ipv4(s);
@@ -580,7 +586,7 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		e = &prefixdata->entries[i];
 
 		mstream_getw(s, &e->peer_index);
-		e->peer = &table_dump_v2_peer_index_table->entries[e->peer_index];
+		e->peer = &entry->dump->table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
 
         if (addpath)
@@ -622,7 +628,7 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		e = &prefixdata->entries[i];
 
 		mstream_getw(s, &e->peer_index);
-		e->peer = &table_dump_v2_peer_index_table->entries[e->peer_index];
+		e->peer = &entry->dump->table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
 
         if (addpath)
