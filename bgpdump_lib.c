@@ -141,11 +141,11 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     struct mstream s;
     u_char *buffer;
     int ok=0;
-    u_int32_t bytes_read;
+    u_int32_t bytes_read, t;
 
     BGPDUMP_ENTRY *this_entry = bgpdump_entry_create(dump);
 
-    bytes_read = cfr_read_n(dump->f, &(this_entry->time), 4);
+    bytes_read = cfr_read_n(dump->f, &t, 4);
     bytes_read += cfr_read_n(dump->f, &(this_entry->type), 2);
     bytes_read += cfr_read_n(dump->f, &(this_entry->subtype), 2);
     bytes_read += cfr_read_n(dump->f, &(this_entry->length), 4);
@@ -154,7 +154,7 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
         /* Intel byte ordering stuff ... */
         this_entry->type = ntohs(this_entry->type);
         this_entry->subtype = ntohs(this_entry->subtype);
-        this_entry->time = ntohl(this_entry->time);
+        this_entry->time = (time_t) ntohl (t);
         this_entry->length = ntohl(this_entry->length);
         
         /* If Extended Header format, then reading the miscroseconds attribute */
