@@ -82,7 +82,7 @@ CFRFILE *cfr_open(const char *path) {
 #ifndef DONT_HAVE_GZ
   if((path == NULL) || (strcmp(path, "-") == 0)) {
 	/* dump from stdin */
-	gzFile *f;
+	gzFile f;
 	while (format < CFR_NUM_FORMATS) {
 		if (strcmp(cfr_extensions[format], ".gz") == 0)
         		break;
@@ -157,7 +157,7 @@ CFRFILE *cfr_open(const char *path) {
 #ifndef DONT_HAVE_GZ
   case 3:  // gzip
     { 
-	gzFile *f;
+	gzFile f;
       	// get file 
 	f = gzopen(path, "r");
 	if(f == NULL) {
@@ -302,8 +302,8 @@ size_t cfr_read(void *ptr, size_t size, size_t nmemb, CFRFILE *stream) {
 #ifndef DONT_HAVE_GZ
   case 3:  // gzip
     { 
-      gzFile * in;
-      in = (gzFile *)(stream->data2);
+      gzFile in;
+      in = (gzFile)(stream->data2);
       retval = gzread(in, ptr, size*nmemb);
       if (retval != nmemb*size) {
         // fprintf(stderr,"short read!!!\n");
@@ -391,7 +391,7 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
 #ifndef DONT_HAVE_GZ
   case 3:  // gzip
     { 
-      char * return_ptr = gzgets((gzFile *)(stream->data2), *lineptr, *n );
+      char * return_ptr = gzgets((gzFile)(stream->data2), *lineptr, *n );
       if (return_ptr == Z_NULL) {
         stream->error2 = errno;
         return(-1);
@@ -473,7 +473,7 @@ char * cfr_strerror(CFRFILE *stream) {
     asprintf(&msg2, 
              "%s: %s",
              msg, 
-             gzerror((gzFile*)(stream->data2), &(stream->error2)));
+             gzerror((gzFile)(stream->data2), &(stream->error2)));
     free(msg);
     msg = msg2;
   }
