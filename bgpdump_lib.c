@@ -98,6 +98,10 @@ BGPDUMP *bgpdump_open_dump(const char *filename) {
     BGPDUMP *this_dump = malloc(sizeof(BGPDUMP));
     strcpy(this_dump->filename, "[STDIN]");
     if(filename && strcmp(filename, "-")) {
+        if (strlen(filename) >= BGPDUMP_MAX_FILE_LEN - 1) {
+            fprintf (stderr, "File name %s is too long.\n", filename);
+            exit(1);
+        }
 	strcpy(this_dump->filename, filename);
     }
 
