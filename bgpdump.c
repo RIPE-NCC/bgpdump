@@ -154,7 +154,7 @@ extern int optind;
 
 int main(int argc, char *argv[]) {
     
-    char c;
+    int c;
     int fd;
     bool usage_error = false;
     bool use_syslog = true;
