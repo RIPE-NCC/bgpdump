@@ -1389,7 +1389,7 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
 
         /* If this is an Additional Paths enabled NLRI, then there is a
          * 4 octet identifier preceeding each prefix entry */
-        pathid_t path_id;
+        pathid_t path_id = 0;
         if (is_addp)
             path_id = mstream_getl(s, NULL);
 
