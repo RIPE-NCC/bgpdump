@@ -449,37 +449,46 @@ char * cfr_strerror(CFRFILE *stream) {
   // Result may change on subsequent call to this function.
 
   static char res[120];
+  int ret;
   char * msg, * msg2;
 
   if (stream == NULL) {
-    asprintf(&msg,"Error: stream is NULL, i.e. not opened");
-    return(msg);
+    snprintf(res, sizeof(res), "%s", "Error: stream is NULL, i.e. not opened");
+    return(res);
   }
 
-  asprintf(&msg,
+  ret = asprintf(&msg,
            "stream-i/o: %s, %s  [%s]",
            stream->eof?"EOF":"",
            strerror(stream->error1),
            cfr_compressor_str(stream));
+  if (ret == -1)
+    goto oom;
   if (stream->format == 2) {
-    asprintf(&msg2, 
+    ret = asprintf(&msg2, 
              "%s: %s",
              msg, 
              _cfr_compressor_strerror(stream->format, stream->error2));
     free(msg);
+    if (ret == -1)
+      goto oom;
     msg = msg2;
   } 
   if (stream->format == 3) {
-    asprintf(&msg2, 
+    ret = asprintf(&msg2, 
              "%s: %s",
              msg, 
              gzerror((gzFile)(stream->data2), &(stream->error2)));
     free(msg);
+    if (ret == -1)
+      goto oom;
     msg = msg2;
   }
-  snprintf(res, 120, "%s", msg);
-  res[119] = 0;
+  snprintf(res, sizeof(res), "%s", msg);
   free(msg); 
+  return(res);
+oom:
+  snprintf(res, sizeof(res), "%s", "Error: asprintf: out of memory");
   return(res);
 }
 
