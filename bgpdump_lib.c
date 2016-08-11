@@ -549,9 +549,9 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 
 
 		if(peertype & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AS4)
-			read_asn(s, &t->entries[i].peer_as, 4);
+			read_asn(s, &t->entries[i].peer_as, ASN32_LEN);
 		else
-			read_asn(s, &t->entries[i].peer_as, 2);
+			read_asn(s, &t->entries[i].peer_as, ASN16_LEN);
 
 	}
 	return 0;
