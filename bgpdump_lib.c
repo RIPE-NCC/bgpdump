@@ -69,7 +69,7 @@ static    void process_mp_announce(struct mstream *s, struct mp_info *info, stru
 static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp);
 static    int read_prefix_list(struct mstream *s, u_int16_t af, struct prefix *prefixes, struct zebra_incomplete *incomplete, int is_addp);
 
-static    as_t read_asn(struct mstream *s, as_t *asn, u_int8_t len);
+static    as_t read_asn(struct mstream *s, u_int8_t len);
 static    struct aspath *create_aspath(u_int16_t len, u_int8_t asn_len);
 static    void aspath_error(struct aspath *as);
 static    int check_new_aspath(struct aspath *aspath);
@@ -383,10 +383,10 @@ int process_mrtd_bgp(struct mstream *s, BGPDUMP_ENTRY *entry) {
     switch(entry->subtype) {
     case BGPDUMP_SUBTYPE_MRTD_BGP_UPDATE:
     case BGPDUMP_SUBTYPE_MRTD_BGP_KEEPALIVE:
-	entry->body.mrtd_message.source_as = read_asn(s, NULL, ASN16_LEN);
+	entry->body.mrtd_message.source_as = read_asn(s, ASN16_LEN);
 	entry->body.mrtd_message.source_ip = mstream_get_ipv4(s);
 
-	entry->body.mrtd_message.destination_as = read_asn(s, NULL, ASN16_LEN);
+	entry->body.mrtd_message.destination_as = read_asn(s, ASN16_LEN);
 	entry->body.mrtd_message.destination_ip = mstream_get_ipv4(s);
 
 	mstream_t withdraw_stream = mstream_copy(s, mstream_getw(s, NULL));
@@ -401,7 +401,7 @@ int process_mrtd_bgp(struct mstream *s, BGPDUMP_ENTRY *entry) {
 								   &entry->body.mrtd_message.incomplete, 0);
 	break;
     case BGPDUMP_SUBTYPE_MRTD_BGP_STATE_CHANGE:
-	entry->body.mrtd_state_change.destination_as = read_asn(s, NULL, ASN16_LEN);
+	entry->body.mrtd_state_change.destination_as = read_asn(s, ASN16_LEN);
 	entry->body.mrtd_state_change.destination_ip = mstream_get_ipv4(s);
 	entry->body.mrtd_state_change.old_state = mstream_getw(s, NULL);
 	entry->body.mrtd_state_change.new_state = mstream_getw(s, NULL);
@@ -463,7 +463,7 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
             assert(0); // unreachable
     }
 
-    entry->body.mrtd_table_dump.peer_as = read_asn(s, NULL, asn_len);
+    entry->body.mrtd_table_dump.peer_as = read_asn(s, asn_len);
 
     entry->attr = process_attributes(s, asn_len, NULL, 0);
 
@@ -549,9 +549,9 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 
 
 		if(peertype & BGPDUMP_PEERTYPE_TABLE_DUMP_V2_AS4)
-			t->entries[i].peer_as = read_asn(s, NULL, ASN32_LEN);
+			t->entries[i].peer_as = read_asn(s, ASN32_LEN);
 		else
-			t->entries[i].peer_as = read_asn(s, NULL, ASN16_LEN);
+			t->entries[i].peer_as = read_asn(s, ASN16_LEN);
 
 	}
 	return 0;
@@ -666,8 +666,8 @@ int process_zebra_bgp(struct mstream *s,BGPDUMP_ENTRY *entry) {
 }
 
 int process_zebra_bgp_state_change(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
-    entry->body.zebra_state_change.source_as = read_asn(s, NULL, asn_len);
-    entry->body.zebra_state_change.destination_as = read_asn(s, NULL, asn_len);
+    entry->body.zebra_state_change.source_as = read_asn(s, asn_len);
+    entry->body.zebra_state_change.destination_as = read_asn(s, asn_len);
 
     /* Work around Zebra dump corruption.
      * N.B. I don't see this in quagga 0.96.4 any more. Is it fixed? */
@@ -733,16 +733,16 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL:
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_LOCAL_ADDPATH:
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_LOCAL_ADDPATH:
-			entry->body.zebra_message.destination_as = read_asn(s, NULL, asn_len);
-			entry->body.zebra_message.source_as = read_asn(s, NULL, asn_len);
+			entry->body.zebra_message.destination_as = read_asn(s, asn_len);
+			entry->body.zebra_message.source_as = read_asn(s, asn_len);
 			break;
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE:
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4:
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_ADDPATH:
 		case BGPDUMP_SUBTYPE_ZEBRA_BGP_MESSAGE_AS4_ADDPATH:
 		default:
-			entry->body.zebra_message.source_as = read_asn(s, NULL, asn_len);
-			entry->body.zebra_message.destination_as = read_asn(s, NULL, asn_len);
+			entry->body.zebra_message.source_as = read_asn(s, asn_len);
+			entry->body.zebra_message.destination_as = read_asn(s, asn_len);
 			break;
 	}
 
@@ -875,7 +875,7 @@ int process_zebra_bgp_message_notify(struct mstream *s, BGPDUMP_ENTRY *entry) {
 
 int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     mstream_getc(s, &entry->body.zebra_message.version);
-    entry->body.zebra_message.my_as = read_asn(s, NULL, asn_len);
+    entry->body.zebra_message.my_as = read_asn(s, asn_len);
     mstream_getw(s, &entry->body.zebra_message.hold_time);
     entry->body.zebra_message.bgp_id = mstream_get_ipv4(s);
     mstream_getc(s, &entry->body.zebra_message.opt_len);
@@ -1026,7 +1026,7 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             break;
         case BGP_ATTR_AGGREGATOR:
             assert(-1 == attr->new_aggregator_as);
-            attr->aggregator_as = read_asn(s, NULL, asn_len);
+            attr->aggregator_as = read_asn(s, asn_len);
             attr->aggregator_addr = mstream_get_ipv4(s);
             break;
         case BGP_ATTR_COMMUNITIES:
@@ -1048,7 +1048,7 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             break;
         case BGP_ATTR_NEW_AGGREGATOR:
             assert(-1 == attr->new_aggregator_as);
-            attr->new_aggregator_as = read_asn(s, NULL, ASN32_LEN);
+            attr->new_aggregator_as = read_asn(s, ASN32_LEN);
             attr->new_aggregator_addr = mstream_get_ipv4(s);
             break;
         case BGP_ATTR_ORIGINATOR_ID:
@@ -1429,17 +1429,15 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
     return count;
 }
 
-static as_t read_asn(struct mstream *s, as_t *asn, u_int8_t len) {
+static as_t read_asn(struct mstream *s, u_int8_t len) {
   u_int16_t asn16;
 
   assert(len == sizeof(u_int32_t) || len == sizeof(u_int16_t));
   switch(len) {
     case sizeof(u_int32_t):
-      return mstream_getl(s, asn);
+      return mstream_getl(s, NULL);
     case sizeof(u_int16_t):
       mstream_getw(s, &asn16);
-      if(asn)
-	*asn = asn16;
 	return asn16;
     default:
       /* Not reached. Avoid compiler warning */
