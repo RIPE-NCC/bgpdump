@@ -6,11 +6,11 @@ mkdir -p test_out
 
 echo "Running Regression Tests..."
 for mrt in `ls test_data`; do
-    echo -n "      testing $mrt..."
+    /bin/echo -n "      testing $mrt..."
     OUT=$mrt.bgp.gz
     ./bgpdump -vm test_data/$mrt > test_out/$OUT
     gzip -cd test_expect/$OUT | diff -q test_out/$OUT -
-    if [ $? == 0 ]; then
+    if [ $? = 0 ]; then
         echo "success"
     else
         FAILURES=$(( $FAILURES + 1 ))
