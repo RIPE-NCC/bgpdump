@@ -1430,15 +1430,12 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
 }
 
 static as_t read_asn(struct mstream *s, u_int8_t len) {
-  u_int16_t asn16;
-
   assert(len == sizeof(u_int32_t) || len == sizeof(u_int16_t));
   switch(len) {
     case sizeof(u_int32_t):
       return mstream_getl(s, NULL);
     case sizeof(u_int16_t):
-      mstream_getw(s, &asn16);
-	return asn16;
+      return mstream_getw(s, NULL);
     default:
       /* Not reached. Avoid compiler warning */
       return 0;
