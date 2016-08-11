@@ -35,6 +35,10 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #include "bgpdump_attr.h"
 #include "bgpdump_formats.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BGPDUMP_MAX_FILE_LEN	1024
 #define BGPDUMP_MAX_AS_PATH_LEN	2000
 
@@ -61,5 +65,9 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump);
 void	bgpdump_free_mem(BGPDUMP_ENTRY *entry);
 char    *bgpdump_version(void);
 int     is_addpath(BGPDUMP_ENTRY *entry);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
