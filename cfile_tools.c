@@ -30,23 +30,15 @@
 const char * cfr_formats[CFR_NUM_FORMATS] = {
   "not open",     //  0
   "uncompressed", //  1
-#ifndef DONT_HAVE_BZ2
   "bzip2",         //  2
-#endif
-#ifndef DONT_HAVE_GZ
   "gzip",         //  3
-#endif
 };
 
 const char * cfr_extensions[CFR_NUM_FORMATS] = {
   "",             //  0
   "",             //  1
-#ifndef DONT_HAVE_BZ2
   ".bz2",          //  2
-#endif
-#ifndef DONT_HAVE_GZ
   ".gz"          //  3
-#endif
 };
 
 
@@ -79,7 +71,6 @@ CFRFILE *cfr_open(const char *path) {
   retval->error2 = 0;
 
 
-#ifndef DONT_HAVE_GZ
   if((path == NULL) || (strcmp(path, "-") == 0)) {
 	/* dump from stdin */
 	gzFile f;
@@ -97,7 +88,6 @@ CFRFILE *cfr_open(const char *path) {
 	retval->format = format;
 	return (retval);
   }
-#endif
   while (format < CFR_NUM_FORMATS) {
     ext_len = strlen(cfr_extensions[format]);
     if (strncmp(cfr_extensions[format],
@@ -123,7 +113,6 @@ CFRFILE *cfr_open(const char *path) {
       return(retval);
     }
     break;
-#ifndef DONT_HAVE_BZ2
   case 2:  // bzip2
     { 
       int bzerror;
@@ -153,8 +142,6 @@ CFRFILE *cfr_open(const char *path) {
       return(retval);
     }
     break;
-#endif
-#ifndef DONT_HAVE_GZ
   case 3:  // gzip
     { 
 	gzFile f;
@@ -168,7 +155,6 @@ CFRFILE *cfr_open(const char *path) {
 	return (retval);
    }
    break;
-#endif
   default:  // this is an internal error, no diag yet.
     fprintf(stderr,"illegal format '%d' in cfr_open!\n", format);
     exit(1);
@@ -195,18 +181,14 @@ int cfr_close(CFRFILE *stream) {
       stream->error1 = retval;
       break;
   case 2: // bzip2
-      #ifndef DONT_HAVE_BZ2
       BZ2_bzReadClose( &stream->error2, (BZFILE *)stream->data2);
       stream->error1 = retval = fclose((FILE *)(stream->data1));
       break;
-      #endif
   case 3:  // gzip
-      #ifndef DONT_HAVE_GZ
       if(stream->data2!=NULL)
           retval = gzclose(stream->data2);
       stream->error2 = retval;
       break;
-      #endif
     default:  // internal error
           assert("illegal stream->format" && 0);
   }
@@ -247,7 +229,6 @@ size_t cfr_read(void *ptr, size_t size, size_t nmemb, CFRFILE *stream) {
       return (retval);
     }
     break;
-#ifndef DONT_HAVE_BZ2    
    case 2:  // bzip2
     { 
       BZFILE * bzin; 
@@ -298,8 +279,6 @@ size_t cfr_read(void *ptr, size_t size, size_t nmemb, CFRFILE *stream) {
       return(0);
     }
     break;
-#endif    
-#ifndef DONT_HAVE_GZ
   case 3:  // gzip
     { 
       gzFile in;
@@ -314,7 +293,6 @@ size_t cfr_read(void *ptr, size_t size, size_t nmemb, CFRFILE *stream) {
       return (retval/size);
     }
     break;
-#endif
   default:  // this is an internal error, no diag yet.
     fprintf(stderr,"illegal format '%d' in cfr_read!\n",stream->format);
     exit(1);
@@ -346,7 +324,6 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
     }
     break;
 
-#ifndef DONT_HAVE_BZ2
   case 2:  // bzip2  
     {                
       size_t count;
@@ -387,8 +364,6 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
       return(count);
     }
     break;
-#endif
-#ifndef DONT_HAVE_GZ
   case 3:  // gzip
     { 
       char * return_ptr = gzgets((gzFile)(stream->data2), *lineptr, *n );
@@ -400,7 +375,6 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
   
     }
     break;
-#endif
   default:  // this is an internal error, no diag yet.
     fprintf(stderr,"illegal format '%d' in cfr_getline!\n",stream->format);
     exit(1);
@@ -518,22 +492,17 @@ const char * _cfr_compressor_strerror(int format, int err) {
     return("file not compressed");
     break;
     
-#ifndef DONT_HAVE_BZ2
   case 2:
     return(_bz2_strerror(err));
     break;
-#endif          
-#ifndef DONT_HAVE_GZ
   case 3:
     return NULL;
     break;
-#endif          
   default:
     return("unknowen compressor code");
   }  
 }
     
-#ifndef DONT_HAVE_BZ2
 const char * _bz2_strerror(int err) {
   // Since bzlib does not have strerror, we do it here manually.
   // This works for version 1.0 of 21 March 2000 of bzlib.h
@@ -556,5 +525,4 @@ const char * _bz2_strerror(int err) {
   default: return("unknowen bzip2 error code");
   }
 }
-#endif
     

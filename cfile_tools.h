@@ -34,13 +34,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#ifndef DONT_HAVE_BZ2
 #include <bzlib.h>
-#endif
 
-#ifndef DONT_HAVE_GZ
 #include <zlib.h>
-#endif
 
 // Types
 
@@ -61,15 +57,7 @@ typedef struct _CFRFILE CFRFILE;
 
 // Formats
 
-#ifndef DONT_HAVE_BZ2
-  #ifndef DONT_HAVE_GZ
 	#define CFR_NUM_FORMATS 4
-  #else
-	#define CFR_NUM_FORMATS 3
-  #endif
-#else
-	#define CFR_NUM_FORMATS 2
-#endif
 
 // Functions
 
@@ -83,9 +71,7 @@ int          cfr_error(CFRFILE *stream);
 char       * cfr_strerror(CFRFILE *stream);
 const char * cfr_compressor_str(CFRFILE *stream);
 
-#ifndef DONT_HAVE_BZ2
 const char * _bz2_strerror(int err);
-#endif
 
 
 #endif
