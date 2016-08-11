@@ -1573,7 +1573,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-			printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
+			printf("%s|%d|%d|",inet_ntoa(prefix->nexthop.v4_addr),npref,nmed);
 				//printf("%s|%d|%d|",inet_ntoa(prefix->nexthop.v4_addr),entry->attr->local_pref,entry->attr->med);
 				if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    			printf("%s|%s|",entry->attr->community->str+1,tmp2);
