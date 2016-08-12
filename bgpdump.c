@@ -1238,7 +1238,7 @@ void show_attr(attributes_t *attr) {
                         printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop.v4_addr));
                     if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len==16)
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,buf));
-			        if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len==32) {
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len==32) {
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,buf));
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_local,buf));
                     }
@@ -1250,7 +1250,7 @@ void show_attr(attributes_t *attr) {
                         printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop.v4_addr));
                     if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_len==16)
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop,buf));
-			        if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_len==32) {
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_len==32) {
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop,buf));
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_local,buf));
                     }
@@ -1262,7 +1262,7 @@ void show_attr(attributes_t *attr) {
                         printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop.v4_addr));
                     if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_len==16)
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop,buf));
-			        if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_len==32) {
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_len==32) {
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop,buf));
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_local,buf));
                     }
@@ -1280,7 +1280,7 @@ void show_attr(attributes_t *attr) {
                         printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop.v4_addr));
                     if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len==16)
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop,buf));
-			        if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len==32) {
+                    if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len==32) {
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop,buf));
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_local,buf));
                     }
@@ -1292,7 +1292,7 @@ void show_attr(attributes_t *attr) {
                         printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop.v4_addr));
                     if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_len==16)
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop,buf));
-			        if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_len==32) {
+                    if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_len==32) {
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop,buf));
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_local,buf));
                     }
@@ -1304,7 +1304,7 @@ void show_attr(attributes_t *attr) {
                         printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop.v4_addr));
                     if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_len==16)
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop,buf));
-			        if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_len==32) {
+                    if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_len==32) {
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop,buf));
                         printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_local,buf));
                     }
