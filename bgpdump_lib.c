@@ -1289,7 +1289,7 @@ void process_attr_community_string(struct community *com) {
     strcpy(com->str, buf);
 }
 
-static struct mp_nlri *get_nexthop(struct mstream *s, u_int16_t afi) {
+static struct mp_nlri *get_nexthop(struct mstream *s) {
     struct mp_nlri *nlri = calloc(1, sizeof(struct mp_nlri));
     
     nlri->nexthop_len = mstream_getc(s, NULL);
@@ -1298,22 +1298,23 @@ static struct mp_nlri *get_nexthop(struct mstream *s, u_int16_t afi) {
     // if(mp_nlri->nexthop_len == 0)
     //    return len;
 
-    if(afi == AFI_IP) {
-        assert(nlri->nexthop_len == 4);
-        nlri->nexthop.v4_addr = mstream_get_ipv4(s);
-        return nlri;
-    }
+    // the AFI is irrelevant to the nexthop, since RFC5549
+    // so this code now just checks for an expected length:
+    // 4 = IPv4
+    // 16 = IPv6
+    // 32 = IPv6 + link-local
 
-#ifdef BGPDUMP_HAVE_IPV6
-    assert(afi == AFI_IP6);
-    mstream_get(s, &nlri->nexthop.v6_addr, 16);
-    if(nlri->nexthop_len == 32) {
-        /* Is there also a link-local address? */
+    if(nlri->nexthop_len == 4) {
+        nlri->nexthop.v4_addr = mstream_get_ipv4(s);
+    } else if(nlri->nexthop_len == 16) {
+        mstream_get(s, &nlri->nexthop.v6_addr, 16);
+    } else if(nlri->nexthop_len == 32) {
+        mstream_get(s, &nlri->nexthop.v6_addr, 16);
         mstream_get(s, &nlri->nexthop_local.v6_addr.s6_addr, 16);
-    } else if(nlri->nexthop_len != 16) {
+    }
+    else {
         warn("process_mp_announce: unknown MP nexthop length %d", nlri->nexthop_len);
     }
-#endif
     return nlri;
 }
 
@@ -1324,7 +1325,7 @@ void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_i
     // look for MRT abbreviated MP_NLRI packets
     if(s->start[s->position] != 0) {
         assert(info->announce[AFI_IP6][SAFI_UNICAST] == NULL);
-        info->announce[AFI_IP6][SAFI_UNICAST] = get_nexthop(s, AFI_IP6);
+        info->announce[AFI_IP6][SAFI_UNICAST] = get_nexthop(s);
         return;
     }
     
@@ -1341,7 +1342,7 @@ void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_i
             return;
     }
 
-    info->announce[afi][safi] = get_nexthop(s, afi);
+    info->announce[afi][safi] = get_nexthop(s);
 
     // SNPA is defunct and num_snpa should always be 0
     u_int8_t num_snpa;
