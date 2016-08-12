@@ -66,6 +66,8 @@ CFRFILE *cfr_open(const char *path) {
 
   // Do action dependent on file format
   retval = (CFRFILE *) calloc(1,sizeof(CFRFILE));
+  if(retval == NULL)
+	return (NULL);    
   retval->eof = 0;
   retval->error1 = 0;
   retval->error2 = 0;
@@ -310,7 +312,8 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
   // For bzip2 the speedup for additional buffering was only 5%
   // so I dropped it.
   // Returns -1 in case of an error.
-  
+  char *tmp;
+
   if (stream == NULL) return(-1);  
 
   switch (stream->format) {
@@ -335,11 +338,20 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
       // allocate initial buffer if none was passed or size was zero
       if (*lineptr == NULL) {
         *lineptr = (char *) calloc(120, 1);
+        if(*lineptr == NULL) {
+            stream->error1 = errno;
+            return(-1);
+        }
         *n = 120;
       }
       if (*n == 0) {
         *n = 120;
-        *lineptr = (char *) realloc(*lineptr, *n); // to avoid memory-leaks
+        tmp = (char *) realloc(*lineptr, *n); // to avoid memory-leaks
+        if(tmp == NULL) {
+            stream->error1 = errno;
+            return(-1);
+        }
+        *lineptr = tmp;
       }
 
       count = 0;
@@ -352,11 +364,12 @@ ssize_t cfr_getline(char **lineptr, size_t *n, CFRFILE *stream) {
         count ++;
         if (count >= *n) {
           *n = 2 * *n;
-          *lineptr = (char *) realloc(*lineptr, *n);
-          if (*lineptr == NULL) {
+          tmp = (char *) realloc(*lineptr, *n);
+          if (tmp == NULL) {
             stream->error1 = errno;
             return(-1);
           }
+          *lineptr = tmp;
         }
         (*lineptr)[count-1] = c;
       } while (c != '\n');
