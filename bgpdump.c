@@ -561,8 +561,11 @@ void process(BGPDUMP_ENTRY *entry) {
 #endif				
 						printf("WITHDRAW\n");
 					if (entry->body.zebra_message.withdraw_count)
+                        
+                            // old style
 			    			show_prefixes(entry->body.zebra_message.withdraw_count,entry->body.zebra_message.withdraw, addpath);
 
+                            // MP
                                         if (entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST] && entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST]->prefix_count)
                                                 show_prefixes(entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST]->prefix_count,entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST]->nlri, addpath);
                                 
@@ -587,8 +590,11 @@ void process(BGPDUMP_ENTRY *entry) {
 				{
 					printf("ANNOUNCE\n");
 			    		if (entry->body.zebra_message.announce_count)
+                            
+                            // old style
 			    			show_prefixes(entry->body.zebra_message.announce_count,entry->body.zebra_message.announce, addpath);
 
+                            // MP
                                         if (entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST] && entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->prefix_count)
                                                 show_prefixes(entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->prefix_count,entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nlri, addpath);
                                 
@@ -615,8 +621,10 @@ void process(BGPDUMP_ENTRY *entry) {
 				if ((entry->body.zebra_message.withdraw_count) || (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_UNREACH_NLRI)))
 				{
 
+                    // old style
 					table_line_withdraw(entry->body.zebra_message.withdraw,entry->body.zebra_message.withdraw_count,entry,time_str);
-
+                    
+                    // MP
                                         if (entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST] && entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST]->prefix_count)
                                                 table_line_withdraw(entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST]->nlri,entry->attr->mp_info->withdraw[AFI_IP][SAFI_UNICAST]->prefix_count,entry,time_str);	
 
@@ -640,7 +648,10 @@ void process(BGPDUMP_ENTRY *entry) {
 				}
 				if ( (entry->body.zebra_message.announce_count) || (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI)))
 				{
+                    // old style
 					table_line_announce(entry->body.zebra_message.announce,entry->body.zebra_message.announce_count,entry,time_str);
+
+                    // MP
                                         if (entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST] && entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->prefix_count)
                                                 table_line_announce_1(entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST],entry->attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->prefix_count,entry,time_str);	
                                         if (entry->attr->mp_info->announce[AFI_IP][SAFI_MULTICAST] && entry->attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->prefix_count)
@@ -1217,66 +1228,87 @@ void show_attr(attributes_t *attr) {
 		    printf("MP_REACH_NLRI");
 #ifdef BGPDUMP_HAVE_IPV6
 		    if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST] || attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST] || attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST])
-
 		    {
 			   char buf[128];
 			    
 			   if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST])
 			   {
 				   printf("(IPv6 Unicast)\n");
-			   	   printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,buf));
-			           if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len==32)
-					printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_local,buf));
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len==4)
+				        printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop.v4_addr));
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len==16)
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,buf));
+			        if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len==32) {
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,buf));
+					    printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_local,buf));
+                    }
 			   }
 			   else if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST])	 
 		  	   {
 			   	   printf("(IPv6 Multicast)\n");
-				   printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop,buf));
-			           if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_len==32)
-					printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_local,buf));
-
-		           }
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_len==4)
+				        printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop.v4_addr));
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_len==16)
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop,buf));
+			        if (attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_len==32) {
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop,buf));
+					    printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_MULTICAST]->nexthop_local,buf));
+                    }
+		       }
 			   else
 		           {
 				   printf("(IPv6 Both unicast and multicast)\n");
-				   printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop,buf));
-			           if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_len==32)
-					printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_local,buf));
-
-
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_len==4)
+				        printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop.v4_addr));
+                    if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_len==16)
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop,buf));
+			        if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_len==32) {
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop,buf));
+					    printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST_MULTICAST]->nexthop_local,buf));
+                    }
 			   }
 		    }
 		    else
 #endif
 		    {
-			   
+			   char buf[128];
+
 			   if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST])
 			   {
 				   printf("(IPv4 Unicast)\n");
-				   printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop.v4_addr));
-			           if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len==32)
-					printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_local.v4_addr));
-			  
+                    if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len==4)
+				        printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop.v4_addr));
+                    if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len==16)
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop,buf));
+			        if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len==32) {
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop,buf));
+					    printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_local,buf));
+                    }
 			   }
 			   else if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST])	 
 		  	   {
 			   	   printf("(IPv4 Multicast)\n");
-			           printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop.v4_addr));
-			           if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_len==32)
-					printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_local.v4_addr));
-			  
-		
-		           }
+                    if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_len==4)
+				        printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop.v4_addr));
+                    if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_len==16)
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop,buf));
+			        if (attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_len==32) {
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop,buf));
+					    printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_MULTICAST]->nexthop_local,buf));
+                    }
+		       }
 			   else if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST])
 		           {
 				   printf("(IPv4 Both unicast and multicast)\n");
-				   printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop.v4_addr));
-			           if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_len==32)
-					printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_local.v4_addr));
-			  
-
+                    if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_len==4)
+				        printf("NEXT_HOP: %s\n",inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop.v4_addr));
+                    if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_len==16)
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop,buf));
+			        if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_len==32) {
+			   	        printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop,buf));
+					    printf("NEXT_HOP: %s\n",fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST_MULTICAST]->nexthop_local,buf));
+                    }
 			   }
-  
 		    }
 	    }
 	    
@@ -1576,7 +1608,11 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-			printf("%s|%d|%d|",inet_ntoa(prefix->nexthop.v4_addr),npref,nmed);
+                if (prefix->nexthop_len == 4)
+			        printf("%s|%d|%d|",inet_ntoa(prefix->nexthop.v4_addr),npref,nmed);
+                else if ((prefix->nexthop_len == 16) || (prefix->nexthop_len == 32))
+			        printf("%s|%d|%d|",fmt_ipv6(prefix->nexthop,buf),npref,nmed);
+                
 				//printf("%s|%d|%d|",inet_ntoa(prefix->nexthop.v4_addr),entry->attr->local_pref,entry->attr->med);
 				if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    			printf("%s|%s|",entry->attr->community->str+1,tmp2);
@@ -1586,6 +1622,11 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 			}
 			else 
 			{
+                // I'm not convinced this code block is actually ever executed
+                // it appears to handle old-style (non-MP) yet this function isn't
+                // called for that type.....
+                // cpetrie@ 2016-08-12
+
 				switch(entry->body.zebra_message.address_family)
 				{
 #ifdef BGPDUMP_HAVE_IPV6
@@ -1614,7 +1655,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 	            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
 	            nmed=0;
 			    
-			printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
+			    printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
 				//printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),entry->attr->local_pref,entry->attr->med);
 				if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    			printf("%s|%s|",entry->attr->community->str+1,tmp2);
@@ -1715,7 +1756,10 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
             if (is_addpath(entry))
                 printf("%u|", prefix->nlri[idx].path_id);
 
-            printf("%s|%s|%s|%u|%u|", attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
+            if (prefix->nexthop_len == 4)
+                printf("%s|%s|%s|%u|%u|", attr_aspath(entry->attr),describe_origin(entry->attr->origin),inet_ntoa(prefix->nexthop.v4_addr),npref,nmed);
+            else if ((prefix->nexthop_len == 16) || (prefix->nexthop_len == 32))
+                printf("%s|%s|%s|%u|%u|", attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
 
 			if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
@@ -1918,13 +1962,25 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
             if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC) ) ==0)
                 nmed=0;
             
-#ifdef BGPDUMP_HAVE_IPV6
             if ((attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI)) && attr->mp_info->announce[AFI_IP6][SAFI_UNICAST])
             {
-                fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,nexthop);
+                if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len == 4)
+                    strncpy(nexthop, inet_ntoa(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop.v4_addr), BGPDUMP_ADDRSTRLEN);
+                else if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len == 16)
+                    fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,nexthop);
+                else if (attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop_len == 32)
+                    fmt_ipv6(attr->mp_info->announce[AFI_IP6][SAFI_UNICAST]->nexthop,nexthop);
+            }
+            else if ((attr->flag & ATTR_FLAG_BIT(BGP_ATTR_MP_REACH_NLRI)) && attr->mp_info->announce[AFI_IP][SAFI_UNICAST])
+            {
+                if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len == 4)
+                    strncpy(nexthop, inet_ntoa(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop.v4_addr), BGPDUMP_ADDRSTRLEN);
+                else if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len == 16)
+                    fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop,nexthop);
+                else if (attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop_len == 32)
+                    fmt_ipv6(attr->mp_info->announce[AFI_IP][SAFI_UNICAST]->nexthop,nexthop);
             }
             else
-#endif
             {
                 strncpy(nexthop, inet_ntoa(attr->nexthop), BGPDUMP_ADDRSTRLEN);
             }
