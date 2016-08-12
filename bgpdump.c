@@ -258,6 +258,9 @@ const char *bgp_state_name[] = {
 	"Opensent",
 	"Openconfirm",
 	"Established",
+	/* not defined in RFC 6396 but quagga puts them into update files */
+	"Clearing",
+	"Deleted",
 	NULL
 };
 
