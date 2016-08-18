@@ -38,7 +38,7 @@ char *fmt_ipv4(BGPDUMP_IP_ADDRESS addr, char *buffer);
 char *fmt_ipv6(BGPDUMP_IP_ADDRESS addr, char *buffer);
 void test_fmt_ip(void);
 
-int time2str(struct tm* date,char *time_str);
+void time2str(struct tm* date,char *time_str);
 int int2str(uint32_t value, char* str);
 void test_utils(void);
 
