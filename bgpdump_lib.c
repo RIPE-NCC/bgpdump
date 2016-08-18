@@ -93,8 +93,11 @@ BGPDUMP *bgpdump_open_dump(const char *filename) {
         perror("can't open dumpfile");
         return NULL;
     }
-    
     BGPDUMP *this_dump = malloc(sizeof(BGPDUMP));
+    if (this_dump == NULL) {
+        perror("malloc");
+        return NULL;
+    }
     strcpy(this_dump->filename, "[STDIN]");
     if(filename && strcmp(filename, "-")) {
         if (strlen(filename) >= BGPDUMP_MAX_FILE_LEN - 1) {
@@ -130,6 +133,10 @@ void bgpdump_close_dump(BGPDUMP *dump) {
 
 BGPDUMP_ENTRY* bgpdump_entry_create(BGPDUMP *dump){
     BGPDUMP_ENTRY *this_entry = malloc(sizeof(BGPDUMP_ENTRY));
+    if(this_entry == NULL) {
+        err("%s: out of memory", __func__);
+        return NULL;
+    }
     memset(this_entry, 0, sizeof(BGPDUMP_ENTRY));
     this_entry->dump = dump;
     return this_entry;
@@ -144,6 +151,11 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     u_int32_t bytes_read, t;
 
     BGPDUMP_ENTRY *this_entry = bgpdump_entry_create(dump);
+    if(this_entry == NULL) {
+        err("%s: out of memmory", __func__);
+        dump->eof = 1;
+        return(NULL);
+    }
 
     bytes_read = cfr_read_n(dump->f, &t, 4);
     bytes_read += cfr_read_n(dump->f, &(this_entry->type), 2);
@@ -188,7 +200,12 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     dump->parsed++;
     this_entry->attr=NULL;
 
-    buffer = malloc(this_entry->length);
+    if ((buffer = malloc(this_entry->length)) == NULL) {
+	err("%s: out of memory", __func__);
+	free(this_entry);
+	dump->eof=1;
+	return(NULL);
+    }
     bytes_read = cfr_read_n(dump->f, buffer, this_entry->length);
     if(bytes_read != this_entry->length) {
 	err("bgpdump_read_next: incomplete dump record (%d bytes read, expecting %d)",
@@ -394,7 +411,8 @@ int process_mrtd_bgp(struct mstream *s, BGPDUMP_ENTRY *entry) {
 								   entry->body.mrtd_message.withdraw,
 								   &entry->body.mrtd_message.incomplete, 0);
 
-	entry->attr = process_attributes(s, ASN16_LEN, &entry->body.mrtd_message.incomplete, 0);
+	if((entry->attr = process_attributes(s, ASN16_LEN, &entry->body.mrtd_message.incomplete, 0)) == NULL)
+	    return 0;
 
 	entry->body.mrtd_message.announce_count = read_prefix_list(s, AFI_IP, 
 								   entry->body.mrtd_message.announce,
@@ -465,7 +483,8 @@ int process_mrtd_table_dump(struct mstream *s,BGPDUMP_ENTRY *entry) {
 
     entry->body.mrtd_table_dump.peer_as = read_asn(s, asn_len);
 
-    entry->attr = process_attributes(s, asn_len, NULL, 0);
+    if((entry->attr = process_attributes(s, asn_len, NULL, 0)) == NULL)
+        return 0;
 
     return 1;
 }
@@ -505,13 +524,16 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 	}
 	free(entry->dump->table_dump_v2_peer_index_table);
 
-	entry->dump->table_dump_v2_peer_index_table = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE));
+	if((entry->dump->table_dump_v2_peer_index_table = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE))) == NULL) {
+	    err("process_mrtd_table_dump_v2_peer_index_table: failed to allocate memory for index table");
+	    return 0;
+	}
 	t = entry->dump->table_dump_v2_peer_index_table;
 	t->entries = NULL;
 
-    t->local_bgp_id = mstream_get_ipv4(s);
+	t->local_bgp_id = mstream_get_ipv4(s);
 
-    mstream_getw(s,&view_name_len);
+	mstream_getw(s,&view_name_len);
 	strcpy(t->view_name, "");
 
 	// view_name_len is without trailing \0
@@ -522,7 +544,7 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 		t->view_name[view_name_len] = 0;
 	}
 
-    mstream_getw(s,&t->peer_count);
+	mstream_getw(s,&t->peer_count);
 
 	t->entries = malloc(sizeof(BGPDUMP_TABLE_DUMP_V2_PEER_INDEX_TABLE_ENTRY) * t->peer_count);
 	if(t->entries == NULL){
@@ -584,13 +606,15 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		e = &prefixdata->entries[i];
 
 		mstream_getw(s, &e->peer_index);
+
 		e->peer = &entry->dump->table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
 
-        if (addpath)
+		if (addpath)
 		    mstream_getl(s, &e->path_id);
             
-		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
+		if((e->attr = process_attributes(s, 4, NULL, is_addpath(entry))) == NULL)
+		    return 0;
 	}
 
 	return 1;
@@ -629,10 +653,11 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		e->peer = &entry->dump->table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
 
-        if (addpath)
+		if (addpath)
 		    mstream_getl(s, &e->path_id);
 
-		e->attr = process_attributes(s, 4, NULL, is_addpath(entry));
+		if((e->attr = process_attributes(s, 4, NULL, is_addpath(entry))) == NULL)
+		    return 0;
 	}
 
 #endif
@@ -866,7 +891,10 @@ int process_zebra_bgp_message_notify(struct mstream *s, BGPDUMP_ENTRY *entry) {
     entry->body.zebra_message.notify_len = entry->body.zebra_message.size - 21;
 
     if(entry->body.zebra_message.notify_len > 0) {
-	entry->body.zebra_message.notify_data = malloc(entry->body.zebra_message.notify_len);
+	if((entry->body.zebra_message.notify_data = malloc(entry->body.zebra_message.notify_len)) == NULL) {
+            err("%s: out of memory", __func__);
+            return 0;
+        }
 	mstream_get(s, entry->body.zebra_message.notify_data, entry->body.zebra_message.notify_len);
     }
 
@@ -881,7 +909,11 @@ int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, u_in
     mstream_getc(s, &entry->body.zebra_message.opt_len);
 
     if(entry->body.zebra_message.opt_len) {
-	entry->body.zebra_message.opt_data = malloc(entry->body.zebra_message.opt_len);
+	if((entry->body.zebra_message.opt_data = malloc(entry->body.zebra_message.opt_len)) == NULL) {
+	    err("%s: out of memory", __func__);
+	    return 0;
+	}
+
 	mstream_get(s, entry->body.zebra_message.opt_data, entry->body.zebra_message.opt_len);
     }
 
@@ -897,7 +929,8 @@ int process_zebra_bgp_message_update(struct mstream *s, BGPDUMP_ENTRY *entry, u_
 			 &entry->body.zebra_message.incomplete,
              is_addpath(entry));
 
-    entry->attr = process_attributes(s, asn_len, &entry->body.zebra_message.incomplete, is_addpath(entry));
+    if((entry->attr = process_attributes(s, asn_len, &entry->body.zebra_message.incomplete, is_addpath(entry))) == NULL)
+        return 0;
 
     entry->body.zebra_message.announce_count = read_prefix_list(s, AFI_IP, 
                          entry->body.zebra_message.announce,
@@ -921,7 +954,15 @@ static attributes_t *attr_init(struct mstream *s, int len) {
 
     attributes_t *attr = malloc(sizeof(struct attr));
     
-    attr->data=malloc(len);
+    if(attr == NULL) {
+        err("%s: out of memory", __func__);
+        return NULL;
+    }
+    if((attr->data=malloc(len)) == NULL) {
+        free(attr);
+        err("%s: out of memory", __func__);
+        return NULL;
+    }
     memcpy(attr->data, &s->start[s->position], len);
     
     attr->len = len;
@@ -940,8 +981,13 @@ static attributes_t *attr_init(struct mstream *s, int len) {
     attr->aspath			= NULL;
     attr->community		= NULL;
     attr->transit		= NULL;
-    attr->mp_info		= calloc(1, sizeof(struct mp_info));;
-
+    attr->mp_info		= calloc(1, sizeof(struct mp_info));
+    if(attr->mp_info == NULL) {
+        free(attr->data);
+        free(attr);
+        err("%s: out of memory", __func__);
+        return NULL;
+    }
     attr->unknown_num = 0;
     attr->unknown = NULL;
 
@@ -956,8 +1002,11 @@ static attributes_t *attr_init(struct mstream *s, int len) {
 static void process_unknown_attr(struct mstream *s, attributes_t *attr, int flag, int type, int len) {
     /* Unknown attribute. Save as is */
     attr->unknown_num++;
-    attr->unknown = realloc(attr->unknown, attr->unknown_num * sizeof(struct unknown_attr));
-    
+    if((attr->unknown = realloc(attr->unknown, attr->unknown_num * sizeof(struct unknown_attr))) == NULL) {
+        err("%s: out of memory", __func__);
+        exit(1); /* XXX */
+    }
+
     /* Pointer to the unknown attribute we want to fill in */
     struct unknown_attr unknown = {
         .flag = flag,
@@ -965,7 +1014,10 @@ static void process_unknown_attr(struct mstream *s, attributes_t *attr, int flag
         .len = len,
         .raw = malloc(len)
     };
-    
+    if(unknown.raw == NULL) {
+        err("%s: out of memory", __func__);
+        exit(1); /* XXX */
+    }
     attr->unknown[attr->unknown_num - 1] = unknown;
     
     mstream_get(s, unknown.raw, len);
@@ -1031,9 +1083,17 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             break;
         case BGP_ATTR_COMMUNITIES:
             assert(! attr->community);
-            attr->community		= malloc(sizeof(struct community));
+            if((attr->community		= malloc(sizeof(struct community))) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
+            
             attr->community->size	= len / 4;
-            attr->community->val	= malloc(len);
+            if((attr->community->val	= malloc(len)) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
+
             mstream_get(s,attr->community->val,len);
             attr->community->str	= NULL;
             process_attr_community_string(attr->community);
@@ -1057,9 +1117,15 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             break;
         case BGP_ATTR_CLUSTER_LIST:
             assert(! attr->cluster);
-            attr->cluster		= malloc(sizeof(struct cluster_list));
+            if((attr->cluster= malloc(sizeof(struct cluster_list))) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
             attr->cluster->length	= len/4;
-            attr->cluster->list = malloc((attr->cluster->length) * sizeof(struct in_addr));
+            if((attr->cluster->list = calloc((attr->cluster->length), sizeof(struct in_addr))) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
             
             int i; // cluster index
             for (i = 0; i < attr->cluster->length; i++)
@@ -1074,6 +1140,9 @@ attributes_t *process_attributes(struct mstream *s, u_int8_t asn_len, struct zeb
     int	total = mstream_getw(s, NULL);
     
     attributes_t *attr = attr_init(s, total);
+    if(attr == NULL)
+        return NULL;
+
     mstream_t copy = mstream_copy(s, total);
 
     if(mstream_can_read(&copy) != total)
@@ -1095,11 +1164,16 @@ struct aspath *create_aspath(u_int16_t len, u_int8_t asn_len) {
     aspath->length	= len;
     aspath->count	= 0;
     aspath->str		= NULL;
-    if(len > 0)
-       aspath->data	= malloc(len);
-    else
+    if(len > 0) {
+       if((aspath->data	= malloc(len)) == NULL) {
+         err("%s: out of memory", __func__);
+         free(aspath);
+         return NULL;
+       }
+    } else
        aspath->data	= NULL;
-  }
+  } else
+      err("%s: out of memory", __func__);
   return aspath;
 }
 
@@ -1112,13 +1186,17 @@ void aspath_error(struct aspath *as) {
   }
 
   as->str = malloc(strlen(ASPATH_STR_ERROR) + 1);
-  strcpy(as->str, ASPATH_STR_ERROR);
+  if (as->str != NULL)
+    strcpy(as->str, ASPATH_STR_ERROR);
 }
 
 void process_attr_aspath_string(struct aspath *as) {
     const int MAX_ASPATH_LEN = 8000;  
-    as->str = malloc(MAX_ASPATH_LEN);
-    
+    if((as->str = malloc(MAX_ASPATH_LEN)) == NULL) {
+        err("%s: out of memory", __func__);
+        exit(1); /* XXX */
+    }
+
     /* Set default values */
     int space = 0;
     u_char type = AS_SEQUENCE;
@@ -1285,13 +1363,21 @@ void process_attr_community_string(struct community *com) {
 	}
     }
 
-    com->str = malloc(strlen(buf)+1);
-    strcpy(com->str, buf);
+    if((com->str = malloc(strlen(buf)+1)) != NULL) {
+        strcpy(com->str, buf);
+    } else {
+        err("%s: out of memory", __func__);
+        exit(1); /* XXX */
+    }
 }
 
 static struct mp_nlri *get_nexthop(struct mstream *s) {
     struct mp_nlri *nlri = calloc(1, sizeof(struct mp_nlri));
     
+    if(nlri == NULL) {
+        err("%s: out of memory", __func__);
+        return NULL;
+    }
     nlri->nexthop_len = mstream_getc(s, NULL);
     
     // sometimes nexthop_len is 0 - not sure what this means (see IS-626)
@@ -1376,7 +1462,10 @@ void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_i
 	}
 
 	/* Allocate structure */
-	mp_nlri = malloc(sizeof(struct mp_nlri));
+	if((mp_nlri = malloc(sizeof(struct mp_nlri))) == NULL) {
+	    err("%s: out of memory", __func__);
+	    exit(1); /* XXX */
+	}
 	memset(mp_nlri, 0, sizeof(struct mp_nlri));
 	info->withdraw[afi][safi] = mp_nlri;
 
@@ -1504,7 +1593,10 @@ void process_asn32_trans(attributes_t *attr, u_int8_t asn_len) {
 }
 
 struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath) {
+  void *tmp;
   struct aspath *mergedpath = create_aspath(0, ASN32_LEN);
+  if(mergedpath == NULL)
+      return NULL;
   struct assegment *segment, *mergedsegment;
   int newlen;
 
@@ -1513,7 +1605,14 @@ struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath) {
   while(mergedpath->count < path->count - newpath->count) {
     /* Make room */
     newlen = mergedpath->length + sizeof(struct assegment) + segment->length * ASN32_LEN;
-    mergedpath->data = realloc(mergedpath->data, newlen);
+    tmp = realloc(mergedpath->data, newlen);
+    if(tmp == NULL) {
+        free(mergedpath->data);
+        free(mergedpath);
+        err("%s: out of memory", __func__);
+        return NULL;
+    }
+    mergedpath->data = tmp;
 
     /* Create a new AS-path segment */
     mergedsegment = (struct assegment *) (mergedpath->data + mergedpath->length);
@@ -1538,7 +1637,14 @@ struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath) {
   }
 
   /* Append NEW_AS_PATH to merged path */
-  mergedpath->data = realloc(mergedpath->data, mergedpath->length + newpath->length);
+  tmp = realloc(mergedpath->data, mergedpath->length + newpath->length);
+  if(tmp == NULL) {
+      free(mergedpath->data);
+      free(mergedpath);
+      err("%s: out of memory", __func__);
+      return NULL;
+  }
+  mergedpath->data = tmp;
   memcpy(mergedpath->data + mergedpath->length, newpath->data, newpath->length);
   mergedpath->length += newpath->length;
 
