@@ -66,9 +66,9 @@ void err(const char *fmt, ...) { log(ERR, error); }
 void warn(const char *fmt, ...) { log(WARNING, warn); }
 void debug(const char *fmt, ...) { log(INFO, info); }
 
-void time2str(struct tm* date,char *time_str)
+int time2str(struct tm* date,char *time_str)
 {
-    sprintf(time_str, "%02d/%02d/%02d %02d:%02d:%02d", date->tm_mon+1, date->tm_mday, date->tm_year%100,
+    return sprintf(time_str, "%02d/%02d/%02d %02d:%02d:%02d", date->tm_mon+1, date->tm_mday, date->tm_year%100,
             date->tm_hour, date->tm_min, date->tm_sec);
 }
 

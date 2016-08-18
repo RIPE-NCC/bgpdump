@@ -273,19 +273,20 @@ void process(BGPDUMP_ENTRY *entry) {
     char prefix[BGPDUMP_ADDRSTRLEN];
     char *bgp4mp_format;
     char *bgp4mp_subtype_format;
+    int len;
 	
 	date=gmtime(&entry->time);
 	time2str(date,time_str_fixed);
     
     if (mode == 1) {
         // Timestamp mode
-        sprintf(time_str, "%lld", (long long)entry->time);
+        len = sprintf(time_str, "%lld", (long long)entry->time);
     } else {
-        time2str(date,time_str);
+        len = time2str(date,time_str);
     }
     // Appending microseconds to time_str if needed
     if (entry->type == BGPDUMP_TYPE_ZEBRA_BGP_ET) {
-        sprintf(time_str, "%s.%06ld", time_str, entry->ms);
+        sprintf(time_str + len, ".%06ld", entry->ms);
     }
     
 	if (mode==0)
