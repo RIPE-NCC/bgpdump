@@ -601,6 +601,12 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		return 0;
 	}
 
+	if(prefixdata->entry_count && entry->dump->table_dump_v2_peer_index_table == NULL) {
+	    free(prefixdata->entries);
+	    err("%s: missing peer index table", __func__);
+	    return 0;
+        }
+
 	for(i=0; i < prefixdata->entry_count; i++){
 		BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *e;
 		e = &prefixdata->entries[i];
@@ -644,6 +650,12 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 	    err("process_mrtd_table_dump_v2_ipv6_unicast: failed to allocate memory for entry table");
 		return 0;
 	}
+
+	if(prefixdata->entry_count && entry->dump->table_dump_v2_peer_index_table == NULL) {
+	    free(prefixdata->entries);
+	    err("%s: missing peer index table", __func__);
+	    return 0;
+        }
 
 	for(i=0; i < prefixdata->entry_count; i++){
 		BGPDUMP_TABLE_DUMP_V2_ROUTE_ENTRY *e;
