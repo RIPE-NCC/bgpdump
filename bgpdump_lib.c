@@ -200,6 +200,13 @@ BGPDUMP_ENTRY*	bgpdump_read_next(BGPDUMP *dump) {
     dump->parsed++;
     this_entry->attr=NULL;
 
+    if(this_entry->length == 0) {
+        err("%s: invalid entry length: 0", __func__);
+	free(this_entry);
+	dump->eof=1;
+	return(NULL);
+    }
+
     if ((buffer = malloc(this_entry->length)) == NULL) {
 	err("%s: out of memory", __func__);
 	free(this_entry);
