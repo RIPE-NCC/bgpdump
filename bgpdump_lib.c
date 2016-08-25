@@ -314,10 +314,13 @@ void bgpdump_free_mem(BGPDUMP_ENTRY *entry) {
                 e = &entry->body.mrtd_table_dump_v2_prefix;
                 int i;
 
-                for(i = 0; i < e->entry_count; i++){
-                    bgpdump_free_attr(e->entries[i].attr);
+                // Conditional as the entries have already been free'd in this case
+                if(!(e->entry_count && entry->dump->table_dump_v2_peer_index_table == NULL)) {
+                    for(i = 0; i < e->entry_count; i++){
+                        bgpdump_free_attr(e->entries[i].attr);
+                    }
+                    free(e->entries);
                 }
-                free(e->entries);
             }
 		}
 		break;
