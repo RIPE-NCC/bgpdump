@@ -120,6 +120,32 @@ static const char* get_bgp4mp_format(BGPDUMP_ENTRY *entry) {
     }
 }
 
+static const char* get_bgp_state_name(u_int16_t state) {
+
+    const char *bgp_state_name[] = {
+        "Unknown",
+        "Idle",
+        "Connect",
+        "Active",
+        "Opensent",
+        "Openconfirm",
+        "Established",
+        /* not defined in RFC 6396 but quagga puts them into update files */
+        "Clearing",
+        "Deleted",
+        NULL
+    };
+
+
+    printf("%u\n", sizeof(bgp_state_name));
+    printf("%u\n", sizeof(*bgp_state_name));
+    if (state && state >= (sizeof(bgp_state_name)) / (sizeof(*bgp_state_name))) {
+        return "Unknown";
+    } else {
+        return bgp_state_name[state];
+    }
+}
+
 static int mode=0;
 static int timetype=0;
 static int show_packet_index = 0;
@@ -249,20 +275,6 @@ int main(int argc, char *argv[]) {
     
     return 0;
 }
-
-const char *bgp_state_name[] = {
-	"Unknown",
-	"Idle",
-	"Connect",
-	"Active",
-	"Opensent",
-	"Openconfirm",
-	"Established",
-	/* not defined in RFC 6396 but quagga puts them into update files */
-	"Clearing",
-	"Deleted",
-	NULL
-};
 
 void process(BGPDUMP_ENTRY *entry) {
 
@@ -985,7 +997,7 @@ void process(BGPDUMP_ENTRY *entry) {
 			//	printf(" N/A ");
 		    	printf("AS%u\n",entry->body.zebra_state_change.source_as);
 
-		    	printf("STATE: %s/%s\n",bgp_state_name[entry->body.zebra_state_change.old_state],bgp_state_name[entry->body.zebra_state_change.new_state]);
+		    	printf("STATE: %s/%s\n",get_bgp_state_name(entry->body.zebra_state_change.old_state),get_bgp_state_name(entry->body.zebra_state_change.new_state));
 		    }
 		    else if (mode==1 || mode==2 ) //-m -M
 		    {
@@ -1088,8 +1100,8 @@ void process_bgpdump_mrtd_bgp(BGPDUMP_ENTRY *entry) {
             printf("PEER:");
             show_ipv4_address(entry->body.mrtd_state_change.destination_ip);
             printf("AS%u\n", entry->body.mrtd_state_change.destination_as);
-            printf("STATE: %s/%s\n", bgp_state_name[entry->body.mrtd_state_change.old_state],
-                   bgp_state_name[entry->body.mrtd_state_change.new_state]);
+            printf("STATE: %s/%s\n", get_bgp_state_name(entry->body.mrtd_state_change.old_state),
+                   get_bgp_state_name(entry->body.mrtd_state_change.new_state));
         }
         else if (mode == 1 || mode == 2) {
             show_line_prefix("BGP", time_str, "STATE");
