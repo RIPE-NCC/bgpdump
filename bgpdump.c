@@ -136,9 +136,6 @@ static const char* get_bgp_state_name(u_int16_t state) {
         NULL
     };
 
-
-    printf("%u\n", sizeof(bgp_state_name));
-    printf("%u\n", sizeof(*bgp_state_name));
     if (state && state >= (sizeof(bgp_state_name)) / (sizeof(*bgp_state_name))) {
         return "Unknown";
     } else {
