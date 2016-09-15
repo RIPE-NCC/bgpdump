@@ -8,6 +8,14 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2016-09-15 Colin Petrie <cpetrie@ripe.net> v1.5.00.00
+	* Many security fixes, crashes, segfaults, memory leaks fixed.
+	* Many fixes provided by Christoph Biedl from Debian port
+	* Fuzzed inputs, hints and ideas provided by Guillaume Valadon
+	* Thread-safety fixes from CAIDA/bgpstream version of bgpdump
+	* version bump as new fields have been added to structs, apps
+	  should be recompiled
+
 2015-11-05 Colin Petrie <cpetrie@ripe.net>
 	* Adding support for draft-petrie-grow-mrt-add-paths
 	  Note that this adds various output format changes, when reading messages
