@@ -8,7 +8,7 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
-2016-09-15 Colin Petrie <cpetrie@ripe.net> v1.5.00.00
+2016-09-15 Colin Petrie <cpetrie@ripe.net> v1.5.0
 	* Many security fixes, crashes, segfaults, memory leaks fixed.
 	* Many fixes provided by Christoph Biedl from Debian port
 	* Fuzzed inputs, hints and ideas provided by Guillaume Valadon
