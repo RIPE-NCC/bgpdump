@@ -8,6 +8,9 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2017-01-15 Colin Petrie <cpetrie@ripe.net>
+	* Add support for BGP Large Communities
+
 2016-09-15 Colin Petrie <cpetrie@ripe.net> v1.5.0
 	* Many security fixes, crashes, segfaults, memory leaks fixed.
 	* Many fixes provided by Christoph Biedl from Debian port

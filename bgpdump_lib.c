@@ -64,6 +64,7 @@ static    attributes_t *process_attributes(struct mstream *s, u_int8_t asn_len, 
 static    void process_attr_aspath_string(struct aspath *as);
 static    char aspath_delimiter_char (u_char type, u_char which);
 static    void process_attr_community_string(struct community *com);
+static    void process_attr_lcommunity_string(struct lcommunity *lcom);
 
 static    void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp);
 static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp);
@@ -354,6 +355,16 @@ void bgpdump_free_attr(attributes_t *attr){
 
 		free(attr->community);
 	    }
+
+        if(attr->lcommunity != NULL) {
+            if(attr->lcommunity->val != NULL)
+                free(attr->lcommunity->val);
+
+            if(attr->lcommunity->str != NULL)
+                free(attr->lcommunity->str);
+
+        free(attr->lcommunity);
+        }
 
 	    if(attr->data != NULL)
 		free(attr->data);
@@ -1003,6 +1014,8 @@ static attributes_t *attr_init(struct mstream *s, int len) {
 
     attr->aspath			= NULL;
     attr->community		= NULL;
+    attr->lcommunity     = NULL;
+
     attr->transit		= NULL;
     attr->mp_info		= calloc(1, sizeof(struct mp_info));
     if(attr->mp_info == NULL) {
@@ -1120,6 +1133,23 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             mstream_get(s,attr->community->val,len);
             attr->community->str	= NULL;
             process_attr_community_string(attr->community);
+            break;
+         case BGP_ATTR_LARGE_COMMUNITIES:
+            assert(! attr->lcommunity);
+            if((attr->lcommunity     = malloc(sizeof(struct lcommunity))) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
+            
+            attr->lcommunity->size   = len / 12;
+            if((attr->lcommunity->val    = malloc(len)) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
+
+            mstream_get(s,attr->lcommunity->val,len);
+            attr->lcommunity->str    = NULL;
+            process_attr_lcommunity_string(attr->lcommunity);
             break;
         case BGP_ATTR_NEW_AS_PATH:
             assert(! attr->new_aspath);
@@ -1392,6 +1422,39 @@ void process_attr_community_string(struct community *com) {
         err("%s: out of memory", __func__);
         exit(1); /* XXX */
     }
+}
+
+void process_attr_lcommunity_string(struct lcommunity *lcom) {
+
+  char buf[BUFSIZ];
+  u_int32_t i;
+  u_int32_t global;
+  u_int32_t local1;
+  u_int32_t local2;
+
+  memset (buf, 0, BUFSIZ);
+
+  for (i = 0; i < lcom->size; i++)
+    {
+        memcpy (&global, lcom->val + (i * 3), sizeof (u_int32_t));
+        memcpy (&local1, lcom->val + (i * 3) + 1, sizeof (u_int32_t));
+        memcpy (&local2, lcom->val + (i * 3) + 2, sizeof (u_int32_t));
+
+        global = ntohl (global);
+        local1 = ntohl (local1);
+        local2 = ntohl (local2);
+
+        snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
+            " %u:%u:%u", global, local1, local2);
+    }
+
+    if((lcom->str = malloc(strlen(buf)+1)) != NULL) {
+        strcpy(lcom->str, buf);
+    } else {
+        err("%s: out of memory", __func__);
+        exit(1); /* XXX */
+    }
+
 }
 
 static struct mp_nlri *get_nexthop(struct mstream *s) {
