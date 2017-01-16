@@ -146,6 +146,7 @@ static const char* get_bgp_state_name(u_int16_t state) {
 static int mode=0;
 static int timetype=0;
 static int show_packet_index = 0;
+static int show_large_comms = 0;
 static int packet_index = 0;
 
 static const char USAGE[] = "\
@@ -167,6 +168,7 @@ Options for -m and -M modes:\n\
     -t dump    timestamps for RIB dumps reflect the time of the dump (the default)\n\
     -t change  timestamps for RIB dumps reflect the last route modification\n\
     -p         show packet index at second position\n\
+    -l         show large communities field after regular communities\n\
 \n\
 Special options:\n\
     -T         run unit tests and exit\n\
@@ -184,7 +186,7 @@ int main(int argc, char *argv[]) {
  
     log_to_stderr();
     
-    while ((c=getopt(argc,argv,"if:o:t:mMHO:svTp"))!=-1)
+    while ((c=getopt(argc,argv,"if:o:t:mMHO:svTpl"))!=-1)
 	switch(c)
 	{
        case 'H':
@@ -232,6 +234,10 @@ int main(int argc, char *argv[]) {
         case 'p':
                 show_packet_index = 1;
                 break;
+        case 'l':
+                show_large_comms = 1;
+                break;
+               
         case '?':
         default:
                 usage_error = true;
@@ -1372,6 +1378,10 @@ void show_attr(attributes_t *attr) {
 	    } 
 	    if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
 		    printf("COMMUNITY:%s\n",attr->community->str);
+
+        if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0)    
+            printf("LARGE_COMMUNITY:%s\n",attr->lcommunity->str);
+       
     }
  
 }
@@ -1488,14 +1498,14 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 {
 	int idx  ;
 	char buf[128];
-	char tmp2[20];
+	char aggregate[20];
 	unsigned int npref;
 	unsigned int nmed;
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(tmp2,"AG");
+		sprintf(aggregate,"AG");
 	else
-		sprintf(tmp2,"NAG");
+		sprintf(aggregate,"NAG");
 
 	for (idx=0;idx<count;idx++)
 	{
@@ -1533,10 +1543,19 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 			    
 			printf("%s|%u|%u|",inet_ntoa(entry->attr->nexthop),npref,nmed);
 			if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
-		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
-			else
-				printf("|%s|",tmp2);
-				
+		    	printf("%s|",entry->attr->community->str+1);
+            else
+                printf("|");
+
+            if (show_large_comms) {
+                if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0) 
+                    printf("%s|",entry->attr->lcommunity->str+1);
+                else
+                    printf("|");
+            }
+
+		    printf("%s|", aggregate); /* AG/NAG */
+
 			if (entry->attr->aggregator_addr.s_addr != -1)
 				printf("%u %s|\n",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
 			else
@@ -1573,14 +1592,14 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 {
 	int idx  ;
 	char buf[128];
-	char tmp2[20];
+	char aggregate[20];
 	unsigned int npref;
 	unsigned int nmed;
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(tmp2,"AG");
+		sprintf(aggregate,"AG");
 	else
-		sprintf(tmp2,"NAG");
+		sprintf(aggregate,"NAG");
 
 	for (idx=0;idx<count;idx++)
 	{
@@ -1625,9 +1644,18 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
                 
 				//printf("%s|%d|%d|",inet_ntoa(prefix->nexthop.v4_addr),entry->attr->local_pref,entry->attr->med);
 				if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
-		    			printf("%s|%s|",entry->attr->community->str+1,tmp2);
+		    		printf("%s|",entry->attr->community->str+1);
 				else
-					printf("|%s|",tmp2);
+					printf("|");
+
+                if (show_large_comms) {
+                    if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0) 
+                        printf("%s|",entry->attr->lcommunity->str+1);
+                    else
+                        printf("|");
+                }
+
+                printf("%s|", aggregate); /* AG/NAG */
 
 			}
 			else 
@@ -1668,10 +1696,18 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 			    printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),npref,nmed);
 				//printf("%s|%d|%d|",inet_ntoa(entry->attr->nexthop),entry->attr->local_pref,entry->attr->med);
 				if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
-		    			printf("%s|%s|",entry->attr->community->str+1,tmp2);
+		    		printf("%s|",entry->attr->community->str+1);
 				else
-					printf("|%s|",tmp2);
+					printf("|");
 
+                if (show_large_comms) {
+                    if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0) 
+                        printf("%s|",entry->attr->lcommunity->str+1);
+                    else
+                        printf("|");
+                }
+
+                printf("%s|",aggregate); /* AG/NAG */
 
 			}
 			if (entry->attr->aggregator_addr.s_addr != -1)
@@ -1713,14 +1749,14 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 	char buf[128];
 	char buf1[128];
 	char buf2[128];
-	char tmp2[20];
+	char aggregate[20];
 	unsigned int npref;
 	unsigned int nmed;
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(tmp2,"AG");
+		sprintf(aggregate,"AG");
 	else
-		sprintf(tmp2,"NAG");
+		sprintf(aggregate,"NAG");
 
 	for (idx=0;idx<count;idx++)
 	{
@@ -1772,9 +1808,19 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
                 printf("%s|%s|%s|%u|%u|", attr_aspath(entry->attr),describe_origin(entry->attr->origin),fmt_ipv6(prefix->nexthop,buf),npref,nmed);
 
 			if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
-		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
+		    		printf("%s|",entry->attr->community->str+1);
 			else
-				printf("|%s|",tmp2);
+				printf("|");
+
+            if (show_large_comms) {
+                if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0) 
+                    printf("%s|",entry->attr->lcommunity->str+1);
+                else
+                    printf("|");
+
+            }
+
+            printf("%s|", aggregate); /* AG/NAG */
 
 
 			if (entry->attr->aggregator_addr.s_addr != -1)
@@ -1816,16 +1862,16 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 {
 	
 	struct tm *date = NULL;
-	char tmp2[20];	
+	char aggregate[20];	
 	unsigned int npref;
 	unsigned int nmed;
 	char  time_str[20];
         char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(tmp2,"AG");
+		sprintf(aggregate,"AG");
 	else
-		sprintf(tmp2,"NAG");
+		sprintf(aggregate,"NAG");
 
     time_t *t;
     if (timetype==0) {
@@ -1880,9 +1926,19 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 		   printf("%s|%u|%u|",nexthop,npref,nmed);
 
 		   if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
-		    		printf("%s|%s|",entry->attr->community->str+1,tmp2);
+		    		printf("%s|",entry->attr->community->str+1);
 			else
-				printf("|%s|",tmp2);
+				printf("|");
+
+            if (show_large_comms) {
+                if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0)  
+                    printf("%s|",entry->attr->lcommunity->str+1);
+                else
+                    printf("|");
+
+            }
+
+            printf("%s|",aggregate); /* AG/NAG */
 				
 			if (entry->attr->aggregator_addr.s_addr != -1)
 				printf("%u %s|\n",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
@@ -1997,10 +2053,19 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
             printf("%s|%u|%u|",nexthop,npref,nmed);
             
             if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_COMMUNITIES) ) !=0)	
-                printf("%s|%s|",attr->community->str+1,aggregate);
+                printf("%s|",attr->community->str+1);
             else
-                printf("|%s|",aggregate);
+                printf("|");
+
+            if (show_large_comms) {
+                if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0)    
+                    printf("%s|",attr->lcommunity->str+1);
+                else
+                    printf("|");
+            }
             
+            printf("%s|",aggregate);
+
             if (attr->aggregator_addr.s_addr != -1)
                 printf("%u %s|\n",attr->aggregator_as,inet_ntoa(attr->aggregator_addr));
             else

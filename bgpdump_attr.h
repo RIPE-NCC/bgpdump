@@ -56,6 +56,7 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #define BGP_ATTR_EXT_COMMUNITIES          16
 #define BGP_ATTR_NEW_AS_PATH              17
 #define BGP_ATTR_NEW_AGGREGATOR           18
+#define BGP_ATTR_LARGE_COMMUNITIES        32
 
 /* Flag macro */
 #define ATTR_FLAG_BIT(X)  (1 << ((X) - 1))
@@ -129,6 +130,7 @@ struct attr
   struct aspath 	*aspath;
   struct community 	*community;
   struct ecommunity 	*ecommunity;
+  struct lcommunity   *lcommunity;
   struct transit 	*transit;
   
   /* libbgpdump additions */
@@ -154,6 +156,13 @@ struct community
   int 			size;
   u_int32_t 		*val;
   char			*str;
+};
+
+struct lcommunity
+{
+  int       size;
+  u_int32_t *val;
+  char      *str;
 };
 
 struct cluster_list
