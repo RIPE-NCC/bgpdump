@@ -163,6 +163,7 @@ Common options:\n\
     -O <file>  output to <file> instead of STDOUT\n\
     -s         log to syslog (the default)\n\
     -v         log to STDERR\n\
+    -q         quiet\n\
 \n\
 Options for -m and -M modes:\n\
     -t dump    timestamps for RIB dumps reflect the time of the dump (the default)\n\
@@ -183,10 +184,11 @@ int main(int argc, char *argv[]) {
     int fd;
     bool usage_error = false;
     bool use_syslog = true;
+    bool quiet = false;
  
     log_to_stderr();
     
-    while ((c=getopt(argc,argv,"if:o:t:mMHO:svTpl"))!=-1)
+    while ((c=getopt(argc,argv,"if:o:t:mMHO:svTplq"))!=-1)
 	switch(c)
 	{
        case 'H':
@@ -237,7 +239,10 @@ int main(int argc, char *argv[]) {
         case 'l':
                 show_large_comms = 1;
                 break;
-               
+        case 'q':
+                quiet = true;
+                break;
+
         case '?':
         default:
                 usage_error = true;
@@ -246,7 +251,8 @@ int main(int argc, char *argv[]) {
     argv += optind;
     
     if(use_syslog) {
-        debug("logging to syslog");
+        if(!quiet)
+            debug("logging to syslog");
         log_to_syslog();
     }
     
