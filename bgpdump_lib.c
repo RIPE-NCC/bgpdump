@@ -633,7 +633,7 @@ int process_mrtd_table_dump_v2_ipv4_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		e = &prefixdata->entries[i];
 
 		mstream_getw(s, &e->peer_index);
-		assert(e->peer_index <= entry->dump->table_dump_v2_peer_index_table->peer_count);
+		assert(e->peer_index < entry->dump->table_dump_v2_peer_index_table->peer_count);
 		e->peer = &entry->dump->table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
 
@@ -683,7 +683,7 @@ int process_mrtd_table_dump_v2_ipv6_unicast(struct mstream *s, BGPDUMP_ENTRY *en
 		e = &prefixdata->entries[i];
 
 		mstream_getw(s, &e->peer_index);
-		assert(e->peer_index <= entry->dump->table_dump_v2_peer_index_table->peer_count);
+		assert(e->peer_index < entry->dump->table_dump_v2_peer_index_table->peer_count);
 		e->peer = &entry->dump->table_dump_v2_peer_index_table->entries[e->peer_index];
 		mstream_getl(s, &e->originated_time);
 
