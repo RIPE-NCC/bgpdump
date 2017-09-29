@@ -259,7 +259,7 @@ static void bgpdump_free_mp_info(struct mp_info *info) {
     u_int8_t safi;
 
     for(afi = 1; afi <= BGPDUMP_MAX_AFI; afi++) {
-	for(safi = 1; safi < BGPDUMP_MAX_SAFI; safi++) {
+	for(safi = 1; safi <= BGPDUMP_MAX_SAFI; safi++) {
 	    if(info->announce[afi][safi])
 		free(info->announce[afi][safi]);
 		info->announce[afi][safi] = NULL;
