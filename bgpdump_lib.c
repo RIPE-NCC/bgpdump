@@ -937,7 +937,8 @@ int process_zebra_bgp_message_notify(struct mstream *s, BGPDUMP_ENTRY *entry) {
 
 int process_zebra_bgp_message_open(struct mstream *s, BGPDUMP_ENTRY *entry, u_int8_t asn_len) {
     mstream_getc(s, &entry->body.zebra_message.version);
-    entry->body.zebra_message.my_as = read_asn(s, asn_len);
+    // my_as in open is always 16bits, regardless of MRT subtype
+    entry->body.zebra_message.my_as = read_asn(s, ASN16_LEN);
     mstream_getw(s, &entry->body.zebra_message.hold_time);
     entry->body.zebra_message.bgp_id = mstream_get_ipv4(s);
     mstream_getc(s, &entry->body.zebra_message.opt_len);
