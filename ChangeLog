@@ -8,6 +8,11 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2019-03-06 Kevin White <bitbucket-kevin@kevbo.org>
+	* Update Makefile.in to use $(DESTDIR) in the install stanza
+	* Transistion spec file to use %make_install, rather than %makeinstall
+	* Update spec file to move the static library to the -devel package
+
 2018-09-26 Colin Petrie <cpetrie@ripe.net> v1.6.0
 	* Fix overflow for large records
 	* Add basic '-q' quiet mode
