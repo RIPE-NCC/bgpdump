@@ -145,14 +145,14 @@ static const char* get_bgp_state_name(u_int16_t state) {
 
 /* Check if -u (compact attributes) is enabled and append a field
  * to the output to show any unknown attributes. */
-static void append_compact_unknown_attributes(BGPDUMP_ENTRY *entry) {
-	for(int i = 0; i < entry->attr->unknown_num; i++) {
-		struct unknown_attr *ua = &(entry->attr->unknown[i]);
+static void append_compact_unknown_attributes(attributes_t *attr) {
+	for(int i = 0; i < attr->unknown_num; i++) {
+		struct unknown_attr *ua = &(attr->unknown[i]);
 		printf("%02x:%02x:", ua->type, ua->flag);
 		for(size_t s = 0; s < ua->len; s++) {
 			printf("%02x", (uint8_t)(ua->raw[s]));
 		}
-		if(i < entry->attr->unknown_num - 1) {
+		if(i < attr->unknown_num - 1) {
 			printf(" ");
 		}
 	}
@@ -1589,7 +1589,7 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 			printf("|");
 
 			if (show_unknown_attributes) {
-				append_compact_unknown_attributes(entry);
+				append_compact_unknown_attributes(entry->attr);
 			}
 			printf("\n");
 		}
@@ -1748,7 +1748,7 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 			printf("|");
 
 			if (show_unknown_attributes) {
-				append_compact_unknown_attributes(entry);
+				append_compact_unknown_attributes(entry->attr);
 			}
 
 			printf("\n");
@@ -1867,7 +1867,7 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 			printf("|");
 
 			if (show_unknown_attributes) {
-				append_compact_unknown_attributes(entry);
+				append_compact_unknown_attributes(entry->attr);
 			}
 
 			printf("\n");
@@ -1983,16 +1983,24 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 
             printf("%s|",aggregate); /* AG/NAG */
 				
-			if (entry->attr->aggregator_addr.s_addr != -1)
-				printf("%u %s|\n",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
-			else
-				printf("|\n");
+            if (entry->attr->aggregator_addr.s_addr != -1) {
+                printf("%u %s",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
+            }
+            printf("|");
+
+            if (show_unknown_attributes) {
+                append_compact_unknown_attributes(entry->attr);
+            }
+            printf("\n");
+
 		}
+
 		else
 		{
 	 	    printf("%s|%u|",peer,route->peer_as);
                     printf("%s/%d|%s|%s\n",prefix,route->mask,attr_aspath(entry->attr),describe_origin(entry->attr->origin));
 		}
+
 
 }
 
@@ -2115,7 +2123,7 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
             printf("|");
 
             if (show_unknown_attributes) {
-                append_compact_unknown_attributes(entry);
+                append_compact_unknown_attributes(attr);
             }
             printf("\n");
         }
