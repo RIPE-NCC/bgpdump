@@ -9,6 +9,8 @@ RANLIB	= @RANLIB@
 
 SYS_LIBS= @LIBS@
 
+INSTALL  = install
+
 prefix   = @prefix@
 exec_prefix = @exec_prefix@
 bindir   = @bindir@
@@ -29,10 +31,10 @@ libbgpdump.so: libbgpdump.a
 	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
 
 example: example.c libbgpdump.a
-	$(COMPILE) -o example example.c libbgpdump.a $(SYS_LIBS)
+	$(COMPILE) $(LDFLAGS) -o example example.c libbgpdump.a $(SYS_LIBS)
 
 bgpdump: bgpdump.c libbgpdump.a
-	$(COMPILE) -o bgpdump bgpdump.c libbgpdump.a $(SYS_LIBS)
+	$(COMPILE) $(LDFLAGS) -o bgpdump bgpdump.c libbgpdump.a $(SYS_LIBS)
 
 check-clean:
 	rm -f test_out/*.bgp.gz
@@ -48,10 +50,10 @@ distclean: clean
 	rm -Rf $(PKG)
 
 install: all
-	install -d $(DESTDIR)$(bindir) $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)
-	install bgpdump $(DESTDIR)$(bindir)
-	install $(LIB_H) $(DESTDIR)$(includedir)
-	install libbgpdump.so libbgpdump.a $(DESTDIR)$(libdir)
+	$(INSTALL) -d $(DESTDIR)$(bindir) $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)
+	$(INSTALL) bgpdump $(DESTDIR)$(bindir)
+	$(INSTALL) -m 0644 $(LIB_H) $(DESTDIR)$(includedir)
+	$(INSTALL) libbgpdump.so libbgpdump.a $(DESTDIR)$(libdir)
 
 PKG=@PACKAGE_NAME@-@PACKAGE_VERSION@
 dist:

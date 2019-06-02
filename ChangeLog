@@ -8,6 +8,10 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2019-04-28 Robert Scheck <robert@fedoraproject.org>
+	* Use $(DESTDIR), $(INSTALL) and $(LDFLAGS) for downstreams
+	* Correct permissions for installed header files (*.h)
+
 2019-03-06 Kevin White <bitbucket-kevin@kevbo.org>
 	* Update Makefile.in to use $(DESTDIR) in the install stanza
 	* Transistion spec file to use %make_install, rather than %makeinstall
