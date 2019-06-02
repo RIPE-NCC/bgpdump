@@ -31,11 +31,12 @@ AC_CHECK_FUNCS(inet_ntoa, [], AC_CHECK_LIB(nsl, inet_ntoa, [], AC_MSG_ERROR([ine
 AC_CHECK_FUNCS(inet_ntop, [], AC_CHECK_LIB(nsl, inet_ntop, [], AC_MSG_ERROR([inet_ntop not found],1)))
 
 case `uname` in
-	Darwin*) LDFLAGS="$LDFLAGS -dynamiclib" ;;
-	*)       LDFLAGS="$LDFLAGS -shared" ;;
+	Darwin*) SOFLAGS="$SOFLAGS -dynamiclib" ;;
+	*)       SOFLAGS="$SOFLAGS -shared" ;;
 esac
 
 AC_SUBST(CFLAGS)
 AC_SUBST(LIBS)
+AC_SUBST(SOFLAGS)
 
 AC_OUTPUT([bgpdump.spec Makefile])

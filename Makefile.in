@@ -5,6 +5,7 @@ COMPILE  = $(CC) $(CFLAGS) $(INCLUDES)
 
 LD	= @CC@
 LDFLAGS	= @LDFLAGS@
+SOFLAGS = @SOFLAGS@
 RANLIB	= @RANLIB@
 
 SYS_LIBS= @LIBS@
@@ -28,7 +29,7 @@ libbgpdump.a: $(LIB_H) $(LIB_O) Makefile cfile_tools.h util.h
 	$(RANLIB) libbgpdump.a
 
 libbgpdump.so: libbgpdump.a
-	$(COMPILE) $(LDFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
+	$(COMPILE) $(LDFLAGS) $(SOFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
 
 example: example.c libbgpdump.a
 	$(COMPILE) $(LDFLAGS) -o example example.c libbgpdump.a $(SYS_LIBS)
