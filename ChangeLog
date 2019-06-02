@@ -8,6 +8,11 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2019-03-06 Kevin White <bitbucket-kevin@kevbo.org>
+	* Update Makefile.in to use $(DESTDIR) in the install stanza
+	* Transistion spec file to use %make_install, rather than %makeinstall
+	* Update spec file to move the static library to the -devel package
+
 2019-02-09 Italo Cunha <cunha@dcc.ufmg.br>
 	* Add '-u' flag to print unknown attributes in oneline (-m) mode
 

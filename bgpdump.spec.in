@@ -36,7 +36,7 @@ make CFLAGS="$RPM_OPT_FLAGS"
 
 %install
 rm -rf %{buildroot}
-%makeinstall
+%make_install
 
 %clean
 rm -rf %{buildroot}
@@ -45,16 +45,20 @@ rm -rf %{buildroot}
 %defattr(0755,root,root)
 %{_bindir}/bgpdump
 %defattr(-,root,root)
-%{_libdir}/libbgpdump.a
 %{_libdir}/libbgpdump.so
 
 %files devel
 %defattr(-,root,root)
+%{_libdir}/libbgpdump.a
 %{_includedir}/bgpdump_attr.h
 %{_includedir}/bgpdump_formats.h
 %{_includedir}/bgpdump_lib.h
 %{_includedir}/bgpdump_mstream.h
 
 %changelog
+* Wed Mar 06 2019 Kevin White <bitbucket-kevin@kevbo.org> 1.6.0-1
+- use make_install (after updating Makefile to support DESTDIR).
+- Move static lib to -devel
+
 * Wed Jul 04 2008 Erik Romijn <eromijn@ripe.net> 1.4.99.9-1
 - Initial release

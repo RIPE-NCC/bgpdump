@@ -48,10 +48,10 @@ distclean: clean
 	rm -Rf $(PKG)
 
 install: all
-	install -d $(bindir) $(includedir) $(libdir)
-	install bgpdump $(bindir)
-	install $(LIB_H) $(includedir)
-	install libbgpdump.so libbgpdump.a $(libdir)
+	install -d $(DESTDIR)$(bindir) $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)
+	install bgpdump $(DESTDIR)$(bindir)
+	install $(LIB_H) $(DESTDIR)$(includedir)
+	install libbgpdump.so libbgpdump.a $(DESTDIR)$(libdir)
 
 PKG=@PACKAGE_NAME@-@PACKAGE_VERSION@
 dist:
