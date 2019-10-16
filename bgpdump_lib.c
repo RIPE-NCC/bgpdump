@@ -78,7 +78,7 @@ static    void process_asn32_trans(attributes_t *attr, u_int8_t asn_len);
 static    struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath);
 static    void asn32_expand_16_to_32(char *dst, char *src, int len);
 
-#if defined(linux)
+#ifndef HAVE_STRLCAT
 static    size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
@@ -1749,7 +1749,7 @@ void asn32_expand_16_to_32(char *dst, char *src, int len) {
   }
 }
 
-#if defined(linux)
+#ifndef HAVE_STRLCAT
 size_t strlcat(char *dst, const char *src, size_t size) {
   if (strlen (dst) + strlen (src) >= size)
     return -1;
