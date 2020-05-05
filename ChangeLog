@@ -8,6 +8,9 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2020-05-05 Colin Petrie <colin@spakka.net> 
+	* Mask trailing bits in NLRI to correct address representations
+
 2020-04-27 Colin Petrie <colin@spakka.net> v1.6.1
 	* Version bump for Github release/tag migration
 

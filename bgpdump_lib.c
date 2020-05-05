@@ -1571,8 +1571,10 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
         if (is_addp)
             path_id = mstream_getl(s, NULL);
 
-        u_int8_t p_len = mstream_getc(s,NULL); // length in bits
-        u_int8_t p_bytes = (p_len + 7) / 8;
+        u_int8_t p_len = mstream_getc(s,NULL); // prefix length in bits
+        u_int8_t p_bytes = p_len / 8;          // number of complete octets to read
+        u_int8_t p_mask = p_len % 8;           // number of remaining significant bits
+        if (p_mask) p_bytes++;                 // if remaining bits, need to read one more octet
         
         /* Truncated prefix list? */
         if(mstream_can_read(s) < p_bytes) {
@@ -1596,7 +1598,39 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
             continue;
 
         *prefix = (struct prefix) { .len = p_len, .path_id = path_id };
-        mstream_get(s, &prefix->address, p_bytes);
+
+        /*
+            RFC4271:
+            The Prefix field contains an IP address prefix, followed by
+            the minimum number of trailing bits needed to make the end
+            of the field fall on an octet boundary.  Note that the value
+            of trailing bits is irrelevant.
+
+            Some implementations (including bgpdump.c) pass the address directly
+            into inet_ntoa() without first considering the prefix length.
+            This isn't a problem for anything that works with prefix lengths.
+            But the resulting address visual representation can look wrong.
+            To avoid any confusion, we mask the trailing bits to 0 also.
+        */
+
+
+        /* Mask trailing bits to 0 if not aligned on a octet boundary */
+        if (p_mask) {
+
+            /* Get all the completed bytes */
+            mstream_get(s, &prefix->address, p_bytes - 1);
+
+            /* Get one remaining octet and then mask the trailing bits */
+            u_int8_t remain;
+            mstream_get(s, &remain, 1);
+            remain &= (0xFF >> (8 - p_mask)) << (8 - p_mask);
+            memcpy((char *)((char *)&prefix->address + p_bytes - 1), &remain, 1);
+
+        } else {
+
+            /* Get all the bytes */
+            mstream_get(s, &prefix->address, p_bytes);
+        }
     }
     
     if(count > MAX_PREFIXES) {
