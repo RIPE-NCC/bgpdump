@@ -20,7 +20,7 @@ includedir = @includedir@
 
 LIB_H	 = bgpdump_attr.h bgpdump_formats.h bgpdump_lib.h bgpdump_mstream.h
 LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o util.o inet_ntop.o
-OTHER    = *.in configure bgpdump.spec README* ChangeLog License*
+OTHER    = *.in configure bgpdump.spec README* ChangeLog COPYING*
 
 all: libbgpdump.so bgpdump 
 
