@@ -9,6 +9,9 @@ ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
 2020-09-20 Colin Petrie <colin@spakka.net> 
+	* Use dynamic allocation for prefixes in NLRI
+	  This reverts some old historical madness and will now handle as
+	  many prefixes as needed - including RFC8654 compliance
 	* Mask trailing bits in NLRI to correct address representations
 
 2020-06-07 Colin Petrie <colin@spakka.net> v1.6.2
