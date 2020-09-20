@@ -223,7 +223,6 @@ struct prefix {
     pathid_t    path_id;
 };
 
-#define MAX_PREFIXES 2050
 struct mp_nlri {
   u_char		nexthop_len;
 
@@ -231,7 +230,7 @@ struct mp_nlri {
   BGPDUMP_IP_ADDRESS 	nexthop_local;
 
   u_int16_t		prefix_count;
-  struct prefix		nlri[MAX_PREFIXES];
+  struct prefix		*nlri;
 };
 
 #endif /* _BGPDUMP_ATTR_H */
