@@ -1561,6 +1561,7 @@ void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_i
 }
 
 static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *prefixes, struct zebra_incomplete *incomplete, int is_addp) {
+    u_int8_t maskarray[8] = {0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff};
     int count = 0;
     
     while(mstream_can_read(s)) {
@@ -1613,24 +1614,11 @@ static int read_prefix_list(struct mstream *s, u_int16_t afi, struct prefix *pre
             To avoid any confusion, we mask the trailing bits to 0 also.
         */
 
+        mstream_get(s, &prefix->address, p_bytes);
 
         /* Mask trailing bits to 0 if not aligned on a octet boundary */
-        if (p_mask) {
-
-            /* Get all the completed bytes */
-            mstream_get(s, &prefix->address, p_bytes - 1);
-
-            /* Get one remaining octet and then mask the trailing bits */
-            u_int8_t remain;
-            mstream_get(s, &remain, 1);
-            remain &= (0xFF >> (8 - p_mask)) << (8 - p_mask);
-            memcpy((char *)((char *)&prefix->address + p_bytes - 1), &remain, 1);
-
-        } else {
-
-            /* Get all the bytes */
-            mstream_get(s, &prefix->address, p_bytes);
-        }
+        if (p_mask)
+            ((u_int8_t *)&prefix->address)[p_bytes - 1] &= maskarray[p_mask - 1];
     }
     
     if(count > MAX_PREFIXES) {
