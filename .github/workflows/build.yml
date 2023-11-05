@@ -1,0 +1,43 @@
+name: Build CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    # build the master branch every Monday morning
+    - cron: '57 5 * * 1'
+  workflow_dispatch:
+
+jobs:
+  build-latest:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        compiler: [cc, clang, gcc-12]
+        os: [ubuntu-latest, macos-latest]
+        exclude:
+          - os: macos-latest
+            compiler: cc
+          - os: macos-latest
+            compiler: gcc-12
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Run autotools
+        run: |
+          autoheader
+          autoconf
+      - name: Compiler version
+        run: $CC -v
+        env:
+          CC: ${{ matrix.compiler }}
+      - name: configure
+        run: ./configure
+        env:
+          CC: ${{ matrix.compiler }}
+      - name: make
+        run: make -k
+      - name: Run unit tests
+        run: ./bgpdump -T
+      - name: Regression tests
+        run: ./test.sh
