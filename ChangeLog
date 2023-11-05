@@ -8,6 +8,9 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2023-11-05 Colin Petrie <colin@spakka.net>
+	* Include CPPFLAGS
+
 2020-09-20 Colin Petrie <colin@spakka.net> 
 	* Use dynamic allocation for prefixes in NLRI
 	  This reverts some old historical madness and will now handle as
