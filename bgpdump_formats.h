@@ -196,8 +196,8 @@ typedef struct struct_BGPDUMP_ZEBRA_MESSAGE {
     /* For UPDATE packets */
     u_int16_t		withdraw_count;
     u_int16_t		announce_count;
-    struct prefix	withdraw[MAX_PREFIXES];
-    struct prefix	announce[MAX_PREFIXES];
+    struct prefix	*withdraw;
+    struct prefix	*announce;
 
     /* For corrupt update dumps */
     u_int16_t cut_bytes;
@@ -239,8 +239,8 @@ typedef struct struct_BGPDUMP_MRTD_MESSAGE {
 
     u_int16_t		withdraw_count;
     u_int16_t		announce_count;
-    struct prefix	withdraw[MAX_PREFIXES];
-    struct prefix	announce[MAX_PREFIXES];
+    struct prefix	*withdraw;
+    struct prefix	*announce;
 
     /* For corrupt update dumps */
     struct zebra_incomplete incomplete;
