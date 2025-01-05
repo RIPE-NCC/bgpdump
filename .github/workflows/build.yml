@@ -23,6 +23,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Check OS name
+        run: echo "The operating system on the runner is $RUNNER_OS."
+      - name: Install dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get install libbz2-dev zlib1g-dev
+      - name: Install autotools
+        if: runner.os == 'macOS'
+        run: brew install autoconf
       - name: Run autotools
         run: |
           autoheader
