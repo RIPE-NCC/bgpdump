@@ -11,6 +11,7 @@ RANLIB	= @RANLIB@
 SYS_LIBS= @LIBS@
 
 INSTALL  = install
+LN_S     = ln -s
 
 prefix   = @prefix@
 exec_prefix = @exec_prefix@
@@ -22,6 +23,12 @@ LIB_H	 = bgpdump_attr.h bgpdump_formats.h bgpdump_lib.h bgpdump_mstream.h
 LIB_O	 = bgpdump_lib.o bgpdump_mstream.o cfile_tools.o util.o inet_ntop.o
 OTHER    = *.in configure bgpdump.spec README* ChangeLog COPYING*
 
+SOVER_MAJOR = 0
+SOVER_MINOR = 0
+SOVER_PATCH = 0
+SOVER       = $(SOVER_MAJOR).$(SOVER_MINOR).$(SOVER_PATCH)
+SONAME      = libbgpdump.so.$(SOVER_MAJOR)
+
 all: libbgpdump.so bgpdump 
 
 libbgpdump.a: $(LIB_H) $(LIB_O) Makefile cfile_tools.h util.h
@@ -29,13 +36,15 @@ libbgpdump.a: $(LIB_H) $(LIB_O) Makefile cfile_tools.h util.h
 	$(RANLIB) libbgpdump.a
 
 libbgpdump.so: libbgpdump.a
-	$(COMPILE) $(LDFLAGS) $(SOFLAGS) -o libbgpdump.so $(LIB_O) $(SYS_LIBS)
+	$(COMPILE) $(LDFLAGS) $(SOFLAGS) -Wl,-soname,$(SONAME) -o libbgpdump.so.$(SOVER) $(LIB_O) $(SYS_LIBS)
+	$(LN_S) libbgpdump.so.$(SOVER) $(SONAME)
+	$(LN_S) libbgpdump.so.$(SOVER) libbgpdump.so
 
-example: example.c libbgpdump.a
-	$(COMPILE) $(LDFLAGS) -o example example.c libbgpdump.a $(SYS_LIBS)
+example: example.c libbgpdump.so
+	$(COMPILE) $(LDFLAGS) -o example example.c libbgpdump.so.$(SOVER) $(SYS_LIBS)
 
-bgpdump: bgpdump.c libbgpdump.a
-	$(COMPILE) $(LDFLAGS) -o bgpdump bgpdump.c libbgpdump.a $(SYS_LIBS)
+bgpdump: bgpdump.c libbgpdump.so
+	$(COMPILE) $(LDFLAGS) -o bgpdump bgpdump.c libbgpdump.so.$(SOVER) $(SYS_LIBS)
 
 check-clean:
 	rm -f test_out/*.bgp.gz
@@ -44,7 +53,7 @@ check: check-clean bgpdump
 	./test.sh
 
 clean: check-clean
-	rm -f libbgpdump.so libbgpdump.a example bgpdump $(LIB_O)
+	rm -f libbgpdump.so libbgpdump.so.* libbgpdump.a example bgpdump $(LIB_O)
 
 distclean: clean
 	rm -Rf config.log config.status *.dSYM core *.core autom4te.cache bgpdump-config.h Makefile
@@ -54,7 +63,9 @@ install: all
 	$(INSTALL) -d $(DESTDIR)$(bindir) $(DESTDIR)$(includedir) $(DESTDIR)$(libdir)
 	$(INSTALL) bgpdump $(DESTDIR)$(bindir)
 	$(INSTALL) -m 0644 $(LIB_H) $(DESTDIR)$(includedir)
-	$(INSTALL) libbgpdump.so libbgpdump.a $(DESTDIR)$(libdir)
+	$(INSTALL) libbgpdump.so.$(SOVER) libbgpdump.a $(DESTDIR)$(libdir)
+	$(LN_S) libbgpdump.so.$(SOVER) $(DESTDIR)$(libdir)/$(SONAME)
+	$(LN_S) libbgpdump.so.$(SOVER) $(DESTDIR)$(libdir)/libbgpdump.so
 
 PKG=@PACKAGE_NAME@-@PACKAGE_VERSION@
 dist:
