@@ -22,7 +22,7 @@ jobs:
             compiler: gcc-12
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Check OS name
         run: echo "The operating system on the runner is $RUNNER_OS."
       - name: Install dependencies
