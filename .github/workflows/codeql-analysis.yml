@@ -22,7 +22,7 @@ jobs:
         language: [ 'cpp' ]
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Install application build dependencies
       run: sudo apt-get install libbz2-dev zlib1g-dev
     - name: Initialize CodeQL
