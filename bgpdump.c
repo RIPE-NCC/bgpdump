@@ -318,17 +318,19 @@ void process(BGPDUMP_ENTRY *entry) {
     int len;
 	
 	date=gmtime(&entry->time);
-	time2str(date,time_str_fixed);
+	time2str(date,time_str_fixed, sizeof(time_str_fixed));
     
     if (mode == 1) {
         // Timestamp mode
-        len = sprintf(time_str, "%lld", (long long)entry->time);
+        len = snprintf(time_str, sizeof(time_str), "%lld", (long long)entry->time);
     } else {
-        len = time2str(date,time_str);
+        len = time2str(date,time_str, sizeof(time_str));
     }
     // Appending microseconds to time_str if needed
     if (entry->type == BGPDUMP_TYPE_ZEBRA_BGP_ET) {
-        sprintf(time_str + len, ".%06ld", entry->ms);
+        if (len < sizeof(time_str) - 8) {
+            sprintf(time_str + len, ".%06ld", entry->ms);
+        }
     }
     
 	if (mode==0)
@@ -395,7 +397,7 @@ void process(BGPDUMP_ENTRY *entry) {
 
 		//printf("FROM: %s AS%d\n",inet_ntoa(entry->body.mrtd_table_dump.peer_ip.v4_addr),entry->body.mrtd_table_dump.peer_as);
 	 	//time2str(localtime(&entry->body.mrtd_table_dump.uptime),time_str2);
-		time2str(gmtime(&entry->body.mrtd_table_dump.uptime),time_str2);
+		time2str(gmtime(&entry->body.mrtd_table_dump.uptime),time_str2, sizeof(time_str2));
 		printf("ORIGINATED: %s\n",time_str2); 	
 		if (entry->attr && entry->attr->len)
 				    	show_attr(entry->attr);
@@ -463,11 +465,11 @@ void process(BGPDUMP_ENTRY *entry) {
 					fmt_ipv6(e->entries[i].peer->peer_ip, peer_ip);
 #endif
 				} else {
-					sprintf(peer_ip, "[N/A, unsupported AF]");
+					snprintf(peer_ip, sizeof(peer_ip), "[N/A, unsupported AF]");
 				}
     			printf("FROM: %s AS%u\n", peer_ip, e->entries[i].peer->peer_as);
 				time_t time_temp = (time_t)((e->entries[i]).originated_time);
-				time2str(gmtime(&time_temp),time_str);
+				time2str(gmtime(&time_temp),time_str, sizeof(time_str));
 				printf("ORIGINATED: %s\n",time_str); 	
 				if (e->entries[i].attr && e->entries[i].attr->len)
 			    	show_attr(e->entries[i].attr);
@@ -1017,7 +1019,7 @@ void process(BGPDUMP_ENTRY *entry) {
 			case AFI_IP:
 			default:
 				if (entry->body.zebra_state_change.source_ip.v4_addr.s_addr != 0x00000000L)
-		    			printf(" %s ",inet_ntoa(entry->body.zebra_message.source_ip.v4_addr));
+		    			printf(" %s ",inet_ntoa(entry->body.zebra_state_change.source_ip.v4_addr));
 				else
 					printf(" N/A ");
 			}	
@@ -1040,7 +1042,7 @@ void process(BGPDUMP_ENTRY *entry) {
 #endif
 				case AFI_IP:
 				default:
-                    sprintf(prefix, "%s", inet_ntoa(entry->body.zebra_state_change.source_ip.v4_addr));
+                    snprintf(prefix, sizeof(prefix), "%s", inet_ntoa(entry->body.zebra_state_change.source_ip.v4_addr));
 					break;
 			}
             show_line_prefix(bgp4mp_format, time_str, "STATE");
@@ -1078,10 +1080,10 @@ void process_bgpdump_mrtd_bgp(BGPDUMP_ENTRY *entry) {
     date=gmtime(&entry->time);
 
     if (mode == 1) {
-        sprintf(time_str, "%lld", (long long)entry->time);
+        snprintf(time_str, sizeof(time_str), "%lld", (long long)entry->time);
     } else {
         
-        time2str(date, time_str);
+        time2str(date, time_str, sizeof(time_str));
     }
     
     switch (entry->subtype) {
@@ -1530,9 +1532,9 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 	unsigned int nmed;
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(aggregate,"AG");
+		snprintf(aggregate, sizeof(aggregate), "AG");
 	else
-		sprintf(aggregate,"NAG");
+		snprintf(aggregate, sizeof(aggregate), "NAG");
 
 	for (idx=0;idx<count;idx++)
 	{
@@ -1629,9 +1631,9 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 	unsigned int nmed;
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(aggregate,"AG");
+		snprintf(aggregate, sizeof(aggregate), "AG");
 	else
-		sprintf(aggregate,"NAG");
+		snprintf(aggregate, sizeof(aggregate), "NAG");
 
 	for (idx=0;idx<count;idx++)
 	{
@@ -1792,9 +1794,9 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 	unsigned int nmed;
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(aggregate,"AG");
+		snprintf(aggregate, sizeof(aggregate), "AG");
 	else
-		sprintf(aggregate,"NAG");
+		snprintf(aggregate, sizeof(aggregate), "NAG");
 
 	for (idx=0;idx<count;idx++)
 	{
@@ -1908,13 +1910,13 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
 	char aggregate[20];	
 	unsigned int npref;
 	unsigned int nmed;
-	char  time_str[20];
+	char  time_str[32];
         char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
 
 	if (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_ATOMIC_AGGREGATE))
-		sprintf(aggregate,"AG");
+		snprintf(aggregate, sizeof(aggregate), "AG");
 	else
-		sprintf(aggregate,"NAG");
+		snprintf(aggregate, sizeof(aggregate), "NAG");
 
     time_t *t;
     if (timetype==0) {
@@ -1923,10 +1925,10 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
         t = &route->uptime;
     }
     if (mode == 1) {
-        sprintf(time_str, "%lld", (long long)*t);
+        snprintf(time_str, sizeof(time_str), "%lld", (long long)*t);
     } else {
         date=gmtime(t);
-        time2str(date, time_str);
+        time2str(date, time_str, sizeof(time_str));
     }
     show_line_prefix("TABLE_DUMP", time_str, "B");
 
@@ -2015,7 +2017,7 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
     struct tm *date = NULL;
     unsigned int npref;
     unsigned int nmed;
-    char  time_str[20];
+    char  time_str[32];
     char peer[BGPDUMP_ADDRSTRLEN], prefix[BGPDUMP_ADDRSTRLEN], nexthop[BGPDUMP_ADDRSTRLEN];
     
     int i;
@@ -2054,10 +2056,10 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
             t = &tmp;
         }
         if (mode == 1) {
-            sprintf(time_str, "%lld", (long long)*t);
+            snprintf(time_str, sizeof(time_str), "%lld", (long long)*t);
         } else {
             date=gmtime(t);
-            time2str(date, time_str);
+            time2str(date, time_str, sizeof(time_str));
         }
 
         (addpath)

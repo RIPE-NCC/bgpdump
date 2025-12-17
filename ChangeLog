@@ -8,6 +8,20 @@ PLEASE DO NOT E-MAIL INDIVIDUAL DEVELOPERS ABOUT
 ISSUES, AS YOUR E-MAIL MAY BE LOST
 ==========================================================
 
+2024-12-17 Jared Mauch <jared@puck.nether.net>
+
+        * Fixed critical return value bug in process_mrtd_table_dump_v2_peer_index_table
+          that caused peer index tables to be incorrectly marked as failed
+        * Fixed buffer overflow risks in time string formatting and logging functions
+        * Fixed integer overflow/underflow risks in AS path processing and message parsing
+        * Fixed incorrect memory copy in large community processing (byte offset bug)
+        * Fixed memory leak in bgpdump_open_dump when malloc fails
+        * Fixed wrong field reference in state change processing
+        * Replaced all sprintf calls with snprintf for buffer safety
+        * Added size parameters to time2str() and int2str() utility functions
+        * Fixed alignment warnings by replacing unsafe pointer casts with memcpy
+        * Improved code consistency by using sizeof() for all buffer size checks
+
 2023-11-05 Colin Petrie <colin@spakka.net>
 	* Include CPPFLAGS
 

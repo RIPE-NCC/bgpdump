@@ -97,6 +97,7 @@ BGPDUMP *bgpdump_open_dump(const char *filename) {
     BGPDUMP *this_dump = malloc(sizeof(BGPDUMP));
     if (this_dump == NULL) {
         perror("malloc");
+        cfr_close(f);
         return NULL;
     }
     strcpy(this_dump->filename, "[STDIN]");
@@ -622,7 +623,7 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 			t->entries[i].peer_as = read_asn(s, ASN16_LEN);
 
 	}
-	return 0;
+	return 1;
 }
 
 
@@ -918,6 +919,12 @@ int process_zebra_bgp_message(struct mstream *s,BGPDUMP_ENTRY *entry, u_int8_t a
     }
 
     mstream_getw(s,&entry->body.zebra_message.size);
+    
+    /* Validate message size to prevent integer underflow */
+    if (entry->body.zebra_message.size < sizeof(marker) + sizeof(u_int16_t)) {
+        warn("bgp_message: invalid message size %d", entry->body.zebra_message.size);
+        return 0;
+    }
     
     int expected = entry->body.zebra_message.size - sizeof(marker) - sizeof(u_int16_t);
     
@@ -1309,6 +1316,12 @@ void process_attr_aspath_string(struct aspath *as) {
 	}
 
       /* Check AS length. */
+      /* Check for integer overflow before multiplication */
+      if (segment->length > 0 && as->asn_len > 0 && 
+          segment->length > ((size_t)-1 - AS_HEADER_SIZE) / as->asn_len) {
+	  aspath_error(as);
+	  return;
+      }
       if ((pnt + (segment->length * as->asn_len) + AS_HEADER_SIZE) > end)
 	{
 	  aspath_error(as);
@@ -1357,19 +1370,27 @@ void process_attr_aspath_string(struct aspath *as) {
 
 	  int asn_pos = i * as->asn_len;
           switch(as->asn_len) {
-                case ASN16_LEN:
-                    asn = ntohs (*(u_int16_t *) (segment->data + asn_pos));
+                case ASN16_LEN: {
+                    u_int16_t val;
+                    memcpy(&val, segment->data + asn_pos, sizeof(val));
+                    asn = ntohs(val);
                     break;
-                case ASN32_LEN:
-                    asn = ntohl (*(u_int32_t *) (segment->data + asn_pos));
+                }
+                case ASN32_LEN: {
+                    u_int32_t val;
+                    memcpy(&val, segment->data + asn_pos, sizeof(val));
+                    asn = ntohl(val);
                     break;
+                }
                 default:
                     assert("invalid asn_len" && false);
           }
 
-          pos += int2str(asn, as->str + pos);
-          if(pos > MAX_ASPATH_LEN - 100) {
-              strcpy(as->str + pos, "...");
+          pos += int2str(asn, as->str + pos, MAX_ASPATH_LEN - pos);
+          if(pos >= MAX_ASPATH_LEN - 4) {
+              if (pos < MAX_ASPATH_LEN - 1) {
+                  strcpy(as->str + pos, "...");
+              }
               return;
           };
 	}
@@ -1466,11 +1487,11 @@ void process_attr_lcommunity_string(struct lcommunity *lcom) {
 
   memset (buf, 0, BUFSIZ);
 
-  for (i = 0; i < lcom->size; i++)
+    for (i = 0; i < lcom->size; i++)
     {
-        memcpy (&global, lcom->val + (i * 3), sizeof (u_int32_t));
-        memcpy (&local1, lcom->val + (i * 3) + 1, sizeof (u_int32_t));
-        memcpy (&local2, lcom->val + (i * 3) + 2, sizeof (u_int32_t));
+        memcpy (&global, lcom->val + (i * 12), sizeof (u_int32_t));
+        memcpy (&local1, lcom->val + (i * 12) + 4, sizeof (u_int32_t));
+        memcpy (&local2, lcom->val + (i * 12) + 8, sizeof (u_int32_t));
 
         global = ntohl (global);
         local1 = ntohl (local1);
@@ -1794,12 +1815,14 @@ struct aspath *asn32_merge_paths(struct aspath *path, struct aspath *newpath) {
 }
 
 void asn32_expand_16_to_32(char *dst, char *src, int len) {
-  u_int32_t *dstarray = (u_int32_t *) dst;
-  u_int16_t *srcarray = (u_int16_t *) src;
   int i;
 
   for(i = 0; i < len; i++) {
-    dstarray[i] = htonl(ntohs(srcarray[i]));
+    u_int16_t src_val;
+    u_int32_t dst_val;
+    memcpy(&src_val, src + (i * sizeof(u_int16_t)), sizeof(src_val));
+    dst_val = htonl(ntohs(src_val));
+    memcpy(dst + (i * sizeof(u_int32_t)), &dst_val, sizeof(dst_val));
   }
 }
 
