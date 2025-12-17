@@ -165,6 +165,13 @@ struct lcommunity
   char      *str;
 };
 
+struct ecommunity
+{
+  int       size;
+  u_int8_t  *val;
+  char      *str;
+};
+
 struct cluster_list
 {
   int			length;

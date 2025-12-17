@@ -65,6 +65,7 @@ static    void process_attr_aspath_string(struct aspath *as);
 static    char aspath_delimiter_char (u_char type, u_char which);
 static    void process_attr_community_string(struct community *com);
 static    void process_attr_lcommunity_string(struct lcommunity *lcom);
+static    void process_attr_ecommunity_string(struct ecommunity *ecom);
 
 static    void process_mp_announce(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp);
 static    void process_mp_withdraw(struct mstream *s, struct mp_info *info, struct zebra_incomplete *incomplete, int is_addp);
@@ -389,6 +390,16 @@ void bgpdump_free_attr(attributes_t *attr){
                 free(attr->lcommunity->str);
 
         free(attr->lcommunity);
+        }
+
+        if(attr->ecommunity != NULL) {
+            if(attr->ecommunity->val != NULL)
+                free(attr->ecommunity->val);
+
+            if(attr->ecommunity->str != NULL)
+                free(attr->ecommunity->str);
+
+        free(attr->ecommunity);
         }
 
 	    if(attr->data != NULL)
@@ -1047,6 +1058,7 @@ static attributes_t *attr_init(struct mstream *s, int len) {
     attr->aspath			= NULL;
     attr->community		= NULL;
     attr->lcommunity     = NULL;
+    attr->ecommunity     = NULL;
 
     attr->transit		= NULL;
     attr->mp_info		= calloc(1, sizeof(struct mp_info));
@@ -1182,6 +1194,23 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             mstream_get(s,attr->lcommunity->val,len);
             attr->lcommunity->str    = NULL;
             process_attr_lcommunity_string(attr->lcommunity);
+            break;
+        case BGP_ATTR_EXT_COMMUNITIES:
+            assert(! attr->ecommunity);
+            if((attr->ecommunity     = malloc(sizeof(struct ecommunity))) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
+            
+            attr->ecommunity->size   = len / 8;
+            if((attr->ecommunity->val    = malloc(len)) == NULL) {
+                err("%s: out of memory", __func__);
+                exit(1); /* XXX */
+            }
+
+            mstream_get(s,attr->ecommunity->val,len);
+            attr->ecommunity->str    = NULL;
+            process_attr_ecommunity_string(attr->ecommunity);
             break;
         case BGP_ATTR_NEW_AS_PATH:
             assert(! attr->new_aspath);
@@ -1482,6 +1511,81 @@ void process_attr_lcommunity_string(struct lcommunity *lcom) {
 
     if((lcom->str = malloc(strlen(buf)+1)) != NULL) {
         strcpy(lcom->str, buf);
+    } else {
+        err("%s: out of memory", __func__);
+        exit(1); /* XXX */
+    }
+
+}
+
+void process_attr_ecommunity_string(struct ecommunity *ecom) {
+
+  char buf[BUFSIZ];
+  int i;
+  u_int8_t *p;
+  u_int8_t type_high, type_low;
+  u_int16_t as;
+  u_int32_t value;
+  u_int32_t ip_addr;
+  struct in_addr in;
+
+  memset (buf, 0, BUFSIZ);
+
+  for (i = 0; i < ecom->size; i++)
+    {
+        p = ecom->val + (i * 8);
+        
+        type_high = p[0];
+        type_low = p[1];
+        
+        /* Check if it's AS format (type_high & 0x40 == 0) or IP format (type_high & 0x40 == 0x40) */
+        if ((type_high & 0x40) == 0) {
+            /* AS format: 2 bytes AS (network byte order), 4 bytes value (network byte order) */
+            memcpy(&as, p + 2, 2);
+            memcpy(&value, p + 4, 4);
+            as = ntohs(as);
+            value = ntohl(value);
+            
+            /* Determine community type based on type_high and type_low */
+            if ((type_high & 0x3F) == 0x00 && type_low == 0x02) {
+                /* Route Target */
+                snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
+                    " RT:%u:%u", as, value);
+            } else if ((type_high & 0x3F) == 0x00 && type_low == 0x03) {
+                /* Route Origin */
+                snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
+                    " RO:%u:%u", as, value);
+            } else {
+                /* Generic AS format */
+                snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
+                    " 0x%02x%02x:%u:%u", type_high, type_low, as, value);
+            }
+        } else {
+            /* IP format: 4 bytes IP (network byte order), 2 bytes value (network byte order) */
+            memcpy(&ip_addr, p + 2, 4);
+            in.s_addr = ip_addr;
+            memcpy(&value, p + 6, 2);
+            value = ntohs(value);
+            
+            /* Determine community type */
+            if ((type_high & 0x3F) == 0x01 && type_low == 0x02) {
+                /* Route Target IP format */
+                snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
+                    " RT:%s:%u", inet_ntoa(in), value);
+            } else if ((type_high & 0x3F) == 0x01 && type_low == 0x03) {
+                /* Route Origin IP format */
+                snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
+                    " RO:%s:%u", inet_ntoa(in), value);
+            } else {
+                /* Generic IP format */
+                snprintf (buf + strlen (buf), BUFSIZ - strlen (buf),
+                    " 0x%02x%02x:%s:%u", type_high, type_low, inet_ntoa(in), value);
+            }
+        }
+    }
+
+    if((ecom->str = malloc(strlen(buf)+1)) != NULL) {
+        strcpy(ecom->str, buf);
     } else {
         err("%s: out of memory", __func__);
         exit(1); /* XXX */

@@ -1408,6 +1408,9 @@ void show_attr(attributes_t *attr) {
 
         if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0)    
             printf("LARGE_COMMUNITY:%s\n",attr->lcommunity->str);
+
+        if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_EXT_COMMUNITIES) ) !=0)    
+            printf("EXT_COMMUNITY:%s\n",attr->ecommunity->str);
        
     }
  
@@ -1581,6 +1584,11 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
                     printf("|");
             }
 
+            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_EXT_COMMUNITIES) ) !=0)	
+                printf("%s|",entry->attr->ecommunity->str+1);
+            else
+                printf("|");
+
 		    printf("%s|", aggregate); /* AG/NAG */
 
 			if (entry->attr->aggregator_addr.s_addr != -1) {
@@ -1687,6 +1695,11 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
                         printf("|");
                 }
 
+                if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_EXT_COMMUNITIES) ) !=0)	
+                    printf("%s|",entry->attr->ecommunity->str+1);
+                else
+                    printf("|");
+
                 printf("%s|", aggregate); /* AG/NAG */
 
 			}
@@ -1738,6 +1751,11 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
                     else
                         printf("|");
                 }
+
+                if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_EXT_COMMUNITIES) ) !=0)	
+                    printf("%s|",entry->attr->ecommunity->str+1);
+                else
+                    printf("|");
 
                 printf("%s|",aggregate); /* AG/NAG */
 
@@ -1857,6 +1875,11 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
                     printf("|");
 
             }
+
+            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_EXT_COMMUNITIES) ) !=0)	
+                printf("%s|",entry->attr->ecommunity->str+1);
+            else
+                printf("|");
 
             printf("%s|", aggregate); /* AG/NAG */
 
@@ -1980,6 +2003,11 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
                     printf("|");
 
             }
+
+            if( (entry->attr->flag & ATTR_FLAG_BIT(BGP_ATTR_EXT_COMMUNITIES) ) !=0)	
+                printf("%s|",entry->attr->ecommunity->str+1);
+            else
+                printf("|");
 
             printf("%s|",aggregate); /* AG/NAG */
 				
@@ -2114,6 +2142,11 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
                 else
                     printf("|");
             }
+
+            if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_EXT_COMMUNITIES) ) !=0)	
+                printf("%s|",attr->ecommunity->str+1);
+            else
+                printf("|");
             
             printf("%s|",aggregate);
 
