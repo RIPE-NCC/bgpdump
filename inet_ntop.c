@@ -142,7 +142,8 @@ char *fmt_ipv6(BGPDUMP_IP_ADDRESS addr, char *buffer)
         char buffer2[100];
         BGPDUMP_IP_ADDRESS mapped = { .v4_addr.s_addr = ((uint32_t *)addr.v6_addr.s6_addr)[3] };
         
-        sprintf(buffer, "::%s%s", m ? "ffff:" : "", fmt_ipv4(mapped, buffer2));
+        /* IPv4-mapped IPv6 address format: "::ffff:xxx.xxx.xxx.xxx" (max 24 bytes) */
+        snprintf(buffer, BGPDUMP_ADDRSTRLEN, "::%s%s", m ? "ffff:" : "", fmt_ipv4(mapped, buffer2));
         return buffer;
     }
     
