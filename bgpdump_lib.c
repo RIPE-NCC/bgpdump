@@ -1063,6 +1063,7 @@ static attributes_t *attr_init(struct mstream *s, int len) {
     attr->old_aspath		= NULL;
     attr->new_aggregator_as	= -1;
     attr->new_aggregator_addr.s_addr = INADDR_NONE;
+    attr->otc_as		= 0;
     
     return attr;
 }
@@ -1215,6 +1216,17 @@ static void process_one_attr(struct mstream *outer_stream, attributes_t *attr, u
             int i; // cluster index
             for (i = 0; i < attr->cluster->length; i++)
                 attr->cluster->list[i] = mstream_get_ipv4(s);
+            break;
+        case BGP_ATTR_OTC:
+            /* RFC 9234: Only to Customer (OTC) attribute
+             * Type Code: 35, Length: 4 octets, Value: ASN */
+            if(len != 4) {
+                warn("process_one_attr: OTC attribute has invalid length %d (expected 4)", len);
+                process_unknown_attr(s, attr, flag, type, len);
+                break;
+            }
+            assert(0 == attr->otc_as);
+            attr->otc_as = read_asn(s, ASN32_LEN);
             break;
         default:
             process_unknown_attr(s, attr, flag, type, len);

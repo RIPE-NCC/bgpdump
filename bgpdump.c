@@ -1183,9 +1183,10 @@ void mrtd_table_line_announce(struct prefix *prefix, int count, BGPDUMP_ENTRY *e
                 printf("|%s|", aggregate);
 				
             if (entry->attr->aggregator_addr.s_addr != -1)
-                printf("%u %s|\n", entry->attr->aggregator_as, inet_ntoa(entry->attr->aggregator_addr));
-            else
-                printf("|\n");
+                printf("%u %s", entry->attr->aggregator_as, inet_ntoa(entry->attr->aggregator_addr));
+            printf("|");
+
+            printf("%u|\n", entry->attr->otc_as);
         }
         else
             printf("\n");
@@ -1408,6 +1409,10 @@ void show_attr(attributes_t *attr) {
 
         if( (attr->flag & ATTR_FLAG_BIT(BGP_ATTR_LARGE_COMMUNITIES) ) !=0)    
             printf("LARGE_COMMUNITY:%s\n",attr->lcommunity->str);
+
+        /* RFC 9234: OTC attribute (type 35) - check value directly since flag is 32-bit */
+        if(attr->otc_as != 0)
+            printf("OTC: AS%u\n", attr->otc_as);
        
     }
  
@@ -1588,6 +1593,8 @@ static void table_line_announce(struct prefix *prefix,int count,BGPDUMP_ENTRY *e
 			}
 			printf("|");
 
+			printf("%u|", entry->attr->otc_as);
+
 			if (show_unknown_attributes) {
 				append_compact_unknown_attributes(entry->attr);
 			}
@@ -1747,6 +1754,8 @@ static void table_line_announce_1(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY
 			}
 			printf("|");
 
+			printf("%u|", entry->attr->otc_as);
+
 			if (show_unknown_attributes) {
 				append_compact_unknown_attributes(entry->attr);
 			}
@@ -1865,6 +1874,8 @@ static void table_line_announce6(struct mp_nlri *prefix,int count,BGPDUMP_ENTRY 
 				printf("%u %s",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
 			}
 			printf("|");
+
+			printf("%u|", entry->attr->otc_as);
 
 			if (show_unknown_attributes) {
 				append_compact_unknown_attributes(entry->attr);
@@ -1987,6 +1998,8 @@ static void table_line_mrtd_route(BGPDUMP_MRTD_TABLE_DUMP *route,BGPDUMP_ENTRY *
                 printf("%u %s",entry->attr->aggregator_as,inet_ntoa(entry->attr->aggregator_addr));
             }
             printf("|");
+
+            printf("%u|", entry->attr->otc_as);
 
             if (show_unknown_attributes) {
                 append_compact_unknown_attributes(entry->attr);
@@ -2121,6 +2134,8 @@ static void table_line_dump_v2_prefix(BGPDUMP_TABLE_DUMP_V2_PREFIX *e,BGPDUMP_EN
                 printf("%u %s",attr->aggregator_as,inet_ntoa(attr->aggregator_addr));
             }
             printf("|");
+
+            printf("%u|", attr->otc_as);
 
             if (show_unknown_attributes) {
                 append_compact_unknown_attributes(attr);

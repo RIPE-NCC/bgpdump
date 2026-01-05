@@ -57,6 +57,7 @@ Original Author: Dan Ardelean (dan@ripe.net)
 #define BGP_ATTR_NEW_AS_PATH              17
 #define BGP_ATTR_NEW_AGGREGATOR           18
 #define BGP_ATTR_LARGE_COMMUNITIES        32
+#define BGP_ATTR_OTC                      35
 
 /* Flag macro */
 #define ATTR_FLAG_BIT(X)  (1 << ((X) - 1))
@@ -149,6 +150,9 @@ struct attr
   as_t			old_aggregator_as;
   struct in_addr 	new_aggregator_addr;
   struct in_addr 	old_aggregator_addr;
+
+  /* RFC 9234: Only to Customer (OTC) attribute */
+  as_t			otc_as;
 };
 
 struct community 
