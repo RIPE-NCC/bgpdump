@@ -218,7 +218,7 @@ if(entry->type == BGPDUMP_TYPE_ZEBRA_BGP && entry->subtype == BGPDUMP_SUBTYPE_ZE
 				inet_ntop(AF_INET6, &e->entries[i].peer->peer_ip, peer_ip, INET6_ADDRSTRLEN);
 #endif
 			} else {
-				sprintf(peer_ip, "N/A, unsupported AF");
+				snprintf(peer_ip, sizeof(peer_ip), "N/A, unsupported AF");
 			}
     		printf("    PEER IP     : %s\n",peer_ip);
     		printf("    PEER AS     : %u\n",e->entries[i].peer->peer_as);

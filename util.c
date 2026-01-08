@@ -56,8 +56,8 @@ static void _log(int lvl, char *lvl_str, const char *fmt, va_list args) {
     if(use_syslog) {
         syslog(lvl, fmt, args);
     } else {
-        char prefix[strlen(fmt) + 1000];
-        sprintf(prefix, "%s [%s] %s\n", now_str(), lvl_str, fmt);
+        char prefix[strlen(fmt) + 1100];
+        snprintf(prefix, sizeof(prefix), "%s [%s] %s\n", now_str(), lvl_str, fmt);
         vfprintf(stderr, prefix, args);
     }
 }
@@ -66,21 +66,23 @@ void err(const char *fmt, ...) { log(ERR, error); }
 void warn(const char *fmt, ...) { log(WARNING, warn); }
 void debug(const char *fmt, ...) { log(INFO, info); }
 
-int time2str(struct tm* date,char *time_str)
+int time2str(struct tm* date,char *time_str, size_t size)
 {
-    return sprintf(time_str, "%02d/%02d/%02d %02d:%02d:%02d", date->tm_mon+1, date->tm_mday, date->tm_year%100,
+    /* Format produces exactly 17 bytes: "MM/DD/YY HH:MM:SS" */
+    return snprintf(time_str, size, "%02d/%02d/%02d %02d:%02d:%02d", date->tm_mon+1, date->tm_mday, date->tm_year%100,
             date->tm_hour, date->tm_min, date->tm_sec);
 }
 
-int int2str(uint32_t value, char* str)
+int int2str(uint32_t value, char* str, size_t size)
 {
-    return sprintf(str, "%u", value);
+    /* uint32_t max is 4294967295 (10 digits) */
+    return snprintf(str, size, "%u", value);
 }
 
 static void ti2s(uint32_t value) {
     char buf[100], ref[100];
-    sprintf(ref, "%u", value);
-    int len = int2str(value, buf);
+    snprintf(ref, sizeof(ref), "%u", value);
+    int len = int2str(value, buf, sizeof(buf));
     printf("%s =?= %s (%i)\n", ref, buf, len);
 }
 
