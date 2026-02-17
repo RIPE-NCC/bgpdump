@@ -622,7 +622,7 @@ int process_mrtd_table_dump_v2_peer_index_table(struct mstream *s,BGPDUMP_ENTRY 
 			t->entries[i].peer_as = read_asn(s, ASN16_LEN);
 
 	}
-	return 0;
+	return 1;
 }
 
 
